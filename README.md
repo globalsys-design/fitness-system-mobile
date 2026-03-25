@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fitness System Mobile
 
-## Getting Started
+PWA mobile-first para gestão profissional de avaliação física.
 
-First, run the development server:
+## Stack
+- **Framework:** Next.js 14+ (App Router)
+- **Auth:** Auth.js v5 (Google OAuth + Email Magic Link)
+- **DB:** PostgreSQL via Neon + Prisma 6
+- **Pagamentos:** Stripe
+- **Email:** Resend
+- **UI:** shadcn/ui + Tailwind CSS 4
+- **Push:** OneSignal
 
+## Setup
+
+### 1. Pré-requisitos
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+node --version    # v18+
+npm --version     # v9+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Instalar dependências
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Configurar variáveis de ambiente
+```bash
+cp .env.example .env.local
+# Edite .env.local com suas credenciais
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Criar banco de dados
+Crie um banco PostgreSQL gratuito em [neon.tech](https://neon.tech) e copie a connection string para `DATABASE_URL`.
 
-## Learn More
+### 5. Rodar migrations
+```bash
+npx prisma migrate dev --name init
+npx prisma generate
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 6. Iniciar servidor de desenvolvimento
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Abra [http://localhost:3000](http://localhost:3000).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Comandos
 
-## Deploy on Vercel
+```bash
+npm run dev          # Servidor de desenvolvimento
+npm run build        # Build de produção
+npm run tokens       # Sincronizar design tokens com globals.css
+npm run tokens:check # Verificar sincronização (CI)
+npm run storybook    # Storybook (design system)
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploy (Vercel)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Conecte o repositório ao Vercel
+2. Configure as variáveis de ambiente no dashboard do Vercel
+3. Adicione o webhook do Stripe: `https://seu-app.vercel.app/api/stripe/webhook`
+4. Cada push na branch `main` faz deploy automático
+
+## Estrutura
+
+```
+app/
+├── (public)/login/          # Autenticação
+├── (auth)/app/              # App protegido
+│   ├── page.tsx             # Dashboard
+│   ├── usuarios/            # Assistentes e Clientes
+│   ├── avaliacoes/          # Avaliações completas
+│   ├── prescricoes/         # Prescrições e fichas de treino
+│   └── mais/                # Calendário, Notificações, Perfil
+components/
+├── mobile/                  # MobileLayout, BottomNav, BottomSheet, FAB
+├── ui/                      # shadcn/ui
+design-system/
+├── tokens.ts                # Design tokens (source of truth)
+├── generate-css.ts          # Gerador de CSS
+prisma/
+└── schema.prisma            # Banco de dados
+```
+
+## Design System
+
+As cores são definidas em `design-system/tokens.ts` em formato oklch.
+
+```bash
+# Após editar tokens.ts, sincronize com globals.css:
+npm run tokens
+```
+
+Nunca use valores hex hardcoded nos componentes. Use sempre tokens semânticos Tailwind: `bg-primary`, `text-foreground`, etc.

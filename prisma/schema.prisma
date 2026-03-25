@@ -1,0 +1,369 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  TRIAL
+  PRO
+}
+
+enum UserRole {
+  PROFESSIONAL
+  ASSISTANT
+  CLIENT
+}
+
+enum AssistantStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AssessmentStatus {
+  DRAFT
+  COMPLETE
+}
+
+enum AssessmentPopulation {
+  NORMAL
+  ATHLETE
+  ELDERLY
+  CHILD
+  PREGNANT
+}
+
+enum CalendarEventType {
+  ASSESSMENT
+  PRESCRIPTION
+}
+
+enum PrescriptionType {
+  TRAINING
+  AEROBIC
+}
+
+enum NotificationPriority {
+  NORMAL
+  ATTENTION
+  CRITICAL
+}
+
+model User {
+  id                     String    @id @default(cuid())
+  name                   String?
+  email                  String    @unique
+  emailVerified          DateTime?
+  image                  String?
+  stripeCustomerId       String?   @unique
+  stripePriceId          String?
+  stripeSubscriptionId   String?   @unique
+  stripeCurrentPeriodEnd DateTime?
+  trialEndsAt            DateTime?
+  plan                   Plan      @default(FREE)
+  pushToken              String?
+  role                   UserRole  @default(PROFESSIONAL)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  professional  Professional?
+  assistant     Assistant?
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Professional {
+  id            String          @id @default(cuid())
+  userId        String          @unique
+  name          String
+  email         String
+  phone         String?
+  cpf           String?
+  birthCity     String?
+  maritalStatus String?
+  profession    String?
+  specialty     String?
+  photo         String?
+  address       Json?
+  status        AssistantStatus @default(ACTIVE)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assistants     Assistant[]
+  clients        Client[]
+  assessments    Assessment[]
+  prescriptions  Prescription[]
+  calendarEvents CalendarEvent[]
+
+  @@map("professionals")
+}
+
+model Assistant {
+  id             String          @id @default(cuid())
+  professionalId String
+  userId         String?         @unique
+  name           String
+  email          String
+  phone          String?
+  cpf            String?
+  birthCity      String?
+  maritalStatus  String?
+  profession     String?
+  photo          String?
+  address        Json?
+  status         AssistantStatus @default(ACTIVE)
+  permissions    Json?
+  passwordHash   String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  professional  Professional   @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  user          User?          @relation(fields: [userId], references: [id])
+  assessments   Assessment[]
+  prescriptions Prescription[]
+
+  @@map("assistants")
+}
+
+model Client {
+  id                 String       @id @default(cuid())
+  professionalId     String
+  name               String
+  email              String?
+  phone              String?
+  cpf                String?
+  birthDate          DateTime?
+  gender             String?
+  photo              String?
+  address            Json?
+  emergencyContact   Json?
+  responsibleContact Json?
+  status             ClientStatus @default(ACTIVE)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  professional   Professional    @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  assessments    Assessment[]
+  prescriptions  Prescription[]
+  calendarEvents CalendarEvent[]
+
+  @@map("clients")
+}
+
+model Assessment {
+  id              String               @id @default(cuid())
+  clientId        String
+  professionalId  String
+  assistantId     String?
+  population      AssessmentPopulation @default(NORMAL)
+  modality        String?
+  scheduledNextAt DateTime?
+  status          AssessmentStatus     @default(DRAFT)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  client       Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  professional Professional @relation(fields: [professionalId], references: [id])
+  assistant    Assistant?   @relation(fields: [assistantId], references: [id])
+
+  objective     AssessmentObjective?
+  anamnesis     Anamnesis?
+  anthropometry Anthropometry?
+  clinicalExams ClinicalExam?
+  fitnessTests  FitnessTest?
+
+  @@map("assessments")
+}
+
+model AssessmentObjective {
+  id           String   @id @default(cuid())
+  assessmentId String   @unique
+  goals        Json?
+  availability Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@map("assessment_objectives")
+}
+
+model Anamnesis {
+  id                    String   @id @default(cuid())
+  assessmentId          String   @unique
+  basalParameters       Json?
+  parq                  Json?
+  coronaryRisk          Json?
+  framingham            Json?
+  advancedQuestionnaire Json?
+  fullQuestionnaire     Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@map("anamneses")
+}
+
+model Anthropometry {
+  id              String   @id @default(cuid())
+  assessmentId    String   @unique
+  perimeters      Json?
+  diameters       Json?
+  weight          Float?
+  height          Float?
+  bodyComposition Json?
+  somatotype      Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@map("anthropometries")
+}
+
+model ClinicalExam {
+  id           String   @id @default(cuid())
+  assessmentId String   @unique
+  cardiacExam  Json?
+  bloodCount   Json?
+  posturalExam Json?
+  otherExams   Json?
+  attachments  String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@map("clinical_exams")
+}
+
+model FitnessTest {
+  id            String   @id @default(cuid())
+  assessmentId  String   @unique
+  vo2Predictive Json?
+  vo2Max        Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@map("fitness_tests")
+}
+
+model Prescription {
+  id             String           @id @default(cuid())
+  clientId       String
+  professionalId String
+  assistantId    String?
+  type           PrescriptionType @default(TRAINING)
+  content        Json?
+  pdfUrl         String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  professional  Professional  @relation(fields: [professionalId], references: [id])
+  assistant     Assistant?    @relation(fields: [assistantId], references: [id])
+  trainingSheet TrainingSheet?
+
+  @@map("prescriptions")
+}
+
+model TrainingSheet {
+  id             String   @id @default(cuid())
+  prescriptionId String   @unique
+  exercises      Json?
+  aerobics       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@map("training_sheets")
+}
+
+model CalendarEvent {
+  id             String            @id @default(cuid())
+  professionalId String
+  clientId       String?
+  type           CalendarEventType @default(ASSESSMENT)
+  title          String
+  description    String?
+  startAt        DateTime
+  endAt          DateTime
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  client       Client?      @relation(fields: [clientId], references: [id])
+
+  @@map("calendar_events")
+}
+
+model Notification {
+  id        String               @id @default(cuid())
+  userId    String
+  type      String
+  message   String
+  read      Boolean              @default(false)
+  priority  NotificationPriority @default(NORMAL)
+  createdAt DateTime             @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
