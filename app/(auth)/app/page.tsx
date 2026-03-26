@@ -49,6 +49,18 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login");
 
+  // Garante registro Professional para usuários que logaram antes do onboarding automático
+  if (user.role === "PROFESSIONAL" && !user.professional) {
+    await db.professional.create({
+      data: {
+        userId: session.user.id,
+        name: session.user.name ?? "Profissional",
+        email: session.user.email ?? "",
+      },
+    });
+    redirect("/app");
+  }
+
   const trialActive = isTrialActive(user as any);
   const daysLeft = daysLeftInTrial(user as any);
 

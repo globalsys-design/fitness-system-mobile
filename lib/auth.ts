@@ -45,6 +45,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
         },
       });
+
+      if (user.id) {
+        await db.professional.create({
+          data: {
+            userId: user.id,
+            name: user.name ?? "Profissional",
+            email: user.email ?? "",
+          },
+        });
+      }
     },
   },
   pages: {
