@@ -18,7 +18,10 @@ export default function NovaAvaliacaoPage() {
   const [modality, setModality] = useState("");
 
   useEffect(() => {
-    fetch("/api/clients").then((r) => r.json()).then(setClients).catch(() => {});
+    fetch("/api/clients")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setClients(data); })
+      .catch(() => {});
   }, []);
 
   async function handleSubmit() {
