@@ -66,3 +66,12 @@ Assessment → AssessmentObjective, Anamnesis, Anthropometry, ClinicalExam, Fitn
 - API version: `2026-02-25.clover`
 - `invoice.subscription` → `invoice.parent.subscription_details.subscription`
 - `current_period_end` → `invoice.period_end`
+
+## Skills ativas (ler antes de gerar UI ou analisar design)
+- `/Users/BrenoFacchinetti/Applications/Claude Code/Skills/frontend-design.md` — tokens, layout, performance
+- `/Users/BrenoFacchinetti/Applications/Claude Code/Skills/shadcn-ui.md` — regras shadcn v4, componentes disponíveis
+- `/Users/BrenoFacchinetti/Applications/Claude Code/Skills/ui-ux-pro-max.md` — framework de análise UI/UX
+- `/Users/BrenoFacchinetti/Applications/Claude Code/Skills/web-accessibility.md` — WCAG 2.1 AA
+- `/Users/BrenoFacchinetti/Applications/Claude Code/Skills/web-design-guidelines.md` — quality checker, anti-patterns
+- `/Users/BrenoFacchinetti/Applications/Claude Code/Skills/breadboarding.md` — modelagem de sistema
+- `/Users/BrenoFacchinetti/Applications/Claude Code/Skills/breadboard-reflection.md` — análise e refatoração de design
