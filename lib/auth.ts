@@ -12,10 +12,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.AUTH_GOOGLE_ID!,
       clientSecret: process.env.AUTH_GOOGLE_SECRET!,
     }),
-    Resend({
-      apiKey: process.env.AUTH_RESEND_KEY!,
-      from: "Fitness System <noreply@fitnesssystem.app>",
-    }),
+    ...(process.env.AUTH_RESEND_KEY
+      ? [Resend({
+          apiKey: process.env.AUTH_RESEND_KEY,
+          from: "Fitness System <noreply@fitnesssystem.app>",
+        })]
+      : []),
   ],
   callbacks: {
     async session({ session, user }) {
