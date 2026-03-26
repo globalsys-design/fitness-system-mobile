@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { MobileLayout } from "@/components/mobile/mobile-layout";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const OBJECTIVES = [
   "Condicionamento físico",
@@ -43,6 +44,27 @@ export default function ObjetivoPage() {
   const [goals, setGoals] = useState<Record<string, number>>({});
   const [availability, setAvailability] = useState<Record<string, string | null>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+
+  useEffect(() => {
+    async function loadObjective() {
+      try {
+        const res = await fetch(`/api/assessments/${params.id}/objective`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data) {
+            if (data.goals) setGoals(data.goals as Record<string, number>);
+            if (data.availability) setAvailability(data.availability as Record<string, string | null>);
+          }
+        }
+      } catch {
+        // silently ignore — form starts empty
+      } finally {
+        setIsFetching(false);
+      }
+    }
+    loadObjective();
+  }, [params.id]);
 
   async function handleSave() {
     setIsLoading(true);
@@ -60,27 +82,41 @@ export default function ObjetivoPage() {
     }
   }
 
+  if (isFetching) {
+    return (
+      <MobileLayout title="Objetivo e Disponibilidade" showBack>
+        <div className="p-4 flex flex-col gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-xl" />
+          ))}
+        </div>
+      </MobileLayout>
+    );
+  }
+
   return (
     <MobileLayout title="Objetivo e Disponibilidade" showBack>
       <div className="p-4 flex flex-col gap-6">
         {/* Objetivos */}
         <div>
           <h3 className="font-semibold text-foreground text-sm mb-3">Objetivos do cliente</h3>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             {OBJECTIVES.map((obj) => (
               <div key={obj} className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm">{obj}</Label>
                   <span className="text-sm text-primary font-semibold">{goals[obj] ?? 0}</span>
                 </div>
-                <input
-                  type="range"
+                <Slider
                   min={0}
                   max={4}
                   step={1}
                   value={goals[obj] ?? 0}
-                  onChange={(e) => setGoals((g) => ({ ...g, [obj]: Number(e.target.value) }))}
-                  className="w-full accent-primary h-2"
+                  onValueChange={(val) => {
+                    const num = Array.isArray(val) ? val[0] : val;
+                    setGoals((g) => ({ ...g, [obj]: num ?? 0 }));
+                  }}
+                  className="w-full"
                 />
               </div>
             ))}

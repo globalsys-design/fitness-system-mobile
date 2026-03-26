@@ -1,18 +1,28 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import {
   Target, Heart, Ruler, Stethoscope, Activity,
-  CheckCircle2, Circle, ChevronRight
+  CheckCircle2, ChevronRight
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { MobileHeader } from "@/components/mobile/mobile-header";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import type { Prisma } from "@prisma/client";
+
+type AssessmentWithDetails = Prisma.AssessmentGetPayload<{
+  include: {
+    client: { select: { id: true; name: true; photo: true; gender: true; birthDate: true } };
+    objective: true;
+    anamnesis: true;
+    anthropometry: true;
+    clinicalExams: true;
+    fitnessTests: true;
+  };
+}>;
 
 const SECTIONS = [
   {
@@ -20,47 +30,51 @@ const SECTIONS = [
     label: "Objetivo e Disponibilidade",
     icon: Target,
     href: (id: string) => `/app/avaliacoes/${id}/objetivo`,
-    fieldKey: "objective",
+    hasData: (a: AssessmentWithDetails) => a.objective != null,
   },
   {
     id: "anamnese",
     label: "Anamnese",
     icon: Heart,
     href: (id: string) => `/app/avaliacoes/${id}/anamnese`,
-    fieldKey: "anamnesis",
+    hasData: (a: AssessmentWithDetails) => a.anamnesis != null,
   },
   {
     id: "antropometria",
     label: "Antropometria",
     icon: Ruler,
     href: (id: string) => `/app/avaliacoes/${id}/antropometria`,
-    fieldKey: "anthropometry",
+    hasData: (a: AssessmentWithDetails) => a.anthropometry != null,
   },
   {
     id: "exames",
     label: "Exames Clínicos",
     icon: Stethoscope,
     href: (id: string) => `/app/avaliacoes/${id}/exames`,
-    fieldKey: "clinicalExams",
+    hasData: (a: AssessmentWithDetails) => a.clinicalExams != null,
   },
   {
     id: "testes",
     label: "Testes",
     icon: Activity,
     href: (id: string) => `/app/avaliacoes/${id}/testes`,
-    fieldKey: "fitnessTests",
+    hasData: (a: AssessmentWithDetails) => a.fitnessTests != null,
   },
 ];
 
-export function AssessmentDetail({ assessment }: { assessment: any }) {
+const POPULATION_LABELS: Record<string, string> = {
+  NORMAL: "Normal",
+  ATHLETE: "Atleta",
+  ELDERLY: "Idoso",
+  CHILD: "Criança",
+  PREGNANT: "Gestante",
+};
+
+export function AssessmentDetail({ assessment }: { assessment: AssessmentWithDetails }) {
   const birthDate = assessment.client.birthDate;
   const age = birthDate
     ? Math.floor((Date.now() - new Date(birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
     : null;
-
-  const populationLabels: Record<string, string> = {
-    NORMAL: "Normal", ATHLETE: "Atleta", ELDERLY: "Idoso", CHILD: "Criança", PREGNANT: "Gestante",
-  };
 
   return (
     <div className="flex flex-col bg-background" style={{ minHeight: "100dvh" }}>
@@ -87,7 +101,7 @@ export function AssessmentDetail({ assessment }: { assessment: any }) {
             <p className="font-semibold text-foreground text-sm">{assessment.client.name}</p>
             <div className="flex items-center gap-2 flex-wrap mt-0.5">
               <span className="text-xs text-muted-foreground">
-                {populationLabels[assessment.population]}
+                {POPULATION_LABELS[assessment.population]}
               </span>
               {assessment.modality && (
                 <span className="text-xs text-muted-foreground">· {assessment.modality}</span>
@@ -109,7 +123,7 @@ export function AssessmentDetail({ assessment }: { assessment: any }) {
         <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
           {SECTIONS.map((section, index) => {
             const Icon = section.icon;
-            const hasData = assessment[section.fieldKey] !== null;
+            const filled = section.hasData(assessment);
             return (
               <Link
                 key={section.id}
@@ -118,9 +132,9 @@ export function AssessmentDetail({ assessment }: { assessment: any }) {
               >
                 <div className={cn(
                   "flex items-center justify-center w-9 h-9 rounded-xl",
-                  hasData ? "bg-primary/10" : "bg-muted"
+                  filled ? "bg-primary/10" : "bg-muted"
                 )}>
-                  <Icon className={cn("w-4 h-4", hasData ? "text-primary" : "text-muted-foreground")} />
+                  <Icon className={cn("w-4 h-4", filled ? "text-primary" : "text-muted-foreground")} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -128,7 +142,7 @@ export function AssessmentDetail({ assessment }: { assessment: any }) {
                     <p className="text-sm font-medium text-foreground">{section.label}</p>
                   </div>
                 </div>
-                {hasData ? (
+                {filled ? (
                   <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
                 ) : (
                   <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />

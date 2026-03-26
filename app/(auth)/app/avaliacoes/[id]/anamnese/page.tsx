@@ -3,15 +3,15 @@ import { redirect, notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { MobileLayout } from "@/components/mobile/mobile-layout";
 import Link from "next/link";
-import { ChevronRight, Heart } from "lucide-react";
+import { ChevronRight, Heart, CheckCircle2, Circle } from "lucide-react";
 
 const SUB_SECTIONS = [
-  { label: "Parâmetros Basais", href: "parametros-basais" },
-  { label: "PAR-Q+", href: "parq" },
-  { label: "Risco Coronariano", href: "risco-coronariano" },
-  { label: "Framingham", href: "framingham" },
-  { label: "Questionário Avançado", href: "questionario-avancado" },
-  { label: "Questionário Completo", href: "questionario-completo" },
+  { label: "Parâmetros Basais", href: "parametros-basais", fieldKey: "basalParameters" },
+  { label: "PAR-Q+", href: "parq", fieldKey: "parq" },
+  { label: "Risco Coronariano", href: "risco-coronariano", fieldKey: "coronaryRisk" },
+  { label: "Framingham", href: "framingham", fieldKey: "framingham" },
+  { label: "Questionário Avançado", href: "questionario-avancado", fieldKey: "advancedQuestionnaire" },
+  { label: "Questionário Completo", href: "questionario-completo", fieldKey: "fullQuestionnaire" },
 ];
 
 export default async function AnamnesePage({ params }: { params: { id: string } }) {
@@ -20,10 +20,24 @@ export default async function AnamnesePage({ params }: { params: { id: string } 
 
   const assessment = await db.assessment.findUnique({
     where: { id: params.id },
-    select: { id: true, anamnesis: true },
+    select: {
+      id: true,
+      anamnesis: {
+        select: {
+          basalParameters: true,
+          parq: true,
+          coronaryRisk: true,
+          framingham: true,
+          advancedQuestionnaire: true,
+          fullQuestionnaire: true,
+        },
+      },
+    },
   });
 
   if (!assessment) notFound();
+
+  const anamnesis = assessment.anamnesis;
 
   return (
     <MobileLayout title="Anamnese" showBack>
@@ -37,16 +51,23 @@ export default async function AnamnesePage({ params }: { params: { id: string } 
         </div>
 
         <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
-          {SUB_SECTIONS.map((s) => (
-            <Link
-              key={s.href}
-              href={`/app/avaliacoes/${params.id}/anamnese/${s.href}`}
-              className="flex items-center gap-3 px-4 py-4 bg-card hover:bg-accent transition-colors"
-            >
-              <p className="flex-1 text-sm font-medium text-foreground">{s.label}</p>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </Link>
-          ))}
+          {SUB_SECTIONS.map((s) => {
+            const hasData = anamnesis != null && anamnesis[s.fieldKey as keyof typeof anamnesis] != null;
+            return (
+              <Link
+                key={s.href}
+                href={`/app/avaliacoes/${params.id}/anamnese/${s.href}`}
+                className="flex items-center gap-3 px-4 py-4 bg-card hover:bg-accent transition-colors"
+              >
+                <p className="flex-1 text-sm font-medium text-foreground">{s.label}</p>
+                {hasData ? (
+                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                )}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </MobileLayout>
