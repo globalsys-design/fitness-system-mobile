@@ -56,12 +56,12 @@ export function StepResponsible({ isMinor }: StepResponsibleProps) {
           </div>
 
           <p className="text-sm font-medium text-foreground">
-            Responsável Legal *
+            Responsável Legal
           </p>
 
           {/* Nome * */}
           <div>
-            <Label>Nome do responsável *</Label>
+            <Label required>Nome do responsável</Label>
             <Input
               className="mt-1.5"
               placeholder="Nome completo"
@@ -95,7 +95,7 @@ export function StepResponsible({ isMinor }: StepResponsibleProps) {
 
           {/* CPF * */}
           <div>
-            <Label>CPF do responsável *</Label>
+            <Label required>CPF do responsável</Label>
             <Input
               className="mt-1.5"
               placeholder="000.000.000-00"
@@ -112,7 +112,7 @@ export function StepResponsible({ isMinor }: StepResponsibleProps) {
 
           {/* Telefone * */}
           <div>
-            <Label>Telefone do responsável *</Label>
+            <Label required>Telefone do responsável</Label>
             <Input
               type="tel"
               inputMode="tel"

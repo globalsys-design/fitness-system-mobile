@@ -20,6 +20,15 @@ import {
   DDI_OPTIONS,
 } from "@/lib/validations/client";
 
+/** Lookup label from options array by value */
+function getOptionLabel(
+  options: readonly { value: string; label: string }[],
+  value: string | null | undefined
+): string | undefined {
+  if (!value) return undefined;
+  return options.find((opt) => opt.value === value)?.label;
+}
+
 export function StepPersonal() {
   const {
     register,
@@ -73,11 +82,12 @@ export function StepPersonal() {
 
       {/* Nome */}
       <div>
-        <Label htmlFor="name">Nome completo *</Label>
+        <Label htmlFor="name" required>Nome completo</Label>
         <Input
           id="name"
           className="mt-1.5"
           placeholder="Nome do cliente"
+          aria-required="true"
           {...register("name")}
         />
         {errors.name && (
@@ -115,44 +125,49 @@ export function StepPersonal() {
         )}
       </div>
 
-      {/* Gênero */}
-      <div>
-        <Label>Gênero</Label>
-        <Select
-          value={watched.gender || undefined}
-          onValueChange={(v) => setValue("gender", v)}
-        >
-          <SelectTrigger className="mt-1.5">
-            <SelectValue placeholder="Selecione" />
-          </SelectTrigger>
-          <SelectContent>
-            {GENDER_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Gênero + Estado Civil — row alinhado */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Gênero</Label>
+          <Select
+            value={watched.gender || undefined}
+            onValueChange={(v) => setValue("gender", v ?? "")}
+          >
+            <SelectTrigger className="mt-1.5">
+              <SelectValue placeholder="Selecione">
+                {getOptionLabel(GENDER_OPTIONS, watched.gender) || "Selecione"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {GENDER_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      {/* Estado Civil (opcional) */}
-      <div>
-        <Label>Estado civil (opcional)</Label>
-        <Select
-          value={watched.maritalStatus || undefined}
-          onValueChange={(v) => setValue("maritalStatus", v)}
-        >
-          <SelectTrigger className="mt-1.5">
-            <SelectValue placeholder="Selecione" />
-          </SelectTrigger>
-          <SelectContent>
-            {MARITAL_STATUS_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div>
+          <Label>Estado civil</Label>
+          <Select
+            value={watched.maritalStatus || undefined}
+            onValueChange={(v) => setValue("maritalStatus", v ?? "")}
+          >
+            <SelectTrigger className="mt-1.5">
+              <SelectValue placeholder="Selecione">
+                {getOptionLabel(MARITAL_STATUS_OPTIONS, watched.maritalStatus) || "Selecione"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {MARITAL_STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Etnia */}
@@ -160,10 +175,12 @@ export function StepPersonal() {
         <Label>Etnia</Label>
         <Select
           value={watched.ethnicity || undefined}
-          onValueChange={(v) => setValue("ethnicity", v)}
+          onValueChange={(v) => setValue("ethnicity", v ?? "")}
         >
           <SelectTrigger className="mt-1.5">
-            <SelectValue placeholder="Selecione" />
+            <SelectValue placeholder="Selecione">
+              {getOptionLabel(ETHNICITY_OPTIONS, watched.ethnicity) || "Selecione"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {ETHNICITY_OPTIONS.map((opt) => (
@@ -211,7 +228,7 @@ export function StepPersonal() {
         <div className="flex gap-2 mt-1.5">
           <Select
             value={watched.phoneDdi || "+55"}
-            onValueChange={(v) => setValue("phoneDdi", v)}
+            onValueChange={(v) => setValue("phoneDdi", v ?? "+55")}
           >
             <SelectTrigger className="w-28 shrink-0">
               <SelectValue />
