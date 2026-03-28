@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MobileHeader } from "@/components/mobile/mobile-header";
+import { EVENT_TYPE_OPTIONS } from "@/lib/constants/calendar";
 
 export default function NovoAgendamentoPage() {
   const router = useRouter();
@@ -49,8 +50,9 @@ export default function NovoAgendamentoPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ASSESSMENT">Avaliação</SelectItem>
-              <SelectItem value="PRESCRIPTION">Prescrição</SelectItem>
+              {EVENT_TYPE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

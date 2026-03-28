@@ -72,7 +72,7 @@ export default function ParametrosBasaisPage() {
                     placeholder="0"
                     value={values[param.key] ?? ""}
                     onChange={(e) => setValues((v) => ({ ...v, [param.key]: e.target.value }))}
-                    className="h-12 flex-1 text-base"
+                    className="flex-1 text-base"
                   />
                   <span className="text-sm text-muted-foreground w-14 text-center">{param.unit}</span>
                 </div>
@@ -81,7 +81,7 @@ export default function ParametrosBasaisPage() {
           );
         })}
 
-        <Button className="h-12 w-full" onClick={handleSave} disabled={isLoading}>
+        <Button className="w-full" onClick={handleSave} disabled={isLoading}>
           {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           Salvar parâmetros
         </Button>

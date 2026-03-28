@@ -8,15 +8,15 @@ import {
   Mail,
   Phone,
   MapPin,
+  Briefcase,
   Calendar,
   ClipboardList,
-  Dumbbell,
   Edit2,
   Save,
   X,
   User,
-  Shield,
-  ChevronRight,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -32,82 +32,77 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PermissionsToggle, PermissionsMap } from "./permissions-toggle";
 import { cn } from "@/lib/utils";
-import { GENDER_OPTIONS } from "@/lib/validations/client";
+import { PROFESSIONS } from "@/lib/constants/professions";
 import Link from "next/link";
-import { format, differenceInYears } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-interface ClientDetailProps {
-  client: {
+interface AssistantDetailProps {
+  assistant: {
     id: string;
     name: string;
-    email: string | null;
+    email: string;
     phone: string | null;
     cpf: string | null;
-    birthDate: string | null;
-    gender: string | null;
+    birthCity: string | null;
+    maritalStatus: string | null;
+    profession: string | null;
     photo: string | null;
     address: any;
-    emergencyContact: any;
     status: string;
+    permissions: any;
     createdAt: string;
     assessments: Array<{
       id: string;
-      population: string;
-      modality: string | null;
       status: string;
+      modality: string | null;
       createdAt: string;
+      client: { name: string };
     }>;
     prescriptions: Array<{
       id: string;
       type: string;
+      title: string | null;
       createdAt: string;
     }>;
   };
 }
 
-export function ClientDetail({ client }: ClientDetailProps) {
+export function AssistantDetail({ assistant }: AssistantDetailProps) {
   const router = useRouter();
   const [tab, setTab] = useState("info");
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const age = client.birthDate
-    ? differenceInYears(new Date(), new Date(client.birthDate))
-    : null;
-
-  const birthDateFormatted = client.birthDate
-    ? format(new Date(client.birthDate), "dd/MM/yyyy", { locale: ptBR })
-    : null;
-
-  const genderLabel =
-    client.gender === "M"
-      ? "Masculino"
-      : client.gender === "F"
-        ? "Feminino"
-        : client.gender === "OTHER"
-          ? "Outro"
-          : null;
-
-  // Form state para edição
+  // Form state
   const [formData, setFormData] = useState({
-    name: client.name,
-    email: client.email ?? "",
-    phone: client.phone ?? "",
-    cpf: client.cpf ?? "",
-    birthDate: client.birthDate
-      ? format(new Date(client.birthDate), "yyyy-MM-dd")
-      : "",
-    gender: client.gender ?? "",
-    status: client.status,
+    name: assistant.name,
+    email: assistant.email,
+    phone: assistant.phone ?? "",
+    cpf: assistant.cpf ?? "",
+    profession: assistant.profession ?? "",
+    birthCity: assistant.birthCity ?? "",
+    status: assistant.status,
   });
+
+  // Permissions state
+  const [permissions, setPermissions] = useState<PermissionsMap>(
+    (assistant.permissions as PermissionsMap) ?? {
+      clients: { read: true, write: false },
+      assessments: { read: true, write: false },
+      prescriptions: { read: true, write: false },
+      calendar: { read: true, write: false },
+      billing: { read: false, write: false },
+    }
+  );
+  const [isSavingPermissions, setIsSavingPermissions] = useState(false);
 
   async function handleSave() {
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/clients/${client.id}`, {
+      const res = await fetch(`/api/assistants/${assistant.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -123,65 +118,75 @@ export function ClientDetail({ client }: ClientDetailProps) {
     }
   }
 
+  async function handleSavePermissions(newPermissions: PermissionsMap) {
+    setPermissions(newPermissions);
+    setIsSavingPermissions(true);
+    try {
+      const res = await fetch(`/api/assistants/${assistant.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ permissions: newPermissions }),
+      });
+      if (!res.ok) throw new Error("Erro ao salvar");
+      toast.success("Permissões atualizadas!");
+    } catch {
+      toast.error("Erro ao salvar permissões.");
+      // Reverte optimistic update
+      setPermissions(
+        (assistant.permissions as PermissionsMap) ?? {
+          clients: { read: true, write: false },
+          assessments: { read: true, write: false },
+          prescriptions: { read: true, write: false },
+          calendar: { read: true, write: false },
+          billing: { read: false, write: false },
+        }
+      );
+    } finally {
+      setIsSavingPermissions(false);
+    }
+  }
+
   return (
     <div className="flex flex-col">
-      {/* Header do cliente */}
+      {/* Header do assistente */}
       <div className="flex items-center gap-4 px-4 py-5 border-b border-border bg-card">
         <Avatar className="size-16 shrink-0">
-          <AvatarImage src={client.photo ?? undefined} />
+          <AvatarImage src={assistant.photo ?? undefined} />
           <AvatarFallback className="text-lg font-bold bg-primary/10 text-primary">
-            {client.name.slice(0, 2).toUpperCase()}
+            {assistant.name.slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold text-foreground truncate">
-              {client.name}
+              {assistant.name}
             </h2>
             <Badge
               variant="secondary"
               className={cn(
                 "text-xs shrink-0",
-                client.status === "ACTIVE"
+                assistant.status === "ACTIVE"
                   ? "bg-primary/10 text-primary border-primary/20"
                   : "bg-muted text-muted-foreground"
               )}
             >
-              {client.status === "ACTIVE" ? "Ativo" : "Inativo"}
+              {assistant.status === "ACTIVE" ? "Ativo" : "Inativo"}
             </Badge>
           </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            {genderLabel && (
-              <span className="text-sm text-muted-foreground">
-                {genderLabel}
-              </span>
-            )}
-            {age !== null && (
-              <span className="text-sm text-muted-foreground">
-                {genderLabel ? "•" : ""} {age} anos
-              </span>
-            )}
-          </div>
-          {/* Contadores */}
-          <div className="flex items-center gap-4 mt-1.5">
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <ClipboardList className="size-3.5" />
-              {client.assessments.length} aval.
-            </span>
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Dumbbell className="size-3.5" />
-              {client.prescriptions.length} pres.
-            </span>
-          </div>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {assistant.profession ?? "Profissão não definida"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Desde{" "}
+            {format(new Date(assistant.createdAt), "MMM yyyy", {
+              locale: ptBR,
+            })}
+          </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <Tabs
-        value={tab}
-        onValueChange={setTab}
-        className="flex flex-col flex-1"
-      >
+      <Tabs value={tab} onValueChange={setTab} className="flex flex-col flex-1">
         <div className="px-4 pt-3 border-b border-border bg-background sticky top-0 z-10">
           <TabsList className="w-full h-10 bg-transparent p-0 gap-0">
             <TabsTrigger
@@ -203,10 +208,10 @@ export function ClientDetail({ client }: ClientDetailProps) {
               Avaliações
             </TabsTrigger>
             <TabsTrigger
-              value="prescriptions"
+              value="permissions"
               className="flex-1 text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none data-[state=active]:shadow-none h-10"
             >
-              Prescrições
+              Permissões
             </TabsTrigger>
           </TabsList>
         </div>
@@ -214,6 +219,7 @@ export function ClientDetail({ client }: ClientDetailProps) {
         {/* Tab: Informações */}
         <TabsContent value="info" className="mt-0 flex-1">
           <div className="p-4">
+            {/* Botão editar */}
             <div className="flex justify-end mb-3">
               {isEditing ? (
                 <div className="flex gap-2">
@@ -223,15 +229,13 @@ export function ClientDetail({ client }: ClientDetailProps) {
                     onClick={() => {
                       setIsEditing(false);
                       setFormData({
-                        name: client.name,
-                        email: client.email ?? "",
-                        phone: client.phone ?? "",
-                        cpf: client.cpf ?? "",
-                        birthDate: client.birthDate
-                          ? format(new Date(client.birthDate), "yyyy-MM-dd")
-                          : "",
-                        gender: client.gender ?? "",
-                        status: client.status,
+                        name: assistant.name,
+                        email: assistant.email,
+                        phone: assistant.phone ?? "",
+                        cpf: assistant.cpf ?? "",
+                        profession: assistant.profession ?? "",
+                        birthCity: assistant.birthCity ?? "",
+                        status: assistant.status,
                       });
                     }}
                   >
@@ -260,6 +264,7 @@ export function ClientDetail({ client }: ClientDetailProps) {
             </div>
 
             {isEditing ? (
+              /* Modo edição */
               <div className="flex flex-col gap-4">
                 <div>
                   <Label>Nome completo</Label>
@@ -307,85 +312,75 @@ export function ClientDetail({ client }: ClientDetailProps) {
                   />
                 </div>
                 <div>
-                  <Label>Data de nascimento</Label>
-                  <Input
-                    type="date"
-                    className="h-12 mt-1.5"
-                    value={formData.birthDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, birthDate: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Gênero</Label>
+                  <Label>Profissão</Label>
                   <Select
-                    value={formData.gender || undefined}
+                    value={formData.profession || undefined}
                     onValueChange={(v) => {
-                      if (v !== null)
-                        setFormData({ ...formData, gender: v as string });
+                      if (v !== null) setFormData({ ...formData, profession: v as string });
                     }}
                   >
                     <SelectTrigger className="h-12 mt-1.5">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
-                      {GENDER_OPTIONS.map((opt) => (
+                      {PROFESSIONS.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(v) => {
+                      if (v !== null) setFormData({ ...formData, status: v as string });
+                    }}
+                  >
+                    <SelectTrigger className="h-12 mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ACTIVE">Ativo</SelectItem>
+                      <SelectItem value="INACTIVE">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             ) : (
+              /* Modo visualização */
               <div className="flex flex-col gap-1">
-                <InfoRow icon={Mail} label="Email" value={client.email} />
-                <InfoRow icon={Phone} label="Telefone" value={client.phone} />
-                <InfoRow icon={User} label="CPF" value={client.cpf} />
                 <InfoRow
-                  icon={Calendar}
-                  label="Nascimento"
-                  value={
-                    birthDateFormatted
-                      ? `${birthDateFormatted} (${age} anos)`
-                      : null
-                  }
+                  icon={Mail}
+                  label="Email"
+                  value={assistant.email}
+                />
+                <InfoRow
+                  icon={Phone}
+                  label="Telefone"
+                  value={assistant.phone}
                 />
                 <InfoRow
                   icon={User}
-                  label="Gênero"
-                  value={genderLabel}
+                  label="CPF"
+                  value={assistant.cpf}
                 />
-                {client.address && (
+                <InfoRow
+                  icon={Briefcase}
+                  label="Profissão"
+                  value={assistant.profession}
+                />
+                <InfoRow
+                  icon={MapPin}
+                  label="Cidade natal"
+                  value={assistant.birthCity}
+                />
+                {assistant.address && (
                   <InfoRow
                     icon={MapPin}
                     label="Endereço"
-                    value={formatAddress(client.address)}
+                    value={formatAddress(assistant.address)}
                   />
-                )}
-                {client.emergencyContact && (
-                  <>
-                    <div className="border-t border-border mt-2 pt-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                        Contato de emergência
-                      </p>
-                    </div>
-                    <InfoRow
-                      icon={User}
-                      label="Nome"
-                      value={client.emergencyContact.name}
-                    />
-                    <InfoRow
-                      icon={Phone}
-                      label="Telefone"
-                      value={client.emergencyContact.phone}
-                    />
-                    <InfoRow
-                      icon={Shield}
-                      label="Parentesco"
-                      value={client.emergencyContact.relationship}
-                    />
-                  </>
                 )}
               </div>
             )}
@@ -402,7 +397,7 @@ export function ClientDetail({ client }: ClientDetailProps) {
                     Conta ativa
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Permitir que o cliente acesse o sistema
+                    Permitir que o assistente acesse o sistema
                   </p>
                 </div>
                 <Switch
@@ -411,7 +406,7 @@ export function ClientDetail({ client }: ClientDetailProps) {
                     const newStatus = checked ? "ACTIVE" : "INACTIVE";
                     setFormData({ ...formData, status: newStatus });
                     try {
-                      await fetch(`/api/clients/${client.id}`, {
+                      await fetch(`/api/assistants/${assistant.id}`, {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ status: newStatus }),
@@ -433,7 +428,16 @@ export function ClientDetail({ client }: ClientDetailProps) {
                 Email de acesso
               </p>
               <p className="text-sm text-muted-foreground">
-                {client.email ?? "Não configurado"}
+                {assistant.email}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="text-sm font-medium text-foreground mb-1">
+                Último acesso
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Informação indisponível
               </p>
             </div>
 
@@ -443,7 +447,7 @@ export function ClientDetail({ client }: ClientDetailProps) {
               </p>
               <p className="text-sm text-muted-foreground">
                 {format(
-                  new Date(client.createdAt),
+                  new Date(assistant.createdAt),
                   "dd/MM/yyyy 'às' HH:mm",
                   { locale: ptBR }
                 )}
@@ -455,43 +459,35 @@ export function ClientDetail({ client }: ClientDetailProps) {
         {/* Tab: Avaliações */}
         <TabsContent value="assessments" className="mt-0 flex-1">
           <div className="p-4">
-            {client.assessments.length === 0 ? (
+            {assistant.assessments.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-3">
                 <div className="flex items-center justify-center size-16 rounded-full bg-muted">
                   <ClipboardList className="size-8 text-muted-foreground" />
                 </div>
                 <p className="text-sm text-muted-foreground text-center">
-                  Nenhuma avaliação realizada
+                  Nenhuma avaliação vinculada
                 </p>
-                <Link href="/app/avaliacoes/nova">
-                  <Button variant="outline" size="sm">
-                    Criar avaliação
-                  </Button>
-                </Link>
               </div>
             ) : (
               <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
-                {client.assessments.map((assessment, i) => (
+                {assistant.assessments.map((assessment) => (
                   <Link
                     key={assessment.id}
                     href={`/app/avaliacoes/${assessment.id}`}
                     className="flex items-center gap-3 px-4 py-3.5 bg-card active:bg-muted/50 transition-colors"
                   >
-                    <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 shrink-0">
-                      <span className="text-xs font-bold text-primary">
-                        {i + 1}ª
-                      </span>
+                    <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary shrink-0">
+                      <ClipboardList className="size-5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">
-                        {assessment.modality ?? assessment.population}
+                        {assessment.client.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {format(
-                          new Date(assessment.createdAt),
-                          "dd/MM/yyyy",
-                          { locale: ptBR }
-                        )}
+                        {assessment.modality ?? "Avaliação"} •{" "}
+                        {format(new Date(assessment.createdAt), "dd/MM/yyyy", {
+                          locale: ptBR,
+                        })}
                       </p>
                     </div>
                     <Badge
@@ -500,14 +496,13 @@ export function ClientDetail({ client }: ClientDetailProps) {
                         "text-xs shrink-0",
                         assessment.status === "COMPLETE"
                           ? "bg-primary/10 text-primary"
-                          : "bg-accent text-muted-foreground"
+                          : "bg-muted text-muted-foreground"
                       )}
                     >
                       {assessment.status === "COMPLETE"
-                        ? "Concluída"
-                        : "Pendente"}
+                        ? "Completa"
+                        : "Rascunho"}
                     </Badge>
-                    <ChevronRight className="size-4 text-muted-foreground shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -515,61 +510,27 @@ export function ClientDetail({ client }: ClientDetailProps) {
           </div>
         </TabsContent>
 
-        {/* Tab: Prescrições */}
-        <TabsContent value="prescriptions" className="mt-0 flex-1">
-          <div className="p-4">
-            {client.prescriptions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <div className="flex items-center justify-center size-16 rounded-full bg-muted">
-                  <Dumbbell className="size-8 text-muted-foreground" />
-                </div>
-                <p className="text-sm text-muted-foreground text-center">
-                  Nenhuma prescrição cadastrada
+        {/* Tab: Permissões */}
+        <TabsContent value="permissions" className="mt-0 flex-1">
+          <div className="p-4 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Permissões do módulo
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Defina o que este assistente pode acessar
                 </p>
               </div>
-            ) : (
-              <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
-                {client.prescriptions.map((prescription) => (
-                  <Link
-                    key={prescription.id}
-                    href={`/app/prescricoes/${prescription.id}`}
-                    className="flex items-center gap-3 px-4 py-3.5 bg-card active:bg-muted/50 transition-colors"
-                  >
-                    <div
-                      className={cn(
-                        "flex items-center justify-center size-10 rounded-lg shrink-0",
-                        prescription.type === "TRAINING"
-                          ? "bg-primary/10 text-primary"
-                          : "bg-accent text-accent-foreground"
-                      )}
-                    >
-                      <Dumbbell className="size-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {prescription.type === "TRAINING"
-                          ? "Ficha de Treino"
-                          : "Prescrição Aeróbica"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(
-                          new Date(prescription.createdAt),
-                          "dd/MM/yyyy",
-                          { locale: ptBR }
-                        )}
-                      </p>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className="text-xs shrink-0 bg-primary/10 text-primary"
-                    >
-                      Ativa
-                    </Badge>
-                    <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-                  </Link>
-                ))}
-              </div>
-            )}
+              {isSavingPermissions && (
+                <Loader2 className="size-4 animate-spin text-primary" />
+              )}
+            </div>
+
+            <PermissionsToggle
+              permissions={permissions}
+              onChange={handleSavePermissions}
+            />
           </div>
         </TabsContent>
       </Tabs>

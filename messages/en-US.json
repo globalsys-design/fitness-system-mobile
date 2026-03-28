@@ -1,0 +1,131 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Continue",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "none": "None",
+    "optional": "optional",
+    "required": "required",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "auth": {
+    "login": "Sign in",
+    "logout": "Sign out",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "professional": "Professional",
+    "client": "Client",
+    "professionalDesc": "Manage assessments, clients and prescriptions",
+    "clientDesc": "Access your workouts and assessments",
+    "howToAccess": "How would you like to access?",
+    "loginWithGoogle": "Sign in with Google",
+    "loginWithEmail": "Sign in with Email",
+    "sendMagicLink": "Send access link"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "assessments": "Assessments",
+    "prescriptions": "Prescriptions",
+    "more": "More"
+  },
+  "users": {
+    "clients": "Clients",
+    "assistants": "Assistants",
+    "newClient": "New Client",
+    "newAssistant": "New Assistant",
+    "searchClients": "Search by name, email or phone...",
+    "searchAssistants": "Search assistants...",
+    "noClients": "No clients registered",
+    "noAssistants": "No assistants registered",
+    "noClientsFound": "No clients found",
+    "noAssistantsFound": "No assistants found",
+    "registerFirstClient": "Register first client",
+    "registerFirstClientDesc": "Register your first client to start creating assessments and prescriptions."
+  },
+  "clientForm": {
+    "step1Title": "Personal Data",
+    "step2Title": "Address",
+    "step3Title": "Guardian",
+    "step4Title": "Access",
+    "step5Title": "Availability",
+    "name": "Full name",
+    "birthDate": "Date of birth",
+    "cpf": "CPF",
+    "gender": "Gender",
+    "maritalStatus": "Marital status",
+    "ethnicity": "Ethnicity",
+    "healthInsurance": "Health insurance",
+    "email": "Email",
+    "phone": "Phone",
+    "emergencyPhone": "Emergency phone",
+    "select": "Select"
+  },
+  "assessments": {
+    "title": "Assessments",
+    "new": "New Assessment",
+    "search": "Search assessments...",
+    "noAssessments": "No assessments yet",
+    "noAssessmentsFound": "No assessments found",
+    "complete": "Complete",
+    "draft": "Draft",
+    "viewFull": "View full assessment",
+    "generatePdf": "Generate PDF report",
+    "compare": "Compare assessments",
+    "deleteAssessment": "Delete assessment"
+  },
+  "prescriptions": {
+    "title": "Prescriptions",
+    "new": "New Prescription",
+    "search": "Search prescriptions...",
+    "noPrescriptions": "No prescriptions found",
+    "all": "All",
+    "training": "Training",
+    "aerobic": "Aerobic"
+  },
+  "professions": {
+    "doctor": "Doctor",
+    "nutritionist": "Nutritionist",
+    "physiotherapist": "Physiotherapist",
+    "fitnessCoach": "Fitness Coach",
+    "intern": "Intern",
+    "other": "Other"
+  },
+  "gender": {
+    "male": "Male",
+    "female": "Female",
+    "other": "Other"
+  },
+  "population": {
+    "normal": "Normal",
+    "athlete": "Athlete",
+    "elderly": "Elderly",
+    "child": "Child",
+    "pregnant": "Pregnant"
+  },
+  "more": {
+    "title": "More",
+    "profile": "My Profile",
+    "calendar": "Calendar",
+    "notifications": "Notifications",
+    "subscription": "Subscription",
+    "settings": "Settings",
+    "help": "Help",
+    "about": "About",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode"
+  }
+}

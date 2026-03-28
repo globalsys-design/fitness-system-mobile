@@ -54,7 +54,7 @@ export default async function NotificacoesPage() {
                     notif.priority === "CRITICAL"
                       ? "bg-destructive/10"
                       : notif.priority === "ATTENTION"
-                      ? "bg-yellow-500/10"
+                      ? "bg-warning/10"
                       : "bg-primary/10"
                   )}
                 >
@@ -64,7 +64,7 @@ export default async function NotificacoesPage() {
                       notif.priority === "CRITICAL"
                         ? "text-destructive"
                         : notif.priority === "ATTENTION"
-                        ? "text-yellow-600"
+                        ? "text-warning"
                         : "text-primary"
                     )}
                   />

@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
+import { defaultLocale } from "@/lib/i18n.config";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -28,13 +29,16 @@ export const viewport: Viewport = {
   themeColor: "#00b5b0",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = defaultLocale;
+  const messages = (await import(`@/messages/${locale}.json`)).default;
+
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -42,7 +46,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className={`${outfit.variable} font-sans antialiased`}>
-        <Providers>
+        <Providers locale={locale} messages={messages}>
           {children}
         </Providers>
         <Toaster position="top-center" richColors />

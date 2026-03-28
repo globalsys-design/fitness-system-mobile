@@ -1,17 +1,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MobileHeader } from "@/components/mobile/mobile-header";
+import { POPULATION_OPTIONS, MODALITY_OPTIONS } from "@/lib/constants/assessment";
+
+interface Client {
+  id: string;
+  name: string;
+}
 
 export default function NovaAvaliacaoPage() {
   const router = useRouter();
-  const [clients, setClients] = useState<Array<{id: string; name: string}>>([]);
+  const searchParams = useSearchParams();
+
+  // Parâmetros do Calendário
+  const appointmentId = searchParams.get("appointmentId");
+  const clientIdFromCalendar = searchParams.get("clientId");
+
+  const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [clientId, setClientId] = useState("");
   const [population, setPopulation] = useState("NORMAL");
@@ -20,9 +32,17 @@ export default function NovaAvaliacaoPage() {
   useEffect(() => {
     fetch("/api/clients")
       .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setClients(data); })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setClients(data);
+          // Se vindo do calendário, pré-preencher cliente
+          if (clientIdFromCalendar) {
+            setClientId(clientIdFromCalendar);
+          }
+        }
+      })
       .catch(() => {});
-  }, []);
+  }, [clientIdFromCalendar]);
 
   async function handleSubmit() {
     if (!clientId) {
@@ -34,7 +54,13 @@ export default function NovaAvaliacaoPage() {
       const response = await fetch("/api/assessments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId, population, modality }),
+        body: JSON.stringify({
+          clientId,
+          population,
+          modality,
+          // Opcional: se vindo de um agendamento, enviar appointmentId
+          ...(appointmentId && { appointmentId }),
+        }),
       });
       if (!response.ok) throw new Error();
       const assessment = await response.json();
@@ -51,6 +77,14 @@ export default function NovaAvaliacaoPage() {
     <div className="flex flex-col bg-background" style={{ height: "100dvh" }}>
       <MobileHeader title="Nova Avaliação" showBack />
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5">
+        {/* Info banner se vindo de agendamento */}
+        {appointmentId && (
+          <div className="px-3 py-2.5 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-primary" />
+            <span className="text-sm text-primary font-medium">Vinculado a um agendamento</span>
+          </div>
+        )}
+
         <div>
           <Label>Cliente avaliado *</Label>
           <Select value={clientId} onValueChange={(v) => { if (v !== null) setClientId(v); }}>
@@ -72,11 +106,9 @@ export default function NovaAvaliacaoPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="NORMAL">Normal</SelectItem>
-              <SelectItem value="ATHLETE">Atleta</SelectItem>
-              <SelectItem value="ELDERLY">Idoso</SelectItem>
-              <SelectItem value="CHILD">Criança</SelectItem>
-              <SelectItem value="PREGNANT">Gestante</SelectItem>
+              {POPULATION_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -88,13 +120,9 @@ export default function NovaAvaliacaoPage() {
               <SelectValue placeholder="Selecione (opcional)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Atletismo">Atletismo</SelectItem>
-              <SelectItem value="Futebol">Futebol</SelectItem>
-              <SelectItem value="Musculação">Musculação</SelectItem>
-              <SelectItem value="Basquete">Basquete</SelectItem>
-              <SelectItem value="Beach Tênis">Beach Tênis</SelectItem>
-              <SelectItem value="Natação">Natação</SelectItem>
-              <SelectItem value="Outras">Outras modalidades</SelectItem>
+              {MODALITY_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

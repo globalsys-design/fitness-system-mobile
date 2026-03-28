@@ -1,0 +1,131 @@
+{
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "back": "Voltar",
+    "next": "Continuar",
+    "search": "Buscar",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "confirm": "Confirmar",
+    "close": "Fechar",
+    "yes": "Sim",
+    "no": "Não",
+    "none": "Nenhum",
+    "optional": "opcional",
+    "required": "obrigatório",
+    "active": "Ativo",
+    "inactive": "Inativo"
+  },
+  "auth": {
+    "login": "Entrar",
+    "logout": "Sair",
+    "email": "Email",
+    "password": "Senha",
+    "forgotPassword": "Esqueceu a senha?",
+    "professional": "Profissional",
+    "client": "Cliente",
+    "professionalDesc": "Gerencie avaliações, clientes e prescrições",
+    "clientDesc": "Acesse seus treinos e avaliações",
+    "howToAccess": "Como você deseja acessar?",
+    "loginWithGoogle": "Entrar com Google",
+    "loginWithEmail": "Entrar com Email",
+    "sendMagicLink": "Enviar link de acesso"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "users": "Usuários",
+    "assessments": "Avaliações",
+    "prescriptions": "Prescrições",
+    "more": "Mais"
+  },
+  "users": {
+    "clients": "Clientes",
+    "assistants": "Assistentes",
+    "newClient": "Novo Cliente",
+    "newAssistant": "Novo Assistente",
+    "searchClients": "Buscar por nome, email ou telefone...",
+    "searchAssistants": "Buscar assistentes...",
+    "noClients": "Nenhum cliente cadastrado",
+    "noAssistants": "Nenhum assistente cadastrado",
+    "noClientsFound": "Nenhum cliente encontrado",
+    "noAssistantsFound": "Nenhum assistente encontrado",
+    "registerFirstClient": "Cadastrar primeiro cliente",
+    "registerFirstClientDesc": "Cadastre seu primeiro cliente para começar a criar avaliações e prescrições."
+  },
+  "clientForm": {
+    "step1Title": "Dados Pessoais",
+    "step2Title": "Endereço",
+    "step3Title": "Responsável",
+    "step4Title": "Acesso",
+    "step5Title": "Disponibilidade",
+    "name": "Nome completo",
+    "birthDate": "Data de nascimento",
+    "cpf": "CPF",
+    "gender": "Gênero",
+    "maritalStatus": "Estado civil",
+    "ethnicity": "Etnia",
+    "healthInsurance": "Convênio",
+    "email": "Email",
+    "phone": "Telefone",
+    "emergencyPhone": "Telefone de emergência",
+    "select": "Selecione"
+  },
+  "assessments": {
+    "title": "Avaliações",
+    "new": "Nova Avaliação",
+    "search": "Buscar avaliações...",
+    "noAssessments": "Nenhuma avaliação ainda",
+    "noAssessmentsFound": "Nenhuma avaliação encontrada",
+    "complete": "Completa",
+    "draft": "Rascunho",
+    "viewFull": "Ver avaliação completa",
+    "generatePdf": "Gerar relatório PDF",
+    "compare": "Comparar avaliações",
+    "deleteAssessment": "Excluir avaliação"
+  },
+  "prescriptions": {
+    "title": "Prescrições",
+    "new": "Nova Prescrição",
+    "search": "Buscar prescrições...",
+    "noPrescriptions": "Nenhuma prescrição encontrada",
+    "all": "Todas",
+    "training": "Treino",
+    "aerobic": "Aeróbico"
+  },
+  "professions": {
+    "doctor": "Médico",
+    "nutritionist": "Nutricionista",
+    "physiotherapist": "Fisioterapeuta",
+    "fitnessCoach": "Educador Físico",
+    "intern": "Estagiário",
+    "other": "Outro"
+  },
+  "gender": {
+    "male": "Masculino",
+    "female": "Feminino",
+    "other": "Outro"
+  },
+  "population": {
+    "normal": "Normal",
+    "athlete": "Atleta",
+    "elderly": "Idoso",
+    "child": "Criança",
+    "pregnant": "Gestante"
+  },
+  "more": {
+    "title": "Mais",
+    "profile": "Meu Perfil",
+    "calendar": "Calendário",
+    "notifications": "Notificações",
+    "subscription": "Assinatura",
+    "settings": "Configurações",
+    "help": "Ajuda",
+    "about": "Sobre",
+    "darkMode": "Modo escuro",
+    "lightMode": "Modo claro"
+  }
+}
