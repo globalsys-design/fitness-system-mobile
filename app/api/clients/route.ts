@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
       responsibleContact,
       emergencyContact,
       availability,
+      phoneDdi,
       ...rest
     } = parsed.data;
 

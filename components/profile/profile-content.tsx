@@ -63,8 +63,8 @@ export function ProfileContent({ user }: { user: any }) {
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="dados" className="flex-1">
+      {/* Tabs — flex-col necessário no Tailwind CSS 4 para layout vertical */}
+      <Tabs defaultValue="dados" className="w-full flex-col flex-1">
         <div className="px-4 pt-4">
           <TabsList className="w-full h-10">
             <TabsTrigger value="dados" className="flex-1 text-xs">Dados Pessoais</TabsTrigger>
@@ -73,7 +73,7 @@ export function ProfileContent({ user }: { user: any }) {
           </TabsList>
         </div>
 
-        <TabsContent value="dados" className="px-4 py-4 flex flex-col gap-4">
+        <TabsContent value="dados" className="w-full px-4 py-4 flex flex-col gap-4">
           <Card>
             <CardContent className="p-4 flex flex-col gap-4">
               {isEditing ? (
@@ -117,7 +117,7 @@ export function ProfileContent({ user }: { user: any }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="endereco" className="px-4 py-4">
+        <TabsContent value="endereco" className="w-full px-4 py-4">
           <Card>
             <CardContent className="p-4 flex flex-col gap-4">
               {user.professional?.address ? (
@@ -138,7 +138,7 @@ export function ProfileContent({ user }: { user: any }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="profissional" className="px-4 py-4">
+        <TabsContent value="profissional" className="w-full px-4 py-4">
           <Card>
             <CardContent className="p-4 flex flex-col gap-4">
               {isEditing ? (

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { MobileLayout } from "@/components/mobile/mobile-layout";
+import { ThemeToggleRow } from "@/components/settings/theme-toggle-row";
 import {
   CalendarDays,
   Bell,
@@ -69,6 +70,16 @@ export default async function MaisPage() {
             </div>
           </div>
         ))}
+
+        {/* Preferências */}
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+            Preferências
+          </p>
+          <div className="flex flex-col rounded-xl border border-border overflow-hidden divide-y divide-border">
+            <ThemeToggleRow />
+          </div>
+        </div>
 
         {/* Sair */}
         <div className="flex flex-col rounded-xl border border-destructive/30 overflow-hidden">

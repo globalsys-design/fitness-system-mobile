@@ -1,38 +1,86 @@
-import { LoginForm } from "@/components/auth/login-form";
-import Image from "next/image";
+import Link from "next/link";
+import { Dumbbell, Users } from "lucide-react";
+import { BrandLogo } from "@/components/ui/brand-logo";
 
 export default function LoginPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[100dvh] px-6 bg-background">
-      <div className="w-full max-w-sm flex flex-col gap-8">
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-primary-foreground">
-            <svg
-              className="w-9 h-9"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
-              <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
-              <line x1="6" y1="1" x2="6" y2="4" />
-              <line x1="10" y1="1" x2="10" y2="4" />
-              <line x1="14" y1="1" x2="14" y2="4" />
-            </svg>
-          </div>
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground">Fitness System</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Gestão profissional de avaliação física
-            </p>
-          </div>
+      <div className="w-full max-w-sm flex flex-col gap-10">
+        {/* Logo e branding */}
+        <div className="flex flex-col items-center gap-4">
+          <BrandLogo variant="vertical" priority className="h-28 w-52 mx-auto" />
+          <p className="text-sm text-muted-foreground text-center">
+            Gestão profissional de avaliação física
+          </p>
         </div>
 
-        <LoginForm />
+        {/* Seleção de perfil */}
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-medium text-foreground text-center">
+            Como você deseja acessar?
+          </p>
+
+          {/* Card Profissional */}
+          <Link href="/login/profissional" className="group">
+            <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card active:bg-muted/50 transition-colors">
+              <div className="flex items-center justify-center size-12 rounded-xl bg-primary/10 text-primary">
+                <Dumbbell className="size-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base font-semibold text-foreground">
+                  Profissional
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Gerencie avaliações, clientes e prescrições
+                </p>
+              </div>
+              <svg
+                className="size-5 text-muted-foreground"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
+          </Link>
+
+          {/* Card Cliente */}
+          <Link href="/login/cliente" className="group">
+            <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card active:bg-muted/50 transition-colors">
+              <div className="flex items-center justify-center size-12 rounded-xl bg-secondary/10 text-secondary">
+                <Users className="size-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base font-semibold text-foreground">
+                  Cliente
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Acesse seus treinos e avaliações
+                </p>
+              </div>
+              <svg
+                className="size-5 text-muted-foreground"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
+          </Link>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-muted-foreground">
+          Sistema profissional para avaliação física e prescrição de treinos.
+        </p>
       </div>
     </div>
   );

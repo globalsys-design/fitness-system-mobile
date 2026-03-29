@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, CalendarDays, ClipboardList, Dumbbell } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, ClipboardList, Dumbbell, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/mobile/bottom-sheet";
+import { FAB } from "@/components/mobile/fab";
 import { cn } from "@/lib/utils";
 
 interface CalendarEvent {
@@ -24,6 +26,7 @@ interface CalendarViewProps {
 }
 
 export function CalendarView({ events }: CalendarViewProps) {
+  const router = useRouter();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -131,7 +134,7 @@ export function CalendarView({ events }: CalendarViewProps) {
                     setSelectedEvent(event);
                     setEventDetailOpen(true);
                   }}
-                  className="flex items-start gap-3 p-3 rounded-xl border border-border bg-card text-left hover:bg-accent transition-colors w-full"
+                  className="flex items-center gap-3 p-3 min-h-12 rounded-xl border border-border bg-card text-left active:bg-accent transition-colors w-full"
                 >
                   <div className={cn(
                     "flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0",
@@ -196,6 +199,13 @@ export function CalendarView({ events }: CalendarViewProps) {
           </div>
         )}
       </BottomSheet>
+
+      {/* FAB — mesmo padrão das demais telas */}
+      <FAB
+        icon={Plus}
+        onClick={() => router.push("/app/mais/calendario/novo")}
+        label="Novo Agendamento"
+      />
     </div>
   );
 }

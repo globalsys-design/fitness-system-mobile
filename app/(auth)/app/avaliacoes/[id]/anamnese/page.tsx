@@ -14,12 +14,17 @@ const SUB_SECTIONS = [
   { label: "Questionário Completo", href: "questionario-completo", fieldKey: "fullQuestionnaire" },
 ];
 
-export default async function AnamnesePage({ params }: { params: { id: string } }) {
+export default async function AnamnesePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
   const assessment = await db.assessment.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: {
       id: true,
       anamnesis: {
@@ -56,7 +61,7 @@ export default async function AnamnesePage({ params }: { params: { id: string } 
             return (
               <Link
                 key={s.href}
-                href={`/app/avaliacoes/${params.id}/anamnese/${s.href}`}
+                href={`/app/avaliacoes/${id}/anamnese/${s.href}`}
                 className="flex items-center gap-3 px-4 py-4 bg-card hover:bg-accent transition-colors"
               >
                 <p className="flex-1 text-sm font-medium text-foreground">{s.label}</p>

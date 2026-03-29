@@ -20,6 +20,7 @@ export default async function PrescricoesPage() {
           client: {
             select: { id: true, name: true, photo: true },
           },
+          trainingSheet: true,
         },
         orderBy: { createdAt: "desc" },
       })

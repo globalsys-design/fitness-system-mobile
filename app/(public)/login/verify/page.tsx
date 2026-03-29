@@ -25,32 +25,67 @@ export default function VerifyPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[100dvh] px-6 bg-background">
       <div className="w-full max-w-sm flex flex-col items-center gap-6 text-center">
-        <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10">
-          <Mail className="w-10 h-10 text-primary" />
+        {/* Ícone */}
+        <div className="flex items-center justify-center size-20 rounded-full bg-primary/10">
+          <Mail className="size-10 text-primary" />
         </div>
 
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Verifique seu email</h1>
-          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-            Enviamos um link de acesso para o seu email. Clique no link para entrar no
-            Fitness System.
+        {/* Mensagem */}
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold text-foreground">
+            Verifique seu email
+          </h1>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Enviamos um link de acesso para o seu email. Clique no link para
+            entrar no Fitness System.
           </p>
         </div>
 
+        {/* Card de instrução */}
+        <div className="w-full rounded-xl border border-border bg-muted/50 p-4">
+          <div className="flex flex-col gap-3 text-left">
+            <div className="flex items-start gap-3">
+              <span className="flex items-center justify-center size-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0 mt-0.5">
+                1
+              </span>
+              <p className="text-sm text-muted-foreground">
+                Abra sua caixa de entrada
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="flex items-center justify-center size-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0 mt-0.5">
+                2
+              </span>
+              <p className="text-sm text-muted-foreground">
+                Clique no link &quot;Entrar no Fitness System&quot;
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="flex items-center justify-center size-6 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0 mt-0.5">
+                3
+              </span>
+              <p className="text-sm text-muted-foreground">
+                Você será redirecionado automaticamente
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Ações */}
         <div className="w-full flex flex-col gap-3">
           <Button
             variant="outline"
-            className="h-12 w-full"
+            className="h-12 w-full text-base"
             onClick={handleResend}
             disabled={isResending}
           >
-            {isResending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {isResending && <Loader2 className="size-4 mr-2 animate-spin" />}
             Reenviar email
           </Button>
 
-          <Link href="/login">
-            <Button variant="ghost" className="h-12 w-full">
-              <ArrowLeft className="w-4 h-4 mr-2" />
+          <Link href="/login" className="w-full">
+            <Button variant="ghost" className="h-12 w-full text-base">
+              <ArrowLeft className="size-4 mr-2" />
               Voltar para o login
             </Button>
           </Link>

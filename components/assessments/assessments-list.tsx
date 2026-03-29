@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, ClipboardX, FileText, GitCompare, Trash2, MoreVertical } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
+import { ClipboardX, FileText, GitCompare, Trash2, MoreVertical, Plus } from "lucide-react";
+import { ListHeader, ListEmptyState } from "@/components/lists/list-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/mobile/bottom-sheet";
 import { Button } from "@/components/ui/button";
+import { FAB } from "@/components/mobile/fab";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -26,6 +28,7 @@ interface AssessmentsListProps {
 }
 
 export function AssessmentsList({ assessments }: AssessmentsListProps) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -45,32 +48,19 @@ export function AssessmentsList({ assessments }: AssessmentsListProps) {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Buscar avaliações..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 h-11"
-        />
-      </div>
+    <div className="flex flex-col">
+      <ListHeader
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar avaliações..."
+      />
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted">
-            <ClipboardX className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {search ? "Nenhuma avaliação encontrada" : "Nenhuma avaliação ainda"}
-          </p>
-          <Link href="/app/avaliacoes/nova">
-            <Button size="sm" variant="outline">
-              Criar primeira avaliação
-            </Button>
-          </Link>
-        </div>
+        <ListEmptyState
+          icon={<ClipboardX className="w-8 h-8 text-muted-foreground" />}
+          message={search ? "Nenhuma avaliação encontrada" : "Nenhuma avaliação ainda"}
+          isFiltered={!!search}
+        />
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map((assessment) => (
@@ -151,6 +141,13 @@ export function AssessmentsList({ assessments }: AssessmentsListProps) {
           </Button>
         </div>
       </BottomSheet>
+
+      {/* FAB — mesmo padrão de Usuários */}
+      <FAB
+        icon={Plus}
+        onClick={() => router.push("/app/avaliacoes/nova")}
+        label="Nova Avaliação"
+      />
     </div>
   );
 }

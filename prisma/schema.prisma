@@ -69,6 +69,7 @@ model User {
   stripeSubscriptionId   String?   @unique
   stripeCurrentPeriodEnd DateTime?
   trialEndsAt            DateTime?
+  passwordHash           String?
   plan                   Plan      @default(FREE)
   pushToken              String?
   role                   UserRole  @default(PROFESSIONAL)
@@ -184,13 +185,20 @@ model Client {
   name               String
   email              String?
   phone              String?
+  phoneDdi           String?
   cpf                String?
   birthDate          DateTime?
   gender             String?
+  ethnicity          String?
+  maritalStatus      String?
+  healthInsurance    String?
+  profession         String?
   photo              String?
   address            Json?
   emergencyContact   Json?
   responsibleContact Json?
+  availability       Json?
+  passwordHash       String?
   status             ClientStatus @default(ACTIVE)
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
