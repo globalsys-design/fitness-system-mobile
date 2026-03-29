@@ -51,12 +51,12 @@ export function StepAvailability() {
                 isActive && "ring-1 ring-primary/20"
               )}
             >
-              {/* Day toggle row */}
-              <div className="flex items-center justify-between px-4 py-3.5">
+              {/* Day toggle row — min 48px touch target */}
+              <div className="flex items-center justify-between px-4 min-h-12">
                 <div className="flex items-center gap-3">
                   <Clock
                     className={cn(
-                      "size-4",
+                      "size-4 shrink-0",
                       isActive ? "text-primary" : "text-muted-foreground"
                     )}
                   />
@@ -69,7 +69,7 @@ export function StepAvailability() {
                     {label}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <span className="text-xs text-muted-foreground">
                     {isActive ? "Sim" : "Não"}
                   </span>
@@ -80,23 +80,23 @@ export function StepAvailability() {
                 </div>
               </div>
 
-              {/* Time inputs — render conditionally */}
+              {/* Time inputs — 2-column grid, h-12 inputs */}
               {isActive && (
-                <div className="flex gap-3 px-4 pb-4 pt-1 border-t border-border">
-                  <div className="flex-1">
+                <div className="grid grid-cols-2 gap-3 px-4 pb-3 pt-1 border-t border-border">
+                  <div>
                     <Label className="text-xs">Horário inicial</Label>
                     <Input
                       type="time"
-                      className="mt-1"
+                      className="mt-1 h-12 w-full"
                       value={day.start || "08:00"}
                       onChange={(e) => setDayTime(key, "start", e.target.value)}
                     />
                   </div>
-                  <div className="flex-1">
+                  <div>
                     <Label className="text-xs">Horário final</Label>
                     <Input
                       type="time"
-                      className="mt-1"
+                      className="mt-1 h-12 w-full"
                       value={day.end || "18:00"}
                       onChange={(e) => setDayTime(key, "end", e.target.value)}
                     />

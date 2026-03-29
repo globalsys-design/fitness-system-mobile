@@ -311,9 +311,9 @@ export function ClientRegistrationStepper() {
           {step === 4 && <StepAvailability />}
         </div>
 
-        {/* ── Bottom Action Bar ── */}
+        {/* ── Bottom Action Bar — always visible, never squished ── */}
         <div
-          className="flex items-center gap-3 px-4 py-4 border-t border-border bg-background"
+          className="flex items-center gap-3 px-4 py-4 border-t border-border bg-background shrink-0"
           style={{
             paddingBottom: "calc(1rem + env(safe-area-inset-bottom))",
           }}

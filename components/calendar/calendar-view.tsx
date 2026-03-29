@@ -54,15 +54,15 @@ export function CalendarView({ events }: CalendarViewProps) {
   return (
     <div className="flex flex-col">
       {/* Month Navigation */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <Button variant="ghost" size="icon" onClick={prevMonth} className="h-9 w-9">
-          <ChevronLeft className="w-4 h-4" />
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+        <Button variant="ghost" size="icon" onClick={prevMonth} className="size-12">
+          <ChevronLeft className="size-5" />
         </Button>
         <p className="font-semibold text-foreground capitalize">
           {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
         </p>
-        <Button variant="ghost" size="icon" onClick={nextMonth} className="h-9 w-9">
-          <ChevronRight className="w-4 h-4" />
+        <Button variant="ghost" size="icon" onClick={nextMonth} className="size-12">
+          <ChevronRight className="size-5" />
         </Button>
       </div>
 
@@ -116,17 +116,17 @@ export function CalendarView({ events }: CalendarViewProps) {
       {/* Selected Day Events */}
       {selectedDay && (
         <div className="px-4 pb-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 border-t border-border pt-3">
             {format(selectedDay, "EEEE, d 'de' MMMM", { locale: ptBR })}
           </p>
 
           {selectedDayEvents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-2">
-              <CalendarDays className="w-8 h-8 text-muted-foreground" />
+            <div className="flex flex-col items-center justify-center py-6 gap-2">
+              <CalendarDays className="size-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">Nenhum agendamento neste dia</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 max-h-[40vh] overflow-y-auto">
               {selectedDayEvents.map((event) => (
                 <button
                   key={event.id}
