@@ -101,7 +101,7 @@ export function LoginFormClient() {
             placeholder="seu@email.com"
             inputMode="email"
             autoComplete="email"
-            className="h-12 text-base"
+            className="text-base"
             {...form.register("email")}
           />
           {form.formState.errors.email && (
@@ -127,7 +127,7 @@ export function LoginFormClient() {
               type={showPassword ? "text" : "password"}
               placeholder="Sua senha"
               autoComplete="current-password"
-              className="h-12 text-base pr-12"
+              className="text-base pr-12"
               {...form.register("password")}
             />
             <button
@@ -152,7 +152,7 @@ export function LoginFormClient() {
 
         <Button
           type="submit"
-          className="h-12 text-base font-medium w-full"
+          className="text-base font-medium w-full"
           disabled={isLoading}
         >
           {isLoading && <Loader2 className="size-4 mr-2 animate-spin" />}
@@ -171,7 +171,7 @@ export function LoginFormClient() {
       <div className="flex flex-col gap-3">
         <Button
           variant="outline"
-          className="h-12 text-base font-medium w-full"
+          className="text-base font-medium w-full"
           onClick={handleGoogle}
           disabled={isGoogleLoading}
           type="button"
@@ -203,7 +203,7 @@ export function LoginFormClient() {
 
         <Button
           variant="outline"
-          className="h-12 text-base font-medium w-full"
+          className="text-base font-medium w-full"
           onClick={handleMagicLink}
           disabled={isMagicLinkLoading}
           type="button"

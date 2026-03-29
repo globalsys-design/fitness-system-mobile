@@ -119,15 +119,15 @@ export default function OutrosExamesPage() {
                   <X className="size-4" />
                 </button>
               </div>
-              <Input placeholder="Nome do exame" value={exam.name} onChange={(e) => updateExam(idx, "name", e.target.value)} className="h-12 text-base" />
-              <Input type="date" value={exam.date} onChange={(e) => updateExam(idx, "date", e.target.value)} className="h-12 text-base" />
-              <Input placeholder="Resultado" value={exam.result} onChange={(e) => updateExam(idx, "result", e.target.value)} className="h-12 text-base" />
-              <Input placeholder="Observações" value={exam.notes} onChange={(e) => updateExam(idx, "notes", e.target.value)} className="h-12 text-base" />
+              <Input placeholder="Nome do exame" value={exam.name} onChange={(e) => updateExam(idx, "name", e.target.value)} className="text-base" />
+              <Input type="date" value={exam.date} onChange={(e) => updateExam(idx, "date", e.target.value)} className="text-base" />
+              <Input placeholder="Resultado" value={exam.result} onChange={(e) => updateExam(idx, "result", e.target.value)} className="text-base" />
+              <Input placeholder="Observações" value={exam.notes} onChange={(e) => updateExam(idx, "notes", e.target.value)} className="text-base" />
             </CardContent>
           </Card>
         ))}
 
-        <Button variant="outline" className="h-12 w-full" onClick={addExam} type="button">
+        <Button variant="outline" className="w-full" onClick={addExam} type="button">
           <Plus className="size-4 mr-2" />
           Adicionar exame
         </Button>
@@ -144,7 +144,7 @@ export default function OutrosExamesPage() {
           </CardContent>
         </Card>
 
-        <Button className="h-12 w-full" onClick={handleSave} disabled={isLoading}>
+        <Button className="w-full" onClick={handleSave} disabled={isLoading}>
           {isLoading ? <Loader2 className="size-4 mr-2 animate-spin" /> : saved ? <CheckCircle2 className="size-4 mr-2" /> : null}
           {saved ? "Salvo" : "Salvar exames"}
         </Button>

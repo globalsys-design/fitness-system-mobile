@@ -165,7 +165,7 @@ export default function ParqPage() {
 
         {/* Save */}
         <Button
-          className="h-12 w-full"
+          className="w-full"
           onClick={handleSave}
           disabled={isLoading || !allAnswered}
         >

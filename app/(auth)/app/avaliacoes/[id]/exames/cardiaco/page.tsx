@@ -113,7 +113,7 @@ export default function CardiacoPage() {
           <Card>
             <CardContent className="p-4">
               <Label className="text-sm font-medium mb-2 block">Observações do ECG</Label>
-              <Input placeholder="Resultados..." value={data.ecgNotes} onChange={(e) => setData((d) => ({ ...d, ecgNotes: e.target.value }))} className="h-12 text-base" />
+              <Input placeholder="Resultados..." value={data.ecgNotes} onChange={(e) => setData((d) => ({ ...d, ecgNotes: e.target.value }))} className="text-base" />
             </CardContent>
           </Card>
         )}
@@ -128,7 +128,7 @@ export default function CardiacoPage() {
           <Card>
             <CardContent className="p-4">
               <Label className="text-sm font-medium mb-2 block">Observações do Ecocardiograma</Label>
-              <Input placeholder="Resultados..." value={data.echoNotes} onChange={(e) => setData((d) => ({ ...d, echoNotes: e.target.value }))} className="h-12 text-base" />
+              <Input placeholder="Resultados..." value={data.echoNotes} onChange={(e) => setData((d) => ({ ...d, echoNotes: e.target.value }))} className="text-base" />
             </CardContent>
           </Card>
         )}
@@ -143,7 +143,7 @@ export default function CardiacoPage() {
           <Card>
             <CardContent className="p-4">
               <Label className="text-sm font-medium mb-2 block">Observações do teste</Label>
-              <Input placeholder="Resultados..." value={data.stressTestNotes} onChange={(e) => setData((d) => ({ ...d, stressTestNotes: e.target.value }))} className="h-12 text-base" />
+              <Input placeholder="Resultados..." value={data.stressTestNotes} onChange={(e) => setData((d) => ({ ...d, stressTestNotes: e.target.value }))} className="text-base" />
             </CardContent>
           </Card>
         )}
@@ -155,7 +155,7 @@ export default function CardiacoPage() {
             <CardContent className="p-4">
               <Label className="text-sm font-medium mb-2 block">FC Repouso</Label>
               <div className="flex items-center gap-2">
-                <Input type="number" inputMode="decimal" placeholder="0" value={data.restHR} onChange={(e) => setData((d) => ({ ...d, restHR: e.target.value }))} className="h-12 flex-1 text-base" />
+                <Input type="number" inputMode="decimal" placeholder="0" value={data.restHR} onChange={(e) => setData((d) => ({ ...d, restHR: e.target.value }))} className="flex-1 text-base" />
                 <span className="text-sm text-muted-foreground">bpm</span>
               </div>
             </CardContent>
@@ -164,7 +164,7 @@ export default function CardiacoPage() {
             <CardContent className="p-4">
               <Label className="text-sm font-medium mb-2 block">FC Máxima</Label>
               <div className="flex items-center gap-2">
-                <Input type="number" inputMode="decimal" placeholder="0" value={data.maxHR} onChange={(e) => setData((d) => ({ ...d, maxHR: e.target.value }))} className="h-12 flex-1 text-base" />
+                <Input type="number" inputMode="decimal" placeholder="0" value={data.maxHR} onChange={(e) => setData((d) => ({ ...d, maxHR: e.target.value }))} className="flex-1 text-base" />
                 <span className="text-sm text-muted-foreground">bpm</span>
               </div>
             </CardContent>
@@ -174,7 +174,7 @@ export default function CardiacoPage() {
         <Card>
           <CardContent className="p-4">
             <Label className="text-sm font-medium mb-2 block">Ritmo Cardíaco</Label>
-            <Input placeholder="Ex: Sinusal, regular..." value={data.rhythm} onChange={(e) => setData((d) => ({ ...d, rhythm: e.target.value }))} className="h-12 text-base" />
+            <Input placeholder="Ex: Sinusal, regular..." value={data.rhythm} onChange={(e) => setData((d) => ({ ...d, rhythm: e.target.value }))} className="text-base" />
           </CardContent>
         </Card>
 
@@ -185,7 +185,7 @@ export default function CardiacoPage() {
           </CardContent>
         </Card>
 
-        <Button className="h-12 w-full" onClick={handleSave} disabled={isLoading}>
+        <Button className="w-full" onClick={handleSave} disabled={isLoading}>
           {isLoading ? <Loader2 className="size-4 mr-2 animate-spin" /> : saved ? <CheckCircle2 className="size-4 mr-2" /> : null}
           {saved ? "Salvo" : "Salvar exame cardíaco"}
         </Button>

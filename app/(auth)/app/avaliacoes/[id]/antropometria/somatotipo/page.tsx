@@ -145,7 +145,7 @@ export default function SomatotipoPage() {
                     update(comp.key, val);
                   }
                 }}
-                className="h-12 text-base"
+                className="text-base"
                 step="0.1"
               />
               {/* Visual bar */}
@@ -185,7 +185,7 @@ export default function SomatotipoPage() {
         )}
 
         <Button
-          className="h-12 w-full"
+          className="w-full"
           onClick={handleSave}
           disabled={isLoading}
         >

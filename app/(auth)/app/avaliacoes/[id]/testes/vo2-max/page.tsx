@@ -159,7 +159,7 @@ export default function VO2MaxPage() {
           <CardContent className="p-4">
             <Label className="text-sm font-medium mb-2 block">VO₂máx medido</Label>
             <div className="flex items-center gap-2">
-              <Input type="number" inputMode="decimal" placeholder="0" value={data.vo2max} onChange={(e) => update("vo2max", e.target.value)} className="h-12 flex-1 text-base" />
+              <Input type="number" inputMode="decimal" placeholder="0" value={data.vo2max} onChange={(e) => update("vo2max", e.target.value)} className="flex-1 text-base" />
               <span className="text-sm text-muted-foreground">mL/kg/min</span>
             </div>
             {classification && (
@@ -200,7 +200,7 @@ export default function VO2MaxPage() {
           <CardContent className="p-4">
             <Label className="text-sm font-medium mb-2 block">Lactato máximo</Label>
             <div className="flex items-center gap-2">
-              <Input type="number" inputMode="decimal" placeholder="0" value={data.lactateMax} onChange={(e) => update("lactateMax", e.target.value)} className="h-12 flex-1 text-base" />
+              <Input type="number" inputMode="decimal" placeholder="0" value={data.lactateMax} onChange={(e) => update("lactateMax", e.target.value)} className="flex-1 text-base" />
               <span className="text-sm text-muted-foreground">mmol/L</span>
             </div>
           </CardContent>
@@ -209,7 +209,7 @@ export default function VO2MaxPage() {
         <Card>
           <CardContent className="p-4">
             <Label className="text-sm font-medium mb-2 block">Motivo da interrupção</Label>
-            <Input placeholder="Ex: Exaustão, sintomas, limite HR..." value={data.reasonStopped} onChange={(e) => update("reasonStopped", e.target.value)} className="h-12 text-base" />
+            <Input placeholder="Ex: Exaustão, sintomas, limite HR..." value={data.reasonStopped} onChange={(e) => update("reasonStopped", e.target.value)} className="text-base" />
           </CardContent>
         </Card>
 
@@ -220,7 +220,7 @@ export default function VO2MaxPage() {
           </CardContent>
         </Card>
 
-        <Button className="h-12 w-full" onClick={handleSave} disabled={isLoading}>
+        <Button className="w-full" onClick={handleSave} disabled={isLoading}>
           {isLoading ? <Loader2 className="size-4 mr-2 animate-spin" /> : saved ? <CheckCircle2 className="size-4 mr-2" /> : null}
           {saved ? "Salvo" : "Salvar VO₂máx"}
         </Button>

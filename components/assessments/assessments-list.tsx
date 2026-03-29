@@ -118,22 +118,22 @@ export function AssessmentsList({ assessments }: AssessmentsListProps) {
       >
         <div className="flex flex-col gap-2">
           <Link href={selectedAssessment ? `/app/avaliacoes/${selectedAssessment.id}` : "#"}>
-            <Button variant="outline" className="h-12 w-full justify-start" onClick={() => setActionsOpen(false)}>
+            <Button variant="outline" className="w-full justify-start" onClick={() => setActionsOpen(false)}>
               <FileText className="w-4 h-4 mr-3" />
               Ver avaliação completa
             </Button>
           </Link>
-          <Button variant="outline" className="h-12 w-full justify-start" onClick={() => setActionsOpen(false)}>
+          <Button variant="outline" className="w-full justify-start" onClick={() => setActionsOpen(false)}>
             <FileText className="w-4 h-4 mr-3" />
             Gerar relatório PDF
           </Button>
-          <Button variant="outline" className="h-12 w-full justify-start" onClick={() => setActionsOpen(false)}>
+          <Button variant="outline" className="w-full justify-start" onClick={() => setActionsOpen(false)}>
             <GitCompare className="w-4 h-4 mr-3" />
             Comparar avaliações
           </Button>
           <Button
             variant="outline"
-            className="h-12 w-full justify-start text-destructive hover:bg-destructive/5"
+            className="w-full justify-start text-destructive hover:bg-destructive/5"
             onClick={() => setActionsOpen(false)}
           >
             <Trash2 className="w-4 h-4 mr-3" />

@@ -264,7 +264,7 @@ export function ClientDetail({ client }: ClientDetailProps) {
                 <div>
                   <Label>Nome completo</Label>
                   <Input
-                    className="h-12 mt-1.5"
+                    className="mt-1.5"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
@@ -276,7 +276,7 @@ export function ClientDetail({ client }: ClientDetailProps) {
                   <Input
                     type="email"
                     inputMode="email"
-                    className="h-12 mt-1.5"
+                    className="mt-1.5"
                     value={formData.email}
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
@@ -288,7 +288,7 @@ export function ClientDetail({ client }: ClientDetailProps) {
                   <Input
                     type="tel"
                     inputMode="tel"
-                    className="h-12 mt-1.5"
+                    className="mt-1.5"
                     value={formData.phone}
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
@@ -299,7 +299,7 @@ export function ClientDetail({ client }: ClientDetailProps) {
                   <Label>CPF</Label>
                   <Input
                     inputMode="numeric"
-                    className="h-12 mt-1.5"
+                    className="mt-1.5"
                     value={formData.cpf}
                     onChange={(e) =>
                       setFormData({ ...formData, cpf: e.target.value })
@@ -310,7 +310,7 @@ export function ClientDetail({ client }: ClientDetailProps) {
                   <Label>Data de nascimento</Label>
                   <Input
                     type="date"
-                    className="h-12 mt-1.5"
+                    className="mt-1.5"
                     value={formData.birthDate}
                     onChange={(e) =>
                       setFormData({ ...formData, birthDate: e.target.value })

@@ -201,13 +201,13 @@ export default function VO2PreditivoPage() {
           <Card>
             <CardContent className="p-4">
               <Label className="text-sm font-medium mb-2 block">Idade</Label>
-              <Input type="number" inputMode="decimal" placeholder="0" value={data.age} onChange={(e) => update("age", e.target.value)} className="h-12 text-base" />
+              <Input type="number" inputMode="decimal" placeholder="0" value={data.age} onChange={(e) => update("age", e.target.value)} className="text-base" />
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <Label className="text-sm font-medium mb-2 block">Peso (kg)</Label>
-              <Input type="number" inputMode="decimal" placeholder="0" value={data.weight} onChange={(e) => update("weight", e.target.value)} className="h-12 text-base" />
+              <Input type="number" inputMode="decimal" placeholder="0" value={data.weight} onChange={(e) => update("weight", e.target.value)} className="text-base" />
             </CardContent>
           </Card>
         </div>
@@ -232,7 +232,7 @@ export default function VO2PreditivoPage() {
             <CardContent className="p-4">
               <Label className="text-sm font-medium mb-2 block">Distância percorrida</Label>
               <div className="flex items-center gap-2">
-                <Input type="number" inputMode="decimal" placeholder="0" value={data.distanceMeters} onChange={(e) => update("distanceMeters", e.target.value)} className="h-12 flex-1 text-base" />
+                <Input type="number" inputMode="decimal" placeholder="0" value={data.distanceMeters} onChange={(e) => update("distanceMeters", e.target.value)} className="flex-1 text-base" />
                 <span className="text-sm text-muted-foreground">metros</span>
               </div>
             </CardContent>
@@ -245,7 +245,7 @@ export default function VO2PreditivoPage() {
               <CardContent className="p-4">
                 <Label className="text-sm font-medium mb-2 block">Tempo da caminhada</Label>
                 <div className="flex items-center gap-2">
-                  <Input type="number" inputMode="decimal" placeholder="0" value={data.walkTimeMin} onChange={(e) => update("walkTimeMin", e.target.value)} className="h-12 flex-1 text-base" />
+                  <Input type="number" inputMode="decimal" placeholder="0" value={data.walkTimeMin} onChange={(e) => update("walkTimeMin", e.target.value)} className="flex-1 text-base" />
                   <span className="text-sm text-muted-foreground">min</span>
                 </div>
               </CardContent>
@@ -254,7 +254,7 @@ export default function VO2PreditivoPage() {
               <CardContent className="p-4">
                 <Label className="text-sm font-medium mb-2 block">FC ao final</Label>
                 <div className="flex items-center gap-2">
-                  <Input type="number" inputMode="decimal" placeholder="0" value={data.hrEnd} onChange={(e) => update("hrEnd", e.target.value)} className="h-12 flex-1 text-base" />
+                  <Input type="number" inputMode="decimal" placeholder="0" value={data.hrEnd} onChange={(e) => update("hrEnd", e.target.value)} className="flex-1 text-base" />
                   <span className="text-sm text-muted-foreground">bpm</span>
                 </div>
               </CardContent>
@@ -267,7 +267,7 @@ export default function VO2PreditivoPage() {
             <CardContent className="p-4">
               <Label className="text-sm font-medium mb-2 block">FC de recuperação (15s × 4)</Label>
               <div className="flex items-center gap-2">
-                <Input type="number" inputMode="decimal" placeholder="0" value={data.hrRecovery} onChange={(e) => update("hrRecovery", e.target.value)} className="h-12 flex-1 text-base" />
+                <Input type="number" inputMode="decimal" placeholder="0" value={data.hrRecovery} onChange={(e) => update("hrRecovery", e.target.value)} className="flex-1 text-base" />
                 <span className="text-sm text-muted-foreground">bpm</span>
               </div>
             </CardContent>
@@ -280,7 +280,7 @@ export default function VO2PreditivoPage() {
               <CardContent className="p-4">
                 <Label className="text-sm font-medium mb-2 block">Carga de trabalho</Label>
                 <div className="flex items-center gap-2">
-                  <Input type="number" inputMode="decimal" placeholder="0" value={data.workload} onChange={(e) => update("workload", e.target.value)} className="h-12 flex-1 text-base" />
+                  <Input type="number" inputMode="decimal" placeholder="0" value={data.workload} onChange={(e) => update("workload", e.target.value)} className="flex-1 text-base" />
                   <span className="text-sm text-muted-foreground">watts</span>
                 </div>
               </CardContent>
@@ -289,7 +289,7 @@ export default function VO2PreditivoPage() {
               <CardContent className="p-4">
                 <Label className="text-sm font-medium mb-2 block">FC steady-state</Label>
                 <div className="flex items-center gap-2">
-                  <Input type="number" inputMode="decimal" placeholder="0" value={data.hrSteadyState} onChange={(e) => update("hrSteadyState", e.target.value)} className="h-12 flex-1 text-base" />
+                  <Input type="number" inputMode="decimal" placeholder="0" value={data.hrSteadyState} onChange={(e) => update("hrSteadyState", e.target.value)} className="flex-1 text-base" />
                   <span className="text-sm text-muted-foreground">bpm</span>
                 </div>
               </CardContent>
@@ -315,7 +315,7 @@ export default function VO2PreditivoPage() {
           </Card>
         )}
 
-        <Button className="h-12 w-full" onClick={handleSave} disabled={isLoading}>
+        <Button className="w-full" onClick={handleSave} disabled={isLoading}>
           {isLoading ? <Loader2 className="size-4 mr-2 animate-spin" /> : saved ? <CheckCircle2 className="size-4 mr-2" /> : null}
           {saved ? "Salvo" : "Salvar VO₂ preditivo"}
         </Button>

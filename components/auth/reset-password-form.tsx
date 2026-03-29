@@ -83,7 +83,7 @@ export function ResetPasswordForm() {
         </div>
 
         <Link href="/login" className="w-full">
-          <Button className="h-12 text-base font-medium w-full">
+          <Button className="text-base font-medium w-full">
             Ir para o login
           </Button>
         </Link>
@@ -122,7 +122,7 @@ export function ResetPasswordForm() {
         </div>
 
         <Link href="/login/recuperar-senha" className="w-full">
-          <Button variant="outline" className="h-12 text-base font-medium w-full">
+          <Button variant="outline" className="text-base font-medium w-full">
             Solicitar novo link
           </Button>
         </Link>
@@ -143,7 +143,7 @@ export function ResetPasswordForm() {
             type={showPassword ? "text" : "password"}
             placeholder="Mínimo 8 caracteres"
             autoComplete="new-password"
-            className="h-12 text-base pr-12"
+            className="text-base pr-12"
             {...form.register("password")}
           />
           <button
@@ -174,7 +174,7 @@ export function ResetPasswordForm() {
             type={showConfirm ? "text" : "password"}
             placeholder="Repita a nova senha"
             autoComplete="new-password"
-            className="h-12 text-base pr-12"
+            className="text-base pr-12"
             {...form.register("confirmPassword")}
           />
           <button
@@ -199,7 +199,7 @@ export function ResetPasswordForm() {
 
       <Button
         type="submit"
-        className="h-12 text-base font-medium w-full"
+        className="text-base font-medium w-full"
         disabled={isLoading}
       >
         {isLoading && <Loader2 className="size-4 mr-2 animate-spin" />}

@@ -269,7 +269,7 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
                 <div>
                   <Label>Nome completo</Label>
                   <Input
-                    className="h-12 mt-1.5"
+                    className="mt-1.5"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
@@ -281,7 +281,7 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
                   <Input
                     type="email"
                     inputMode="email"
-                    className="h-12 mt-1.5"
+                    className="mt-1.5"
                     value={formData.email}
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
@@ -293,7 +293,7 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
                   <Input
                     type="tel"
                     inputMode="tel"
-                    className="h-12 mt-1.5"
+                    className="mt-1.5"
                     value={formData.phone}
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
@@ -304,7 +304,7 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
                   <Label>CPF</Label>
                   <Input
                     inputMode="numeric"
-                    className="h-12 mt-1.5"
+                    className="mt-1.5"
                     value={formData.cpf}
                     onChange={(e) =>
                       setFormData({ ...formData, cpf: e.target.value })

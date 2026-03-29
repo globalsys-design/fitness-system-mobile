@@ -252,7 +252,7 @@ export default function QuestionarioCompletoPage() {
                   onChange={(e) =>
                     setData((d) => ({ ...d, [field.key]: e.target.value }))
                   }
-                  className="h-12 text-base"
+                  className="text-base"
                 />
               </div>
             ))}
@@ -271,7 +271,7 @@ export default function QuestionarioCompletoPage() {
                   onChange={(e) =>
                     setData((d) => ({ ...d, waterIntake: e.target.value }))
                   }
-                  className="h-12 text-base"
+                  className="text-base"
                 />
               </div>
               <div>
@@ -286,7 +286,7 @@ export default function QuestionarioCompletoPage() {
                   onChange={(e) =>
                     setData((d) => ({ ...d, sleepHours: e.target.value }))
                   }
-                  className="h-12 text-base"
+                  className="text-base"
                 />
               </div>
             </div>
@@ -335,7 +335,7 @@ export default function QuestionarioCompletoPage() {
         </Card>
 
         <Button
-          className="h-12 w-full"
+          className="w-full"
           onClick={handleSave}
           disabled={isLoading}
         >

@@ -91,7 +91,7 @@ export function MeasurementInput({
             placeholder={placeholder}
             value={value}
             onChange={(e) => handleChange(e.target.value)}
-            className="h-12 flex-1 text-base"
+            className="flex-1 text-base"
           />
           <span className="text-sm text-muted-foreground w-14 text-center shrink-0">
             {unit}

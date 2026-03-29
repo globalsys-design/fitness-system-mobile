@@ -75,7 +75,7 @@ export default function VerifyPage() {
         <div className="w-full flex flex-col gap-3">
           <Button
             variant="outline"
-            className="h-12 w-full text-base"
+            className="w-full text-base"
             onClick={handleResend}
             disabled={isResending}
           >
@@ -84,7 +84,7 @@ export default function VerifyPage() {
           </Button>
 
           <Link href="/login" className="w-full">
-            <Button variant="ghost" className="h-12 w-full text-base">
+            <Button variant="ghost" className="w-full text-base">
               <ArrowLeft className="size-4 mr-2" />
               Voltar para o login
             </Button>

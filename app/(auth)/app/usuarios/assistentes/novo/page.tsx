@@ -154,7 +154,7 @@ export default function NovoAssistentePage() {
               <Label htmlFor="name">Nome completo *</Label>
               <Input
                 id="name"
-                className="h-12 mt-1.5"
+                className="mt-1.5"
                 placeholder="Nome do assistente"
                 {...form.register("name")}
               />
@@ -171,7 +171,7 @@ export default function NovoAssistentePage() {
                 type="email"
                 inputMode="email"
                 autoComplete="email"
-                className="h-12 mt-1.5"
+                className="mt-1.5"
                 placeholder="email@exemplo.com"
                 {...form.register("email")}
               />
@@ -187,7 +187,7 @@ export default function NovoAssistentePage() {
                 id="phone"
                 type="tel"
                 inputMode="tel"
-                className="h-12 mt-1.5"
+                className="mt-1.5"
                 placeholder="(00) 00000-0000"
                 {...form.register("phone")}
               />
@@ -197,7 +197,7 @@ export default function NovoAssistentePage() {
               <Input
                 id="cpf"
                 inputMode="numeric"
-                className="h-12 mt-1.5"
+                className="mt-1.5"
                 placeholder="000.000.000-00"
                 {...form.register("cpf")}
               />
@@ -215,7 +215,7 @@ export default function NovoAssistentePage() {
                   if (v !== null) form.setValue("profession", v as string);
                 }}
               >
-                <SelectTrigger className="h-12 mt-1.5">
+                <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Selecione a profissão" />
                 </SelectTrigger>
                 <SelectContent>
@@ -228,7 +228,7 @@ export default function NovoAssistentePage() {
             <div>
               <Label>Cidade natal</Label>
               <Input
-                className="h-12 mt-1.5"
+                className="mt-1.5"
                 placeholder="Cidade"
                 onChange={(e) => form.setValue("birthCity", e.target.value)}
               />
@@ -242,7 +242,7 @@ export default function NovoAssistentePage() {
                 <div>
                   <Label>CEP</Label>
                   <Input
-                    className="h-12 mt-1.5"
+                    className="mt-1.5"
                     placeholder="00000-000"
                     inputMode="numeric"
                     onChange={(e) =>
@@ -256,7 +256,7 @@ export default function NovoAssistentePage() {
                 <div>
                   <Label>Logradouro</Label>
                   <Input
-                    className="h-12 mt-1.5"
+                    className="mt-1.5"
                     placeholder="Rua, Av..."
                     onChange={(e) =>
                       form.setValue("address", {
@@ -270,7 +270,7 @@ export default function NovoAssistentePage() {
                   <div>
                     <Label>Número</Label>
                     <Input
-                      className="h-12 mt-1.5"
+                      className="mt-1.5"
                       inputMode="numeric"
                       onChange={(e) =>
                         form.setValue("address", {
@@ -283,7 +283,7 @@ export default function NovoAssistentePage() {
                   <div className="col-span-2">
                     <Label>Complemento</Label>
                     <Input
-                      className="h-12 mt-1.5"
+                      className="mt-1.5"
                       placeholder="Apto, sala..."
                       onChange={(e) =>
                         form.setValue("address", {
@@ -297,7 +297,7 @@ export default function NovoAssistentePage() {
                 <div>
                   <Label>Bairro</Label>
                   <Input
-                    className="h-12 mt-1.5"
+                    className="mt-1.5"
                     onChange={(e) =>
                       form.setValue("address", {
                         ...((form.getValues("address") as any) ?? {}),
@@ -310,7 +310,7 @@ export default function NovoAssistentePage() {
                   <div className="col-span-2">
                     <Label>Cidade</Label>
                     <Input
-                      className="h-12 mt-1.5"
+                      className="mt-1.5"
                       onChange={(e) =>
                         form.setValue("address", {
                           ...((form.getValues("address") as any) ?? {}),
@@ -322,7 +322,7 @@ export default function NovoAssistentePage() {
                   <div>
                     <Label>UF</Label>
                     <Input
-                      className="h-12 mt-1.5"
+                      className="mt-1.5"
                       maxLength={2}
                       onChange={(e) =>
                         form.setValue("address", {
@@ -386,20 +386,20 @@ export default function NovoAssistentePage() {
         {step > 0 && (
           <Button
             variant="outline"
-            className="h-12 flex-1"
+            className="flex-1"
             onClick={() => setStep(step - 1)}
           >
             Voltar
           </Button>
         )}
         {step < STEPS.length - 1 ? (
-          <Button className="h-12 flex-1" onClick={handleNext}>
+          <Button className="flex-1" onClick={handleNext}>
             Continuar
             <ChevronRight className="size-4 ml-1" />
           </Button>
         ) : (
           <Button
-            className="h-12 flex-1"
+            className="flex-1"
             onClick={form.handleSubmit(onSubmit as any)}
             disabled={isLoading}
           >

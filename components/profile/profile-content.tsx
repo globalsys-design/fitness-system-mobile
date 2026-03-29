@@ -75,11 +75,11 @@ export function ProfileContent({ user }: { user: any }) {
                 <>
                   <div>
                     <Label>Nome completo</Label>
-                    <Input className="h-12 mt-1.5" value={name} onChange={(e) => setName(e.target.value)} />
+                    <Input className="mt-1.5" value={name} onChange={(e) => setName(e.target.value)} />
                   </div>
                   <div>
                     <Label>Telefone</Label>
-                    <Input type="tel" className="h-12 mt-1.5" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                    <Input type="tel" className="mt-1.5" value={phone} onChange={(e) => setPhone(e.target.value)} />
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" className="flex-1 h-11" onClick={() => setIsEditing(false)}>
@@ -140,11 +140,11 @@ export function ProfileContent({ user }: { user: any }) {
                 <>
                   <div>
                     <Label>Profissão</Label>
-                    <Input className="h-12 mt-1.5" value={profession} onChange={(e) => setProfession(e.target.value)} />
+                    <Input className="mt-1.5" value={profession} onChange={(e) => setProfession(e.target.value)} />
                   </div>
                   <div>
                     <Label>Especialidade</Label>
-                    <Input className="h-12 mt-1.5" value={specialty} onChange={(e) => setSpecialty(e.target.value)} />
+                    <Input className="mt-1.5" value={specialty} onChange={(e) => setSpecialty(e.target.value)} />
                   </div>
                 </>
               ) : (

@@ -87,7 +87,7 @@ export function StepAvailability() {
                     <Label className="text-xs">Horário inicial</Label>
                     <Input
                       type="time"
-                      className="mt-1 h-12 w-full"
+                      className="mt-1"
                       value={day.start || "08:00"}
                       onChange={(e) => setDayTime(key, "start", e.target.value)}
                     />
@@ -96,7 +96,7 @@ export function StepAvailability() {
                     <Label className="text-xs">Horário final</Label>
                     <Input
                       type="time"
-                      className="mt-1 h-12 w-full"
+                      className="mt-1"
                       value={day.end || "18:00"}
                       onChange={(e) => setDayTime(key, "end", e.target.value)}
                     />

@@ -323,7 +323,7 @@ export default function FraminghamPage() {
                       update(field.key, val);
                     }
                   }}
-                  className="h-12 flex-1 text-base"
+                  className="flex-1 text-base"
                 />
                 <span className="text-sm text-muted-foreground w-14 text-center">
                   {field.unit}
@@ -394,7 +394,7 @@ export default function FraminghamPage() {
         )}
 
         <Button
-          className="h-12 w-full"
+          className="w-full"
           onClick={handleSave}
           disabled={isLoading || !data.gender}
         >

@@ -106,7 +106,7 @@ export default function HemogramaPage() {
         <Card>
           <CardContent className="p-4">
             <Label className="text-sm font-medium mb-2 block">Data do exame</Label>
-            <Input type="date" value={examDate} onChange={(e) => { setExamDate(e.target.value); setSaved(false); }} className="h-12 text-base" />
+            <Input type="date" value={examDate} onChange={(e) => { setExamDate(e.target.value); setSaved(false); }} className="text-base" />
           </CardContent>
         </Card>
 
@@ -131,7 +131,7 @@ export default function HemogramaPage() {
                     setValues((v) => ({ ...v, [field.key]: e.target.value }));
                     setSaved(false);
                   }}
-                  className="h-12 flex-1 text-base"
+                  className="flex-1 text-base"
                 />
                 <span className="text-xs text-muted-foreground w-20 text-right shrink-0">{field.unit}</span>
               </div>
@@ -146,7 +146,7 @@ export default function HemogramaPage() {
           </CardContent>
         </Card>
 
-        <Button className="h-12 w-full" onClick={handleSave} disabled={isLoading}>
+        <Button className="w-full" onClick={handleSave} disabled={isLoading}>
           {isLoading ? <Loader2 className="size-4 mr-2 animate-spin" /> : saved ? <CheckCircle2 className="size-4 mr-2" /> : null}
           {saved ? "Salvo" : "Salvar hemograma"}
         </Button>

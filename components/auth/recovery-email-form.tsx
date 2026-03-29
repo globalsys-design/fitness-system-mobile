@@ -61,7 +61,7 @@ export function RecoveryEmailForm() {
           placeholder="seu@email.com"
           inputMode="email"
           autoComplete="email"
-          className="h-12 text-base"
+          className="text-base"
           {...form.register("email")}
         />
         {form.formState.errors.email && (
@@ -73,7 +73,7 @@ export function RecoveryEmailForm() {
 
       <Button
         type="submit"
-        className="h-12 text-base font-medium w-full"
+        className="text-base font-medium w-full"
         disabled={isLoading}
       >
         {isLoading && <Loader2 className="size-4 mr-2 animate-spin" />}

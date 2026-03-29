@@ -173,7 +173,7 @@ export default function QuestionarioAvancadoPage() {
                 onChange={(e) =>
                   setData((d) => ({ ...d, medications: e.target.value }))
                 }
-                className="h-12 text-base"
+                className="text-base"
               />
             </div>
             <div>
@@ -186,7 +186,7 @@ export default function QuestionarioAvancadoPage() {
                 onChange={(e) =>
                   setData((d) => ({ ...d, allergies: e.target.value }))
                 }
-                className="h-12 text-base"
+                className="text-base"
               />
             </div>
             <div>
@@ -206,7 +206,7 @@ export default function QuestionarioAvancadoPage() {
         </Card>
 
         <Button
-          className="h-12 w-full"
+          className="w-full"
           onClick={handleSave}
           disabled={isLoading}
         >

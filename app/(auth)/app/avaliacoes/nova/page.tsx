@@ -88,7 +88,7 @@ export default function NovaAvaliacaoPage() {
         <div>
           <Label>Cliente avaliado *</Label>
           <Select value={clientId} onValueChange={(v) => { if (v !== null) setClientId(v); }}>
-            <SelectTrigger className="h-12 mt-1.5">
+            <SelectTrigger className="mt-1.5">
               <SelectValue placeholder="Selecione um cliente" />
             </SelectTrigger>
             <SelectContent>
@@ -102,7 +102,7 @@ export default function NovaAvaliacaoPage() {
         <div>
           <Label>População</Label>
           <Select value={population} onValueChange={(v) => { if (v !== null) setPopulation(v); }}>
-            <SelectTrigger className="h-12 mt-1.5">
+            <SelectTrigger className="mt-1.5">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -116,7 +116,7 @@ export default function NovaAvaliacaoPage() {
         <div>
           <Label>Modalidade</Label>
           <Select value={modality} onValueChange={(v) => { if (v !== null) setModality(v); }}>
-            <SelectTrigger className="h-12 mt-1.5">
+            <SelectTrigger className="mt-1.5">
               <SelectValue placeholder="Selecione (opcional)" />
             </SelectTrigger>
             <SelectContent>
@@ -132,7 +132,7 @@ export default function NovaAvaliacaoPage() {
         className="px-4 py-4 border-t border-border bg-background"
         style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
       >
-        <Button className="h-12 w-full text-base" onClick={handleSubmit} disabled={isLoading || !clientId}>
+        <Button className="w-full text-base" onClick={handleSubmit} disabled={isLoading || !clientId}>
           {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           Criar avaliação
         </Button>

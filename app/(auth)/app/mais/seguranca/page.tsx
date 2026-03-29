@@ -57,7 +57,7 @@ export default function SegurancaPage() {
             <div className="relative mt-1.5">
               <Input
                 type={showCurrent ? "text" : "password"}
-                className="h-12 pr-12"
+                className="pr-12"
                 {...form.register("currentPassword")}
               />
               <button
@@ -78,7 +78,7 @@ export default function SegurancaPage() {
             <div className="relative mt-1.5">
               <Input
                 type={showNew ? "text" : "password"}
-                className="h-12 pr-12"
+                className="pr-12"
                 {...form.register("newPassword")}
               />
               <button
@@ -98,7 +98,7 @@ export default function SegurancaPage() {
             <Label>Confirmar nova senha</Label>
             <Input
               type="password"
-              className="h-12 mt-1.5"
+              className="mt-1.5"
               {...form.register("confirmPassword")}
             />
             {form.formState.errors.confirmPassword && (
@@ -108,7 +108,7 @@ export default function SegurancaPage() {
         </div>
 
         <Button
-          className="h-12 w-full"
+          className="w-full"
           onClick={form.handleSubmit(onSubmit)}
           disabled={isLoading}
         >

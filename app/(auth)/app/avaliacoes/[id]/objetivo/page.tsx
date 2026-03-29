@@ -170,7 +170,7 @@ export default function ObjetivoPage() {
           </div>
         </div>
 
-        <Button className="h-12 w-full" onClick={handleSave} disabled={isLoading}>
+        <Button className="w-full" onClick={handleSave} disabled={isLoading}>
           {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           Salvar objetivo e disponibilidade
         </Button>

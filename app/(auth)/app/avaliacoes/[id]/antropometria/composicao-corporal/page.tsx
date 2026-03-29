@@ -258,7 +258,7 @@ export default function ComposicaoCorporalPage() {
         )}
 
         <Button
-          className="h-12 w-full"
+          className="w-full"
           onClick={handleSave}
           disabled={isLoading}
         >

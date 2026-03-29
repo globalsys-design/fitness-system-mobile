@@ -124,7 +124,7 @@ export default function PerimetrosPage() {
         })}
 
         <Button
-          className="h-12 w-full"
+          className="w-full"
           onClick={handleSave}
           disabled={isLoading}
         >

@@ -46,7 +46,7 @@ export default function NovoAgendamentoPage() {
         <div>
           <Label>Tipo *</Label>
           <Select value={type} onValueChange={(v) => { if (v !== null) setType(v); }}>
-            <SelectTrigger className="h-12 mt-1.5">
+            <SelectTrigger className="mt-1.5">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -58,19 +58,19 @@ export default function NovoAgendamentoPage() {
         </div>
         <div>
           <Label>Título *</Label>
-          <Input className="h-12 mt-1.5" {...register("title")} />
+          <Input className="mt-1.5" {...register("title")} />
         </div>
         <div>
           <Label>Data/hora de início *</Label>
-          <Input type="datetime-local" className="h-12 mt-1.5" {...register("startAt")} />
+          <Input type="datetime-local" className="mt-1.5" {...register("startAt")} />
         </div>
         <div>
           <Label>Data/hora de fim *</Label>
-          <Input type="datetime-local" className="h-12 mt-1.5" {...register("endAt")} />
+          <Input type="datetime-local" className="mt-1.5" {...register("endAt")} />
         </div>
         <div>
           <Label>Descrição</Label>
-          <Input className="h-12 mt-1.5" {...register("description")} />
+          <Input className="mt-1.5" {...register("description")} />
         </div>
       </div>
       <div
@@ -78,7 +78,7 @@ export default function NovoAgendamentoPage() {
         style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
       >
         <Button
-          className="h-12 w-full"
+          className="w-full"
           onClick={handleSubmit(onSubmit)}
           disabled={isLoading}
         >
