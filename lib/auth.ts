@@ -72,29 +72,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider === "credentials") return true;
       return true;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
+      // On sign-in, persist user data into the token
       if (user) {
         token.id = user.id;
         token.email = user.email;
-      }
-      // For credentials provider, ensure we have the id
-      if (account?.provider === "credentials" && user) {
-        token.id = user.id;
+        // Load plan/role once at sign-in so session callback needs no DB query
+        const dbUser = await db.user.findUnique({
+          where: { id: user.id as string },
+          select: { plan: true, trialEndsAt: true, role: true },
+        });
+        if (dbUser) {
+          token.plan = dbUser.plan;
+          token.trialEndsAt = dbUser.trialEndsAt?.toISOString() ?? null;
+          token.role = dbUser.role;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token.id) {
         session.user.id = token.id as string;
-        const dbUser = await db.user.findUnique({
-          where: { id: token.id as string },
-          select: { plan: true, trialEndsAt: true, stripeCurrentPeriodEnd: true, role: true },
-        });
-        if (dbUser) {
-          (session.user as any).plan = dbUser.plan;
-          (session.user as any).trialEndsAt = dbUser.trialEndsAt;
-          (session.user as any).role = dbUser.role;
-        }
+        (session.user as any).plan = token.plan;
+        (session.user as any).trialEndsAt = token.trialEndsAt;
+        (session.user as any).role = token.role;
       }
       return session;
     },

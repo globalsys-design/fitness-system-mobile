@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { recoveryEmailSchema, resetPasswordSchema } from "@/lib/validations";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 
 /**
  * POST — Solicita recuperação de senha.
@@ -116,6 +117,15 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
+  // Verifica se usuário existe
+  const user = await db.user.findUnique({ where: { email } });
+  if (!user) {
+    return NextResponse.json(
+      { error: "Usuário não encontrado" },
+      { status: 404 }
+    );
+  }
+
   // Remove token usado
   await db.verificationToken.delete({
     where: {
@@ -126,7 +136,12 @@ export async function PATCH(req: NextRequest) {
     },
   });
 
-  // Nota: A senha será armazenada quando Credentials provider for configurado.
-  // Por ora, retorna sucesso para o fluxo de UI funcionar.
+  // Salva nova senha com hash
+  const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+  await db.user.update({
+    where: { email },
+    data: { passwordHash },
+  });
+
   return NextResponse.json({ success: true });
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Camera, Mail, Phone, Briefcase, MapPin } from "lucide-react";
+import { Loader2, Mail, Phone, Briefcase, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,17 +43,12 @@ export function ProfileContent({ user }: { user: any }) {
     <div className="flex flex-col">
       {/* Profile Header */}
       <div className="flex flex-col items-center gap-3 p-6 pb-4 border-b border-border">
-        <div className="relative">
-          <Avatar className="w-24 h-24">
-            <AvatarImage src={photo ?? undefined} />
-            <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
-              {displayName?.slice(0, 2).toUpperCase() ?? "??"}
-            </AvatarFallback>
-          </Avatar>
-          <button className="absolute bottom-0 right-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground shadow-md">
-            <Camera className="w-4 h-4" />
-          </button>
-        </div>
+        <Avatar className="w-24 h-24">
+          <AvatarImage src={photo ?? undefined} />
+          <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
+            {displayName?.slice(0, 2).toUpperCase() ?? "??"}
+          </AvatarFallback>
+        </Avatar>
         <div className="text-center">
           <h2 className="text-lg font-bold text-foreground">{displayName}</h2>
           <p className="text-sm text-muted-foreground">{user.email}</p>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Wand2, PlusCircle, Copy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -15,11 +16,10 @@ export default function NewTrainingSheetPage() {
   const handleSelectMethod = (method: CreationMethod) => {
     if (method === 'manual') {
       router.push('/app/prescricoes/nova/treino/manual');
-    } else if (method === 'ai') {
-      router.push('/app/prescricoes/nova/treino/ia');
     } else if (method === 'clone') {
       router.push('/app/prescricoes/nova/treino/clonar');
     }
+    // 'ai' is not yet implemented
   };
 
   return (
@@ -73,35 +73,31 @@ export default function NewTrainingSheetPage() {
           </Card>
         </button>
 
-        {/* Criar com IA */}
-        <button
-          onClick={() => handleSelectMethod('ai')}
-          className="group text-left"
-        >
-          <Card className="bg-card border-border hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer">
+        {/* Criar com IA — Em breve */}
+        <div className="opacity-60 cursor-not-allowed">
+          <Card className="bg-card border-border">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-primary/10 group-hover:bg-primary/20 rounded-lg transition-colors mt-0.5">
-                  <Wand2 className="w-6 h-6 text-primary" />
+                <div className="p-3 bg-muted rounded-lg mt-0.5">
+                  <Wand2 className="w-6 h-6 text-muted-foreground" />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1">
-                    Gerar com IA
-                  </h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-base sm:text-lg font-semibold text-foreground">
+                      Gerar com IA
+                    </h3>
+                    <Badge variant="outline" className="text-xs">Em breve</Badge>
+                  </div>
                   <p className="text-xs sm:text-sm text-muted-foreground">
                     Deixe a inteligência artificial criar uma ficha personalizada baseada
                     no perfil do cliente
                   </p>
                 </div>
-
-                <div className="text-muted-foreground group-hover:text-primary transition-colors mt-0.5">
-                  →
-                </div>
               </div>
             </CardContent>
           </Card>
-        </button>
+        </div>
 
         {/* Clonar Ficha Existente */}
         <button
@@ -137,9 +133,8 @@ export default function NewTrainingSheetPage() {
       <Card className="bg-accent/5 border-border mt-8">
         <CardContent className="p-4">
           <p className="text-xs sm:text-sm text-muted-foreground">
-            <strong className="text-foreground">Dica:</strong> Use a opção "Gerar com IA" para
-            criar fichas personalizadas rapidamente baseadas no perfil do cliente. Você sempre
-            poderá editar e ajustar depois.
+            <strong className="text-foreground">Dica:</strong> Use a opção "Clonar Ficha" para
+            reaproveitar uma ficha anterior como base. Você sempre poderá editar e ajustar depois.
           </p>
         </CardContent>
       </Card>
