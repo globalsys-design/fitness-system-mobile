@@ -63,7 +63,7 @@ export default async function TestesPage({
                   <p className="text-xs text-muted-foreground">{s.description}</p>
                 </div>
                 {hasData ? (
-                  <CheckCircle2 className="size-4 text-green-500 shrink-0" />
+                  <CheckCircle2 className="size-4 text-success shrink-0" />
                 ) : (
                   <ChevronRight className="size-4 text-muted-foreground shrink-0" />
                 )}

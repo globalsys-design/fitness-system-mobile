@@ -16,12 +16,19 @@ import Link from "next/link";
 
 type LoginFormData = z.infer<typeof credentialsLoginSchema>;
 
-export function LoginForm() {
+interface LoginFormProps {
+  variant?: "professional" | "client";
+}
+
+export function LoginForm({ variant = "professional" }: LoginFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isMagicLinkLoading, setIsMagicLinkLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const isClient = variant === "client";
+  const idPrefix = isClient ? "client-" : "";
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(credentialsLoginSchema) as any,
@@ -94,9 +101,9 @@ export function LoginForm() {
         className="flex flex-col gap-4"
       >
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor={`${idPrefix}email`}>Email</Label>
           <Input
-            id="email"
+            id={`${idPrefix}email`}
             type="email"
             placeholder="seu@email.com"
             inputMode="email"
@@ -113,7 +120,7 @@ export function LoginForm() {
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor={`${idPrefix}password`}>Senha</Label>
             <Link
               href="/login/recuperar-senha"
               className="text-xs text-primary font-medium active:opacity-70"
@@ -123,7 +130,7 @@ export function LoginForm() {
           </div>
           <div className="relative">
             <Input
-              id="password"
+              id={`${idPrefix}password`}
               type={showPassword ? "text" : "password"}
               placeholder="Sua senha"
               autoComplete="current-password"
@@ -156,7 +163,7 @@ export function LoginForm() {
           disabled={isLoading}
         >
           {isLoading && <Loader2 className="size-4 mr-2 animate-spin" />}
-          Entrar
+          {isClient ? "Acessar meus treinos" : "Entrar"}
         </Button>
       </form>
 
@@ -218,10 +225,25 @@ export function LoginForm() {
       </div>
 
       <p className="text-center text-xs text-muted-foreground">
-        Ao entrar, você concorda com nossos{" "}
-        <Link href="#" className="underline active:opacity-70">
-          Termos de Uso
-        </Link>
+        {isClient ? (
+          <>
+            Ao acessar, você concorda com os{" "}
+            <Link href="#" className="underline active:opacity-70">
+              Termos de Uso
+            </Link>{" "}
+            e{" "}
+            <Link href="#" className="underline active:opacity-70">
+              Política de Privacidade
+            </Link>
+          </>
+        ) : (
+          <>
+            Ao entrar, você concorda com nossos{" "}
+            <Link href="#" className="underline active:opacity-70">
+              Termos de Uso
+            </Link>
+          </>
+        )}
       </p>
     </div>
   );

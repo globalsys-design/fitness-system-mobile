@@ -1,4 +1,4 @@
-import { LoginFormClient } from "@/components/auth/login-form-client";
+import { LoginForm } from "@/components/auth/login-form";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/ui/brand-logo";
@@ -33,7 +33,7 @@ export default function LoginClientePage() {
             </div>
           </div>
 
-          <LoginFormClient />
+          <LoginForm variant="client" />
         </div>
       </div>
     </div>

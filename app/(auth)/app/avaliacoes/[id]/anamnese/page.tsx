@@ -66,7 +66,7 @@ export default async function AnamnesePage({
               >
                 <p className="flex-1 text-sm font-medium text-foreground">{s.label}</p>
                 {hasData ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
                 ) : (
                   <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 )}

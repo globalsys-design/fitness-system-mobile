@@ -91,7 +91,7 @@ export function AssessmentsList({ assessments }: AssessmentsListProps) {
               <div className="flex flex-col items-end gap-2">
                 <Badge
                   variant="outline"
-                  className={assessment.status === "COMPLETE" ? "border-green-200 text-green-700" : ""}
+                  className={assessment.status === "COMPLETE" ? "border-success/30 text-success" : ""}
                 >
                   {assessment.status === "COMPLETE" ? "Completa" : "Rascunho"}
                 </Badge>

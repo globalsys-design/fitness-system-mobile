@@ -82,7 +82,7 @@ export function AssessmentDetail({ assessment }: { assessment: AssessmentWithDet
         title="Avaliação"
         showBack
         actions={
-          <Badge variant="outline" className={assessment.status === "COMPLETE" ? "border-green-200 text-green-700" : ""}>
+          <Badge variant="outline" className={assessment.status === "COMPLETE" ? "border-success/30 text-success" : ""}>
             {assessment.status === "COMPLETE" ? "Completa" : "Rascunho"}
           </Badge>
         }
@@ -143,7 +143,7 @@ export function AssessmentDetail({ assessment }: { assessment: AssessmentWithDet
                   </div>
                 </div>
                 {filled ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
                 ) : (
                   <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 )}
