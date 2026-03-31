@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ClientCard } from "./client-card";
-import { ListHeader, ListEmptyState } from "@/components/lists/list-header";
+import { ListEmptyState } from "@/components/lists/list-header";
 import Link from "next/link";
 
 interface ClientsListProps {
@@ -17,11 +16,11 @@ interface ClientsListProps {
     status: string;
     gender: string | null;
   }>;
+  /** Search string gerenciado pelo pai (UsersContent) */
+  search: string;
 }
 
-export function ClientsList({ clients }: ClientsListProps) {
-  const [search, setSearch] = useState("");
-
+export function ClientsList({ clients, search }: ClientsListProps) {
   const filtered = clients.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -29,7 +28,7 @@ export function ClientsList({ clients }: ClientsListProps) {
       (c.phone ?? "").includes(search)
   );
 
-  // Estado vazio — Hero CTA
+  // Estado vazio — Hero CTA (sem clientes cadastrados)
   if (clients.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-6 gap-5">
@@ -56,33 +55,20 @@ export function ClientsList({ clients }: ClientsListProps) {
   }
 
   return (
-    <div className="flex flex-col flex-1 overflow-y-auto">
-      <ListHeader
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Buscar por nome, email ou telefone..."
-        count={filtered.length}
-        countLabelSingular="cliente"
-        countLabelPlural="clientes"
-        className="sticky top-[68px] z-10 bg-background"
-      />
-
-      <div className="flex-1 flex flex-col px-4 pb-32">
-        {/* Lista ou busca vazia */}
-        {filtered.length === 0 ? (
-          <ListEmptyState
-            icon={<Users className="size-8 text-muted-foreground" />}
-            message={`Nenhum cliente encontrado para "${search}"`}
-            isFiltered
-          />
-        ) : (
-          <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
-            {filtered.map((client) => (
-              <ClientCard key={client.id} client={client} />
-            ))}
-          </div>
-        )}
-      </div>
+    <div className="flex flex-col px-4 pt-2 pb-32">
+      {filtered.length === 0 ? (
+        <ListEmptyState
+          icon={<Users className="size-8 text-muted-foreground" />}
+          message={`Nenhum cliente encontrado para "${search}"`}
+          isFiltered
+        />
+      ) : (
+        <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
+          {filtered.map((client) => (
+            <ClientCard key={client.id} client={client} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
