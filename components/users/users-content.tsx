@@ -30,8 +30,8 @@ export function UsersContent({ assistants, clients }: UsersContentProps) {
   return (
     <div className="flex flex-col">
       <Tabs value={tab} onValueChange={setTab} className="flex flex-col flex-1">
-        {/* Tabs Navigation — Fixo no topo */}
-        <div className="px-4 pt-4">
+        {/* Tabs Navigation — Sticky no topo, z-20 acima do ListHeader */}
+        <div className="sticky top-0 z-20 bg-background px-4 pt-4 pb-2">
           <TabsList className="w-full h-11">
             <TabsTrigger value="clientes" className="flex-1 text-sm">
               Clientes ({clients.length})

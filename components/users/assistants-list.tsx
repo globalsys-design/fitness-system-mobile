@@ -36,6 +36,7 @@ export function AssistantsList({ assistants }: AssistantsListProps) {
         count={filtered.length}
         countLabelSingular="assistente"
         countLabelPlural="assistentes"
+        className="sticky top-[68px] z-10 bg-background"
       />
 
       <div className="flex-1 flex flex-col px-4 pb-32">
