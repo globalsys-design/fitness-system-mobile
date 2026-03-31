@@ -56,7 +56,7 @@ export function ClientsList({ clients }: ClientsListProps) {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col flex-1 overflow-y-auto">
       <ListHeader
         searchValue={search}
         onSearchChange={setSearch}
@@ -66,20 +66,22 @@ export function ClientsList({ clients }: ClientsListProps) {
         countLabelPlural="clientes"
       />
 
-      {/* Lista ou busca vazia */}
-      {filtered.length === 0 ? (
-        <ListEmptyState
-          icon={<Users className="size-8 text-muted-foreground" />}
-          message={`Nenhum cliente encontrado para "${search}"`}
-          isFiltered
-        />
-      ) : (
-        <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden mx-4 mb-4">
-          {filtered.map((client) => (
-            <ClientCard key={client.id} client={client} />
-          ))}
-        </div>
-      )}
+      <div className="flex-1 flex flex-col px-4 pb-32">
+        {/* Lista ou busca vazia */}
+        {filtered.length === 0 ? (
+          <ListEmptyState
+            icon={<Users className="size-8 text-muted-foreground" />}
+            message={`Nenhum cliente encontrado para "${search}"`}
+            isFiltered
+          />
+        ) : (
+          <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
+            {filtered.map((client) => (
+              <ClientCard key={client.id} client={client} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

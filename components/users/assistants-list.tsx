@@ -28,7 +28,7 @@ export function AssistantsList({ assistants }: AssistantsListProps) {
   );
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col flex-1 overflow-y-auto">
       <ListHeader
         searchValue={search}
         onSearchChange={setSearch}
@@ -38,25 +38,27 @@ export function AssistantsList({ assistants }: AssistantsListProps) {
         countLabelPlural="assistentes"
       />
 
-      {/* Lista ou estado vazio */}
-      {filtered.length === 0 ? (
-        <ListEmptyState
-          icon={<UserX className="size-8 text-muted-foreground" />}
-          message={
-            search
-              ? "Nenhum assistente encontrado"
-              : "Nenhum assistente cadastrado"
-          }
-          subMessage={!search ? "Toque no botão + para adicionar" : undefined}
-          isFiltered={!!search}
-        />
-      ) : (
-        <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden mx-4 mb-4">
-          {filtered.map((assistant) => (
-            <AssistantCard key={assistant.id} assistant={assistant} />
-          ))}
-        </div>
-      )}
+      <div className="flex-1 flex flex-col px-4 pb-32">
+        {/* Lista ou estado vazio */}
+        {filtered.length === 0 ? (
+          <ListEmptyState
+            icon={<UserX className="size-8 text-muted-foreground" />}
+            message={
+              search
+                ? "Nenhum assistente encontrado"
+                : "Nenhum assistente cadastrado"
+            }
+            subMessage={!search ? "Toque no botão + para adicionar" : undefined}
+            isFiltered={!!search}
+          />
+        ) : (
+          <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
+            {filtered.map((assistant) => (
+              <AssistantCard key={assistant.id} assistant={assistant} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
