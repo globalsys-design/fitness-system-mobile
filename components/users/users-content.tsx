@@ -28,28 +28,31 @@ export function UsersContent({ assistants, clients }: UsersContentProps) {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <Tabs value={tab} onValueChange={setTab} className="flex flex-col flex-1">
-        <div className="px-4 pt-4">
-          <TabsList className="w-full h-11">
-            <TabsTrigger value="clientes" className="flex-1 text-sm">
-              Clientes ({clients.length})
-            </TabsTrigger>
-            <TabsTrigger value="assistentes" className="flex-1 text-sm">
-              Assistentes ({assistants.length})
-            </TabsTrigger>
-          </TabsList>
-        </div>
+    <div className="flex flex-col">
+      {/* Tabs Navigation — Fixo no topo, sem scroll */}
+      <div className="px-4 pt-4">
+        <TabsList className="w-full h-11">
+          <TabsTrigger value="clientes" className="flex-1 text-sm">
+            Clientes ({clients.length})
+          </TabsTrigger>
+          <TabsTrigger value="assistentes" className="flex-1 text-sm">
+            Assistentes ({assistants.length})
+          </TabsTrigger>
+        </TabsList>
+      </div>
 
-        <TabsContent value="clientes" className="flex-1 mt-0">
+      {/* Content Wrapper — Scroll aqui, com padding de segurança */}
+      <Tabs value={tab} onValueChange={setTab} className="w-full flex-col">
+        <TabsContent value="clientes" className="w-full mt-0">
           <ClientsList clients={clients} />
         </TabsContent>
 
-        <TabsContent value="assistentes" className="flex-1 mt-0">
+        <TabsContent value="assistentes" className="w-full mt-0">
           <AssistantsList assistants={assistants} />
         </TabsContent>
       </Tabs>
 
+      {/* FAB — Padrão consistente */}
       <FAB icon={Plus} onClick={handleAdd} label={`Adicionar ${tab === "assistentes" ? "assistente" : "cliente"}`} />
     </div>
   );
