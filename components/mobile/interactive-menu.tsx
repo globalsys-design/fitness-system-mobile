@@ -25,7 +25,7 @@ export function InteractiveMenu() {
   return (
     <nav
       className={cn(
-        "fixed z-50 flex items-center gap-1 p-2 rounded-full shadow-2xl",
+        "fixed z-50 flex items-center gap-1 p-3 rounded-full shadow-2xl",
         "left-1/2 -translate-x-1/2",
         "bottom-[calc(env(safe-area-inset-bottom)+1.5rem)]",
         "bg-background/60 backdrop-blur-xl border border-border/50"
@@ -43,13 +43,13 @@ export function InteractiveMenu() {
             key={item.href}
             href={item.href}
             className={cn(
-              "relative flex items-center justify-center rounded-full px-3 py-2 transition-all duration-300 ease-in-out",
+              "relative flex items-center justify-center h-14 w-14 rounded-full transition-all duration-300 ease-in-out",
               isActive
                 ? "bg-primary/15 text-primary"
                 : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
             )}
           >
-            <Icon className="h-5 w-5 shrink-0" />
+            <Icon className="h-6 w-6 shrink-0" />
 
             {/* Animated label expansion */}
             <span
