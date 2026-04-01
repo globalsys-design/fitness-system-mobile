@@ -1,5 +1,5 @@
 import { MobileHeader } from "./mobile-header";
-import { BottomNav } from "./bottom-nav";
+import { InteractiveMenu } from "./interactive-menu";
 
 interface MobileLayoutProps {
   children: React.ReactNode;
@@ -14,11 +14,11 @@ export function MobileLayout({ children, title, showBack, actions }: MobileLayou
       <MobileHeader title={title} showBack={showBack} actions={actions} />
       <main
         className="flex-1 overflow-y-auto"
-        style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }}
       >
         {children}
       </main>
-      <BottomNav />
+      <InteractiveMenu />
     </div>
   );
 }
