@@ -40,7 +40,7 @@ const NavItem = memo(
       <Link
         href={item.href}
         className={cn(
-          "relative flex items-center p-3 transition-colors duration-300 ease-in-out shrink-0",
+          "flex items-center p-3 transition-colors duration-300 ease-in-out shrink-0",
           isActive
             ? "text-primary"
             : "text-muted-foreground hover:text-foreground"
@@ -50,7 +50,7 @@ const NavItem = memo(
         {/* Ícone fixo */}
         <Icon className="h-6 w-6 shrink-0" />
 
-        {/* Container de Expansão Responsiva (Grid para evitar cortes) */}
+        {/* Container de Expansão + Sublinhado (Grid colapsa/expande junto) */}
         <div
           className={cn(
             "grid overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out",
@@ -60,18 +60,16 @@ const NavItem = memo(
           <span className="overflow-hidden whitespace-nowrap text-sm font-semibold">
             {item.label}
           </span>
+          {/* Sublinhado — sempre com a largura exata do texto */}
+          <div
+            className={cn(
+              "h-[2px] w-full bg-primary rounded-full mt-0.5",
+              "transition-opacity duration-300 ease-in-out",
+              isActive ? "opacity-100" : "opacity-0"
+            )}
+            style={{ boxShadow: "var(--primary-glow)" }}
+          />
         </div>
-
-        {/* Sublinhado fino — indicador de estado ativo */}
-        <div
-          className={cn(
-            "absolute bottom-0.5 left-1/2 -translate-x-1/2",
-            "h-[2px] w-1/2 bg-primary rounded-full",
-            "transition-opacity duration-300 ease-in-out",
-            isActive ? "opacity-100" : "opacity-0 pointer-events-none"
-          )}
-          style={{ boxShadow: "var(--primary-glow)" }}
-        />
       </Link>
     );
   }
