@@ -25,9 +25,9 @@ export function InteractiveMenu() {
   return (
     <nav
       className={cn(
-        "fixed z-50 flex items-center gap-1 p-3 rounded-full shadow-2xl",
+        "fixed z-40 flex items-center justify-center gap-2 p-4 rounded-full shadow-2xl h-16",
         "left-1/2 -translate-x-1/2",
-        "bottom-[calc(env(safe-area-inset-bottom)+1.5rem)]",
+        "bottom-[calc(env(safe-area-inset-bottom)+1rem)]",
         "bg-background/60 backdrop-blur-xl border border-border/50"
       )}
     >
