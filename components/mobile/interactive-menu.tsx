@@ -40,7 +40,7 @@ const NavItem = memo(
       <Link
         href={item.href}
         className={cn(
-          "relative flex items-center p-3 transition-all duration-300 ease-in-out shrink-0",
+          "relative flex items-center p-3 transition-colors duration-300 ease-in-out shrink-0",
           isActive
             ? "text-primary"
             : "text-muted-foreground hover:text-foreground"
@@ -48,31 +48,29 @@ const NavItem = memo(
         aria-current={isActive ? "page" : undefined}
       >
         {/* Ícone fixo */}
-        <Icon className="h-6 w-6 shrink-0 z-10" />
+        <Icon className="h-6 w-6 shrink-0" />
 
         {/* Container de Expansão Responsiva (Grid para evitar cortes) */}
         <div
           className={cn(
-            "grid transition-[grid-template-columns] duration-300 ease-in-out will-change-auto",
+            "grid overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out",
             isActive ? "grid-cols-[1fr] ml-2" : "grid-cols-[0fr] ml-0"
           )}
         >
-          <span className="overflow-hidden whitespace-nowrap text-sm font-semibold truncate z-10">
+          <span className="overflow-hidden whitespace-nowrap text-sm font-semibold">
             {item.label}
           </span>
         </div>
 
-        {/* Sublinhado Elegante - Sempre Renderizado (Animação com opacity) */}
+        {/* Sublinhado fino — indicador de estado ativo */}
         <div
           className={cn(
-            "absolute bottom-1 left-1/2 -translate-x-1/2",
-            "h-1.5 w-3/4 bg-primary rounded-full",
+            "absolute bottom-0.5 left-1/2 -translate-x-1/2",
+            "h-[2px] w-1/2 bg-primary rounded-full",
             "transition-opacity duration-300 ease-in-out",
             isActive ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
-          style={{
-            boxShadow: "var(--primary-glow)",
-          }}
+          style={{ boxShadow: "var(--primary-glow)" }}
         />
       </Link>
     );
