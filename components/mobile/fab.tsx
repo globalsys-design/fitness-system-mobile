@@ -16,7 +16,7 @@ export function FAB({ icon: Icon, onClick, label, className }: FABProps) {
         "fixed z-50 flex items-center justify-center",
         "w-14 h-14 rounded-full bg-primary text-primary-foreground font-semibold",
         "shadow-2xl hover:shadow-2xl active:scale-95 transition-all",
-        "bottom-[calc(env(safe-area-inset-bottom)+6rem)] right-6",
+        "bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] right-6",
         className
       )}
       aria-label={label ?? "Ação principal"}

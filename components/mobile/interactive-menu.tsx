@@ -25,10 +25,10 @@ export function InteractiveMenu() {
   return (
     <nav
       className={cn(
-        "fixed z-40 flex items-center justify-center gap-2 p-4 rounded-full shadow-2xl h-16",
-        "left-1/2 -translate-x-1/2",
-        "bottom-[calc(env(safe-area-inset-bottom)+1rem)]",
-        "bg-background/60 backdrop-blur-xl border border-border/50"
+        "fixed z-40 flex items-center justify-between px-4 py-2 rounded-full shadow-2xl",
+        "bg-background/80 backdrop-blur-xl border border-border/50",
+        "left-4 right-4 max-w-[400px] mx-auto",
+        "bottom-[calc(env(safe-area-inset-bottom)+1.5rem)]"
       )}
     >
       {navItems.map((item) => {
@@ -43,25 +43,40 @@ export function InteractiveMenu() {
             key={item.href}
             href={item.href}
             className={cn(
-              "relative flex items-center justify-center h-14 w-14 rounded-full transition-all duration-300 ease-in-out",
+              "relative flex items-center p-3 transition-all duration-300 ease-in-out shrink-0",
               isActive
-                ? "bg-primary/15 text-primary"
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                ? "text-primary"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <Icon className="h-6 w-6 shrink-0" />
+            {/* Ícone fixo */}
+            <Icon className="h-6 w-6 shrink-0 z-10" />
 
-            {/* Animated label expansion */}
-            <span
+            {/* Container de Expansão Responsiva (Grid para evitar cortes) */}
+            <div
               className={cn(
-                "overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-300 ease-in-out",
-                isActive
-                  ? "max-w-[120px] ml-2 opacity-100"
-                  : "max-w-0 opacity-0 ml-0"
+                "grid transition-[grid-template-columns] duration-300 ease-in-out",
+                isActive ? "grid-cols-[1fr] ml-2" : "grid-cols-[0fr] ml-0"
               )}
             >
-              {item.label}
-            </span>
+              <span className="overflow-hidden whitespace-nowrap text-sm font-semibold truncate z-10">
+                {item.label}
+              </span>
+            </div>
+
+            {/* Linha/Sublinhado Elegante de Estado Ativo */}
+            {isActive && (
+              <div
+                className={cn(
+                  "absolute bottom-1 left-1/2 -translate-x-1/2",
+                  "h-1 w-3/4 bg-primary rounded-full",
+                  "animate-in fade-in duration-300"
+                )}
+                style={{
+                  boxShadow: "0 0 8px rgba(102, 218, 198, 0.6)",
+                }}
+              />
+            )}
           </Link>
         );
       })}
