@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { Camera } from "lucide-react";
+import { Camera, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,6 +19,7 @@ import {
   ETHNICITY_OPTIONS,
   DDI_OPTIONS,
 } from "@/lib/validations/client";
+import { cn } from "@/lib/utils";
 
 /** Lookup label from options array by value */
 function getOptionLabel(
@@ -27,6 +28,16 @@ function getOptionLabel(
 ): string | undefined {
   if (!value) return undefined;
   return options.find((opt) => opt.value === value)?.label;
+}
+
+/** Format CPF: 000.000.000-00 */
+function formatCPF(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9)
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 }
 
 export function StepPersonal() {
@@ -38,6 +49,7 @@ export function StepPersonal() {
   } = useFormContext<ClientFormData>();
   const fileRef = useRef<HTMLInputElement>(null);
   const watched = watch();
+  const [showExtra, setShowExtra] = useState(false);
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -49,10 +61,15 @@ export function StepPersonal() {
     reader.readAsDataURL(file);
   }
 
+  function handleCPFInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const formatted = formatCPF(e.target.value);
+    setValue("cpf", formatted, { shouldValidate: true });
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {/* Avatar Upload */}
-      <div className="flex justify-center">
+      <div className="flex flex-col items-center gap-1">
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
@@ -71,6 +88,8 @@ export function StepPersonal() {
             <Camera className="size-3.5 text-primary-foreground" />
           </div>
         </button>
+        {/* I1 — instrução de affordance */}
+        <p className="text-xs text-muted-foreground">Toque para adicionar foto</p>
         <input
           ref={fileRef}
           type="file"
@@ -108,7 +127,7 @@ export function StepPersonal() {
         />
       </div>
 
-      {/* CPF (opcional) */}
+      {/* CPF — com máscara em tempo real (C3) */}
       <div>
         <Label htmlFor="cpf">CPF (opcional)</Label>
         <Input
@@ -116,91 +135,14 @@ export function StepPersonal() {
           className="mt-1.5"
           placeholder="000.000.000-00"
           inputMode="numeric"
-          {...register("cpf")}
+          value={watched.cpf || ""}
+          onChange={handleCPFInput}
         />
         {errors.cpf && (
           <p className="text-xs text-destructive mt-1">
             {errors.cpf.message}
           </p>
         )}
-      </div>
-
-      {/* Gênero + Estado Civil — row alinhado */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>Gênero</Label>
-          <Select
-            value={watched.gender || undefined}
-            onValueChange={(v) => setValue("gender", v ?? "")}
-          >
-            <SelectTrigger className="mt-1.5">
-              <SelectValue placeholder="Selecione">
-                {getOptionLabel(GENDER_OPTIONS, watched.gender) || "Selecione"}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {GENDER_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label>Estado civil</Label>
-          <Select
-            value={watched.maritalStatus || undefined}
-            onValueChange={(v) => setValue("maritalStatus", v ?? "")}
-          >
-            <SelectTrigger className="mt-1.5">
-              <SelectValue placeholder="Selecione">
-                {getOptionLabel(MARITAL_STATUS_OPTIONS, watched.maritalStatus) || "Selecione"}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {MARITAL_STATUS_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Etnia */}
-      <div>
-        <Label>Etnia</Label>
-        <Select
-          value={watched.ethnicity || undefined}
-          onValueChange={(v) => setValue("ethnicity", v ?? "")}
-        >
-          <SelectTrigger className="mt-1.5">
-            <SelectValue placeholder="Selecione">
-              {getOptionLabel(ETHNICITY_OPTIONS, watched.ethnicity) || "Selecione"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {ETHNICITY_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Convênio (opcional) */}
-      <div>
-        <Label htmlFor="healthInsurance">Convênio (opcional)</Label>
-        <Input
-          id="healthInsurance"
-          className="mt-1.5"
-          placeholder="Nome do convênio"
-          {...register("healthInsurance")}
-        />
       </div>
 
       {/* Email */}
@@ -263,6 +205,104 @@ export function StepPersonal() {
           {...register("emergencyPhone")}
         />
       </div>
+
+      {/* ── Dados complementares — Progressive Disclosure (C1) ── */}
+      <button
+        type="button"
+        onClick={() => setShowExtra((v) => !v)}
+        className="flex items-center justify-between w-full px-4 py-3 rounded-xl border border-border bg-muted/30 text-sm font-medium text-muted-foreground hover:bg-muted/60 transition-colors"
+      >
+        <span>Dados complementares (opcional)</span>
+        {showExtra ? (
+          <ChevronUp className="size-4 shrink-0" />
+        ) : (
+          <ChevronDown className="size-4 shrink-0" />
+        )}
+      </button>
+
+      {showExtra && (
+        <div className={cn("flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-200")}>
+          {/* Gênero — C2: empilhado em vez de grid-cols-2 */}
+          <div>
+            <Label>Gênero</Label>
+            <Select
+              value={watched.gender || undefined}
+              onValueChange={(v) => setValue("gender", v ?? "")}
+            >
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Selecione">
+                  {getOptionLabel(GENDER_OPTIONS, watched.gender) || "Selecione"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {GENDER_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Estado civil */}
+          <div>
+            <Label>Estado civil</Label>
+            <Select
+              value={watched.maritalStatus || undefined}
+              onValueChange={(v) => setValue("maritalStatus", v ?? "")}
+            >
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Selecione">
+                  {getOptionLabel(MARITAL_STATUS_OPTIONS, watched.maritalStatus) || "Selecione"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {MARITAL_STATUS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Etnia */}
+          <div>
+            <Label>Etnia</Label>
+            <Select
+              value={watched.ethnicity || undefined}
+              onValueChange={(v) => setValue("ethnicity", v ?? "")}
+            >
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Selecione">
+                  {getOptionLabel(ETHNICITY_OPTIONS, watched.ethnicity) || "Selecione"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {ETHNICITY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Convênio */}
+          <div>
+            <Label htmlFor="healthInsurance">Convênio</Label>
+            <Input
+              id="healthInsurance"
+              className="mt-1.5"
+              placeholder="Nome do convênio"
+              {...register("healthInsurance")}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* I5 — legenda asterisco */}
+      <p className="text-xs text-muted-foreground">* Campo obrigatório</p>
     </div>
   );
 }

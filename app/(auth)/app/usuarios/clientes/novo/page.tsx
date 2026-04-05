@@ -1,5 +1,5 @@
-import { ClientRegistrationStepper } from "@/components/users/client-registration-stepper";
+import { ClientOnboardingFlow } from "@/components/users/onboarding/ClientOnboardingFlow";
 
 export default function NovoClientePage() {
-  return <ClientRegistrationStepper />;
+  return <ClientOnboardingFlow />;
 }

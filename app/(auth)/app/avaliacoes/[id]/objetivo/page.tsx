@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { MobileLayout } from "@/components/mobile/mobile-layout";
-import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 const OBJECTIVES = [
   "Condicionamento físico",
@@ -41,7 +41,7 @@ const DURATIONS = ["15min", "30min", "45min", "1h", "1h30", "2h", "Outro"];
 
 export default function ObjetivoPage() {
   const params = useParams();
-  const [goals, setGoals] = useState<Record<string, number>>({});
+  const [goals, setGoals] = useState<string[]>([]);
   const [availability, setAvailability] = useState<Record<string, string | null>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -53,7 +53,19 @@ export default function ObjetivoPage() {
         if (res.ok) {
           const data = await res.json();
           if (data) {
-            if (data.goals) setGoals(data.goals as Record<string, number>);
+            if (data.goals) {
+              // Backward-compat: handle legacy Record<string, number> format
+              if (Array.isArray(data.goals)) {
+                setGoals(data.goals as string[]);
+              } else if (typeof data.goals === "object") {
+                // Convert old slider format — keep keys with value > 0
+                setGoals(
+                  Object.entries(data.goals as Record<string, number>)
+                    .filter(([, v]) => v > 0)
+                    .map(([k]) => k)
+                );
+              }
+            }
             if (data.availability) setAvailability(data.availability as Record<string, string | null>);
           }
         }
@@ -65,6 +77,12 @@ export default function ObjetivoPage() {
     }
     loadObjective();
   }, [params.id]);
+
+  function toggleGoal(obj: string) {
+    setGoals((prev) =>
+      prev.includes(obj) ? prev.filter((g) => g !== obj) : [...prev, obj]
+    );
+  }
 
   async function handleSave() {
     setIsLoading(true);
@@ -99,27 +117,28 @@ export default function ObjetivoPage() {
       <div className="p-4 flex flex-col gap-6">
         {/* Objetivos */}
         <div>
-          <h3 className="font-semibold text-foreground text-sm mb-3">Objetivos do cliente</h3>
-          <div className="flex flex-col gap-4">
-            {OBJECTIVES.map((obj) => (
-              <div key={obj} className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm">{obj}</Label>
-                  <span className="text-sm text-primary font-semibold">{goals[obj] ?? 0}</span>
-                </div>
-                <Slider
-                  min={0}
-                  max={4}
-                  step={1}
-                  value={goals[obj] ?? 0}
-                  onValueChange={(val) => {
-                    const num = Array.isArray(val) ? val[0] : val;
-                    setGoals((g) => ({ ...g, [obj]: num ?? 0 }));
-                  }}
-                  className="w-full"
-                />
-              </div>
-            ))}
+          <h3 className="font-semibold text-foreground text-sm mb-1">Objetivos do cliente</h3>
+          <p className="text-xs text-muted-foreground mb-3">Selecione um ou mais objetivos</p>
+          <div className="flex flex-wrap gap-2">
+            {OBJECTIVES.map((obj) => {
+              const isActive = goals.includes(obj);
+              return (
+                <button
+                  key={obj}
+                  type="button"
+                  onClick={() => toggleGoal(obj)}
+                  className={cn(
+                    "relative flex items-center justify-center px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200 outline-none select-none",
+                    isActive
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-transparent text-muted-foreground hover:bg-accent"
+                  )}
+                >
+                  {isActive && <Check className="w-4 h-4 mr-1.5 shrink-0" />}
+                  {obj}
+                </button>
+              );
+            })}
           </div>
         </div>
 

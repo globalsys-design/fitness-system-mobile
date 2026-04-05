@@ -61,6 +61,7 @@ export function ClientRegistrationStepper() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const methods = useForm<ClientFormData>({
     resolver: zodResolver(clientFormSchema) as any,
@@ -145,10 +146,14 @@ export function ClientRegistrationStepper() {
       }
     }
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    // C4 — scroll reset ao avançar step
+    setTimeout(() => { scrollRef.current?.scrollTo({ top: 0 }); }, 0);
   }, [step, methods]);
 
   const handleBack = useCallback(() => {
     setStep((s) => Math.max(s - 1, 0));
+    // C4 — scroll reset ao voltar step
+    setTimeout(() => { scrollRef.current?.scrollTo({ top: 0 }); }, 0);
   }, []);
 
   async function onSubmit(data: ClientFormData) {
@@ -263,14 +268,23 @@ export function ClientRegistrationStepper() {
                 key={s.label}
                 className="flex items-center gap-2 flex-1 min-w-0"
               >
-                <div
+                {/* I2 — steps anteriores clicáveis para navegação retroativa */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (i < step) {
+                      setStep(i);
+                      setTimeout(() => { scrollRef.current?.scrollTo({ top: 0 }); }, 0);
+                    }
+                  }}
+                  disabled={i >= step}
                   className={cn(
-                    "flex items-center justify-center size-8 rounded-full text-xs font-semibold transition-all shrink-0",
+                    "flex items-center justify-center size-8 rounded-full text-xs font-semibold transition-all duration-200 shrink-0",
                     i < step
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary text-primary-foreground cursor-pointer hover:opacity-80"
                       : i === step
-                        ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                        : "bg-muted text-muted-foreground"
+                        ? "bg-primary text-primary-foreground ring-2 ring-primary/30 cursor-default"
+                        : "bg-muted text-muted-foreground cursor-default"
                   )}
                 >
                   {i < step ? (
@@ -278,7 +292,7 @@ export function ClientRegistrationStepper() {
                   ) : (
                     <Icon className="size-4" />
                   )}
-                </div>
+                </button>
                 {i < STEPS.length - 1 && (
                   <div
                     className={cn(
@@ -297,17 +311,18 @@ export function ClientRegistrationStepper() {
           <p className="text-xs text-muted-foreground">
             Passo {step + 1} de {STEPS.length}
           </p>
+          {/* I3 — título contextual: step 3 muda de acordo com isMinor */}
           <p className="text-base font-semibold text-foreground mt-0.5">
-            {STEPS[step].label}
+            {step === 2 && clientIsMinor ? "Responsável Legal" : STEPS[step].label}
           </p>
         </div>
 
         {/* ── Step Content ── */}
-        <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
           {step === 0 && <StepPersonal />}
           {step === 1 && <StepAddress />}
           {step === 2 && <StepResponsible isMinor={clientIsMinor} />}
-          {step === 3 && <StepAccess />}
+          {step === 3 && <StepAccess onGoToStep={(s) => { setStep(s); setTimeout(() => { scrollRef.current?.scrollTo({ top: 0 }); }, 0); }} />}
           {step === 4 && <StepAvailability />}
         </div>
 
@@ -321,7 +336,7 @@ export function ClientRegistrationStepper() {
           {step > 0 && (
             <Button
               variant="outline"
-              className="h-12 flex-1"
+              className="h-14 flex-1"
               onClick={handleBack}
             >
               <ChevronLeft className="size-4 mr-1" />
@@ -329,13 +344,13 @@ export function ClientRegistrationStepper() {
             </Button>
           )}
           {step < STEPS.length - 1 ? (
-            <Button className="h-12 flex-1" onClick={handleNext}>
+            <Button className="h-14 flex-1" onClick={handleNext}>
               Continuar
               <ChevronRight className="size-4 ml-1" />
             </Button>
           ) : (
             <Button
-              className="h-12 flex-1"
+              className="h-14 flex-1"
               onClick={methods.handleSubmit(
                 onSubmit as any,
                 handleValidationError

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { ClientFormData } from "@/lib/validations/client";
@@ -11,12 +11,14 @@ export function StepAddress() {
   const { setValue, watch, register } = useFormContext<ClientFormData>();
   const watched = watch();
   const [isFetchingCep, setIsFetchingCep] = useState(false);
+  const [cepFilled, setCepFilled] = useState(false);
 
   async function handleCepBlur(cep: string) {
     const digits = cep.replace(/\D/g, "");
     if (digits.length !== 8) return;
 
     setIsFetchingCep(true);
+    setCepFilled(false);
     try {
       const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
       const data = await res.json();
@@ -31,6 +33,8 @@ export function StepAddress() {
         city: data.localidade || current.city || "",
         state: data.uf || current.state || "",
       });
+      setCepFilled(true);
+      setTimeout(() => setCepFilled(false), 3000);
     } catch {
       // silently fail — user can fill manually
     } finally {
@@ -68,6 +72,9 @@ export function StepAddress() {
           />
           {isFetchingCep && (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 size-4 animate-spin text-muted-foreground" />
+          )}
+          {!isFetchingCep && cepFilled && (
+            <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-success" />
           )}
         </div>
       </div>

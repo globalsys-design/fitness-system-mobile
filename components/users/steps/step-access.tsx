@@ -36,7 +36,11 @@ function generatePassword(length = 12): string {
     .join("");
 }
 
-export function StepAccess() {
+interface StepAccessProps {
+  onGoToStep?: (step: number) => void;
+}
+
+export function StepAccess({ onGoToStep }: StepAccessProps) {
   const {
     register,
     setValue,
@@ -91,9 +95,20 @@ export function StepAccess() {
           disabled
         />
         {!email && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Preencha o email no Passo 1 para habilitar o acesso.
-          </p>
+          <div className="flex items-center gap-1 mt-1">
+            <p className="text-xs text-muted-foreground">
+              Preencha o email no Passo 1 para habilitar o acesso.
+            </p>
+            {onGoToStep && (
+              <button
+                type="button"
+                onClick={() => onGoToStep(0)}
+                className="text-xs text-primary font-medium hover:underline shrink-0"
+              >
+                Ir agora →
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -106,6 +121,7 @@ export function StepAccess() {
             type={showPassword ? "text" : "password"}
             className="pr-12"
             placeholder="Mínimo 8 caracteres"
+            autoComplete="new-password"
             {...register("password")}
           />
           <button

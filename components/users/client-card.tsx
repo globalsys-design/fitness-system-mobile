@@ -49,9 +49,10 @@ export function ClientCard({ client }: ClientCardProps) {
             variant="secondary"
             className={cn(
               "text-[10px] px-1.5 py-0 h-5 shrink-0",
+              /* Psicologia das cores: inativo = cor de alerta, não neutro */
               client.status === "ACTIVE"
                 ? "bg-primary/10 text-primary border-primary/20"
-                : "bg-muted text-muted-foreground"
+                : "bg-destructive/10 text-destructive border-destructive/20"
             )}
           >
             {client.status === "ACTIVE" ? "Ativo" : "Inativo"}
@@ -62,18 +63,35 @@ export function ClientCard({ client }: ClientCardProps) {
           <p className="text-xs text-muted-foreground mt-0.5">{genderLabel}</p>
         )}
 
+        {/* Affordance: email e telefone são ações táteis, não texto inerte */}
         <div className="flex items-center gap-3 mt-1">
           {client.email && (
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <Mail className="size-3" />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.location.href = `mailto:${client.email}`;
+              }}
+              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors min-h-[24px]"
+            >
+              <Mail className="size-3 shrink-0" />
               <span className="truncate max-w-32">{client.email}</span>
-            </span>
+            </button>
           )}
           {client.phone && (
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <Phone className="size-3" />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.location.href = `tel:${client.phone}`;
+              }}
+              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors min-h-[24px]"
+            >
+              <Phone className="size-3 shrink-0" />
               {client.phone}
-            </span>
+            </button>
           )}
         </div>
       </div>
