@@ -43,7 +43,7 @@ export default async function MaisPage() {
   if (!session) redirect("/login");
 
   return (
-    <MobileLayout title="Mais">
+    <MobileLayout title="Mais" hideHeaderOnScroll>
       <div className="p-4 flex flex-col gap-6">
         {menuItems.map((section) => (
           <div key={section.section}>

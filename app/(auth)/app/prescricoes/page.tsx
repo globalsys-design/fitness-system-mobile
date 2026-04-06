@@ -27,7 +27,7 @@ export default async function PrescricoesPage() {
     : [];
 
   return (
-    <MobileLayout title="Prescrições">
+    <MobileLayout title="Prescrições" hideHeaderOnScroll>
       <PrescriptionsList prescriptions={prescriptions} />
     </MobileLayout>
   );

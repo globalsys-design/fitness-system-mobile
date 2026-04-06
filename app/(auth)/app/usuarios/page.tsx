@@ -15,7 +15,7 @@ export default async function UsuariosPage() {
 
   if (!user?.professional) {
     return (
-      <MobileLayout title="Usuários">
+      <MobileLayout title="Usuários" hideHeaderOnScroll>
         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
           <p className="text-muted-foreground text-sm">Perfil profissional não configurado.</p>
         </div>
@@ -35,7 +35,7 @@ export default async function UsuariosPage() {
   ]);
 
   return (
-    <MobileLayout title="Usuários">
+    <MobileLayout title="Usuários" hideHeaderOnScroll>
       <UsersContent assistants={assistants} clients={clients} />
     </MobileLayout>
   );

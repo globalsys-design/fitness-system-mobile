@@ -29,7 +29,7 @@ export default async function AvaliacoesPage() {
     : [];
 
   return (
-    <MobileLayout title="Avaliações">
+    <MobileLayout title="Avaliações" hideHeaderOnScroll>
       <AssessmentsList assessments={assessments} />
     </MobileLayout>
   );

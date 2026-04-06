@@ -4,36 +4,25 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  Loader2,
   Mail,
   Phone,
   MapPin,
   Calendar,
   ClipboardList,
   Dumbbell,
-  Edit2,
-  Save,
-  X,
   User,
   Shield,
   ChevronRight,
   CheckCircle2,
   Activity,
+  Pencil,
+  Clock,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Progress,
@@ -43,10 +32,16 @@ import {
   ProgressValue,
 } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { GENDER_OPTIONS } from "@/lib/validations/client";
 import Link from "next/link";
 import { format, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+// Sheets
+import { EditPersonalSheet } from "./sheets/EditPersonalSheet";
+import { EditContactSheet } from "./sheets/EditContactSheet";
+import { EditAddressSheet } from "./sheets/EditAddressSheet";
+import { EditEmergencySheet } from "./sheets/EditEmergencySheet";
+import { EditAvailabilitySheet } from "./sheets/EditAvailabilitySheet";
 
 interface ClientDetailProps {
   client: {
@@ -54,14 +49,19 @@ interface ClientDetailProps {
     name: string;
     email: string | null;
     phone: string | null;
+    phoneDdi: string | null;
     cpf: string | null;
     birthDate: string | null;
     gender: string | null;
+    ethnicity: string | null;
+    maritalStatus: string | null;
+    healthInsurance: string | null;
     objective: string | null;
     activityLevel: string | null;
     photo: string | null;
     address: any;
     emergencyContact: any;
+    availability: any;
     status: string;
     createdAt: string;
     assessments: Array<{
@@ -82,9 +82,15 @@ interface ClientDetailProps {
 export function ClientDetail({ client }: ClientDetailProps) {
   const router = useRouter();
   const [tab, setTab] = useState("info");
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
+  // ── Sheet open states ────────────────────────────────────────────────────
+  const [personalOpen, setPersonalOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [addressOpen, setAddressOpen] = useState(false);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [availabilityOpen, setAvailabilityOpen] = useState(false);
+
+  // ── Computed values ─────────────────────────────────────────────────────
   const age = client.birthDate
     ? differenceInYears(new Date(), new Date(client.birthDate))
     : null;
@@ -94,634 +100,339 @@ export function ClientDetail({ client }: ClientDetailProps) {
     : null;
 
   const genderLabel =
-    client.gender === "M"
-      ? "Masculino"
-      : client.gender === "F"
-        ? "Feminino"
-        : null;
+    client.gender === "M" ? "Masculino" : client.gender === "F" ? "Feminino" : null;
 
-  // Calculate profile completion
+  const activityLevelLabel: Record<string, string> = {
+    sedentary: "Sedentário",
+    light: "Levemente ativo",
+    moderate: "Moderadamente ativo",
+    active: "Muito ativo",
+    athlete: "Atleta",
+  };
+
+  const objectiveLabel: Record<string, string> = {
+    emagrecimento: "Emagrecimento",
+    hipertrofia: "Hipertrofia",
+    condicionamento: "Condicionamento",
+    saude: "Saúde & Bem-estar",
+    reabilitacao: "Reabilitação",
+    performance: "Performance",
+  };
+
+  // ── Progressive Profiling ────────────────────────────────────────────────
   const profileFields = [
-    { key: "email", filled: !!client.email },
-    { key: "phone", filled: !!client.phone },
-    { key: "cpf", filled: !!client.cpf },
-    { key: "birthDate", filled: !!client.birthDate },
-    { key: "gender", filled: !!client.gender },
-    { key: "objective", filled: !!client.objective },
-    { key: "activityLevel", filled: !!client.activityLevel },
-    { key: "address", filled: !!client.address },
-    { key: "photo", filled: !!client.photo },
+    { key: "email",        filled: !!client.email },
+    { key: "phone",        filled: !!client.phone },
+    { key: "cpf",          filled: !!client.cpf },
+    { key: "birthDate",    filled: !!client.birthDate },
+    { key: "gender",       filled: !!client.gender },
+    { key: "objective",    filled: !!client.objective },
+    { key: "activityLevel",filled: !!client.activityLevel },
+    { key: "address",      filled: !!client.address },
+    { key: "photo",        filled: !!client.photo },
   ];
 
   const completedCount = profileFields.filter((f) => f.filled).length;
-  const completionPercentage = Math.round(
-    (completedCount / profileFields.length) * 100
-  );
-  const isProfileComplete = completionPercentage === 100;
-
-  // Form state para edição
-  const [formData, setFormData] = useState({
-    name: client.name,
-    email: client.email ?? "",
-    phone: client.phone ?? "",
-    cpf: client.cpf ?? "",
-    birthDate: client.birthDate
-      ? format(new Date(client.birthDate), "yyyy-MM-dd")
-      : "",
-    gender: client.gender ?? "",
-    objective: client.objective ?? "",
-    activityLevel: client.activityLevel ?? "",
-    status: client.status,
-  });
-
-  async function handleSave() {
-    setIsSaving(true);
-    try {
-      const res = await fetch(`/api/clients/${client.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!res.ok) throw new Error("Erro ao salvar");
-      toast.success("Dados atualizados com sucesso!");
-      setIsEditing(false);
-      router.refresh();
-    } catch {
-      toast.error("Erro ao salvar. Tente novamente.");
-    } finally {
-      setIsSaving(false);
-    }
-  }
+  const completionPct = Math.round((completedCount / profileFields.length) * 100);
+  const isProfileComplete = completionPct === 100;
 
   return (
-    <div className="flex flex-col">
-      {/* Header do cliente */}
-      <div className="flex items-center gap-4 px-4 py-5 border-b border-border bg-card">
-        <Avatar className="size-16 shrink-0">
-          <AvatarImage src={client.photo ?? undefined} />
-          <AvatarFallback className="text-lg font-bold bg-primary/10 text-primary">
-            {client.name.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-foreground truncate">
-              {client.name}
-            </h2>
-            <Badge
-              variant="secondary"
-              className={cn(
-                "text-xs shrink-0",
-                client.status === "ACTIVE"
-                  ? "bg-primary/10 text-primary border-primary/20"
-                  : "bg-muted text-muted-foreground"
+    <>
+      {/* ── Sheets ───────────────────────────────────────────────────────── */}
+      <EditPersonalSheet
+        clientId={client.id}
+        open={personalOpen}
+        onOpenChange={setPersonalOpen}
+        initialData={{
+          name: client.name,
+          birthDate: client.birthDate
+            ? format(new Date(client.birthDate), "yyyy-MM-dd")
+            : "",
+          gender: client.gender ?? "",
+          cpf: client.cpf ?? "",
+          ethnicity: client.ethnicity ?? "",
+          maritalStatus: client.maritalStatus ?? "",
+          healthInsurance: client.healthInsurance ?? "",
+        }}
+      />
+      <EditContactSheet
+        clientId={client.id}
+        open={contactOpen}
+        onOpenChange={setContactOpen}
+        initialData={{
+          email: client.email ?? "",
+          phone: client.phone ?? "",
+          phoneDdi: client.phoneDdi ?? "+55",
+        }}
+      />
+      <EditAddressSheet
+        clientId={client.id}
+        open={addressOpen}
+        onOpenChange={setAddressOpen}
+        initialData={client.address ?? null}
+      />
+      <EditEmergencySheet
+        clientId={client.id}
+        open={emergencyOpen}
+        onOpenChange={setEmergencyOpen}
+        initialData={client.emergencyContact ?? null}
+      />
+      <EditAvailabilitySheet
+        clientId={client.id}
+        open={availabilityOpen}
+        onOpenChange={setAvailabilityOpen}
+        initialData={client.availability ?? null}
+      />
+
+      {/* ── Main content ─────────────────────────────────────────────────── */}
+      <div className="flex flex-col">
+
+        {/* Header */}
+        <div className="flex items-center gap-4 px-4 py-5 border-b border-border bg-card">
+          <Avatar className="size-16 shrink-0">
+            <AvatarImage src={client.photo ?? undefined} />
+            <AvatarFallback className="text-lg font-bold bg-primary/10 text-primary">
+              {client.name.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground truncate">{client.name}</h2>
+              <Badge
+                variant="secondary"
+                className={cn(
+                  "text-xs shrink-0",
+                  client.status === "ACTIVE"
+                    ? "bg-primary/10 text-primary border-primary/20"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                {client.status === "ACTIVE" ? "Ativo" : "Inativo"}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              {genderLabel && (
+                <span className="text-sm text-muted-foreground">{genderLabel}</span>
               )}
-            >
-              {client.status === "ACTIVE" ? "Ativo" : "Inativo"}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            {genderLabel && (
-              <span className="text-sm text-muted-foreground">
-                {genderLabel}
+              {age !== null && (
+                <span className="text-sm text-muted-foreground">
+                  {genderLabel ? "•" : ""} {age} anos
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-4 mt-1.5">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <ClipboardList className="size-3.5" />
+                {client.assessments.length} aval.
               </span>
-            )}
-            {age !== null && (
-              <span className="text-sm text-muted-foreground">
-                {genderLabel ? "•" : ""} {age} anos
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Dumbbell className="size-3.5" />
+                {client.prescriptions.length} pres.
               </span>
-            )}
-          </div>
-          {/* Contadores */}
-          <div className="flex items-center gap-4 mt-1.5">
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <ClipboardList className="size-3.5" />
-              {client.assessments.length} aval.
-            </span>
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Dumbbell className="size-3.5" />
-              {client.prescriptions.length} pres.
-            </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Progressive Profiling Banner */}
-      {!isProfileComplete && (
-        <div className="px-4 py-3 bg-primary/10 border-b border-primary/20">
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">
+        {/* Progressive Profiling Banner */}
+        {!isProfileComplete && (
+          <div className="px-4 py-3 bg-primary/10 border-b border-primary/20">
+            <Progress value={completionPct}>
+              <ProgressLabel className="text-xs font-semibold text-foreground">
                 Completar perfil
-              </p>
-              <Progress value={completionPercentage} className="mb-2">
-                <ProgressLabel className="text-xs">
-                  {completedCount} de {profileFields.length} preenchidos
-                </ProgressLabel>
-                <ProgressValue>{completionPercentage}%</ProgressValue>
-                <ProgressTrack className="w-full">
-                  <ProgressIndicator />
-                </ProgressTrack>
-              </Progress>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setTab("info");
-                setIsEditing(true);
-              }}
-              className="shrink-0"
-            >
-              Editar
-            </Button>
+              </ProgressLabel>
+              <ProgressValue className="text-xs font-semibold text-primary">
+                {completionPct}%
+              </ProgressValue>
+              <ProgressTrack className="w-full">
+                <ProgressIndicator />
+              </ProgressTrack>
+            </Progress>
+            <p className="text-xs text-muted-foreground mt-2">
+              {completedCount} de {profileFields.length} informações preenchidas — toque em Editar para completar
+            </p>
           </div>
-        </div>
-      )}
+        )}
+        {isProfileComplete && (
+          <div className="px-4 py-3 bg-primary/10 border-b border-primary/20 flex items-center gap-2">
+            <CheckCircle2 className="size-5 text-primary shrink-0" />
+            <p className="text-sm font-medium text-primary">Perfil completo! 🎉</p>
+          </div>
+        )}
 
-      {isProfileComplete && (
-        <div className="px-4 py-3 bg-primary/10 border-b border-primary/20 flex items-center gap-2">
-          <CheckCircle2 className="size-5 text-primary shrink-0" />
-          <p className="text-sm font-medium text-primary">
-            Perfil completo! 🎉
-          </p>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <Tabs
-        value={tab}
-        onValueChange={setTab}
-        className="flex flex-col flex-1"
-      >
-        <div className="px-4 pt-3 border-b border-border bg-background sticky top-0 z-10">
-          <TabsList className="w-full h-10 bg-transparent p-0 gap-0">
-            <TabsTrigger
-              value="info"
-              className="flex-1 text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none data-[state=active]:shadow-none h-10"
-            >
-              Informações
-            </TabsTrigger>
-            <TabsTrigger
-              value="access"
-              className="flex-1 text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none data-[state=active]:shadow-none h-10"
-            >
-              Acesso
-            </TabsTrigger>
-            <TabsTrigger
-              value="assessments"
-              className="flex-1 text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none data-[state=active]:shadow-none h-10"
-            >
-              Avaliações
-            </TabsTrigger>
-            <TabsTrigger
-              value="prescriptions"
-              className="flex-1 text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none data-[state=active]:shadow-none h-10"
-            >
-              Prescrições
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        {/* Tab: Informações */}
-        <TabsContent value="info" className="mt-0 flex-1">
-          <div className="p-4">
-            <div className="flex justify-end mb-3">
-              {isEditing ? (
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setIsEditing(false);
-                      setFormData({
-                        name: client.name,
-                        email: client.email ?? "",
-                        phone: client.phone ?? "",
-                        cpf: client.cpf ?? "",
-                        birthDate: client.birthDate
-                          ? format(new Date(client.birthDate), "yyyy-MM-dd")
-                          : "",
-                        gender: client.gender ?? "",
-                        objective: client.objective ?? "",
-                        activityLevel: client.activityLevel ?? "",
-                        status: client.status,
-                      });
-                    }}
-                  >
-                    <X className="size-4 mr-1" />
-                    Cancelar
-                  </Button>
-                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? (
-                      <Loader2 className="size-4 mr-1 animate-spin" />
-                    ) : (
-                      <Save className="size-4 mr-1" />
-                    )}
-                    Salvar
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
+        {/* Tabs */}
+        <Tabs value={tab} onValueChange={setTab} className="flex flex-col flex-1">
+          <div className="px-4 pt-3 border-b border-border bg-background sticky top-0 z-10">
+            <TabsList className="w-full h-10 bg-transparent p-0 gap-0">
+              {["info", "access", "assessments", "prescriptions"].map((t) => (
+                <TabsTrigger
+                  key={t}
+                  value={t}
+                  className="flex-1 text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none data-[state=active]:shadow-none h-10"
                 >
-                  <Edit2 className="size-4 mr-1" />
-                  Editar
-                </Button>
+                  {t === "info" ? "Informações" : t === "access" ? "Acesso" : t === "assessments" ? "Avaliações" : "Prescrições"}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          {/* ── Tab: Informações ─────────────────────────────────────────── */}
+          <TabsContent value="info" className="mt-0 flex-1">
+            <div className="flex flex-col gap-0 p-4">
+
+              {/* SECÇÃO: Dados Pessoais */}
+              <SectionHeader
+                title="Dados Pessoais"
+                onEdit={() => setPersonalOpen(true)}
+              />
+              <InfoRow icon={User} label="CPF" value={client.cpf} />
+              <InfoRow
+                icon={Calendar}
+                label="Nascimento"
+                value={birthDateFormatted ? `${birthDateFormatted} (${age} anos)` : null}
+              />
+              <InfoRow icon={User} label="Gênero" value={genderLabel} />
+              <InfoRow
+                icon={User}
+                label="Estado Civil"
+                value={client.maritalStatus ?? null}
+              />
+              <InfoRow
+                icon={Shield}
+                label="Plano de Saúde"
+                value={client.healthInsurance ?? null}
+              />
+
+              {/* SECÇÃO: Contato */}
+              <SectionHeader
+                title="Contato"
+                onEdit={() => setContactOpen(true)}
+                className="mt-5"
+              />
+              <InfoRow icon={Mail} label="Email" value={client.email} />
+              <InfoRow icon={Phone} label="Telefone" value={client.phone} />
+
+              {/* SECÇÃO: Metas */}
+              <SectionHeader title="Metas & Rotina" className="mt-5" />
+              <InfoRow
+                icon={Dumbbell}
+                label="Objetivo"
+                value={client.objective ? objectiveLabel[client.objective] ?? client.objective : null}
+              />
+              <InfoRow
+                icon={Activity}
+                label="Nível de Atividade"
+                value={client.activityLevel ? activityLevelLabel[client.activityLevel] ?? client.activityLevel : null}
+              />
+
+              {/* SECÇÃO: Disponibilidade */}
+              <SectionHeader
+                title="Disponibilidade"
+                onEdit={() => setAvailabilityOpen(true)}
+                className="mt-5"
+              />
+              {client.availability ? (
+                <AvailabilityDisplay availability={client.availability} />
+              ) : (
+                <button
+                  onClick={() => setAvailabilityOpen(true)}
+                  className="flex items-center gap-2 py-3 text-sm text-primary font-medium"
+                >
+                  <Clock className="size-4" />
+                  Adicionar disponibilidade
+                </button>
+              )}
+
+              {/* SECÇÃO: Endereço */}
+              <SectionHeader
+                title="Endereço"
+                onEdit={() => setAddressOpen(true)}
+                className="mt-5"
+              />
+              {client.address ? (
+                <InfoRow icon={MapPin} label="Endereço" value={formatAddress(client.address)} />
+              ) : (
+                <button
+                  onClick={() => setAddressOpen(true)}
+                  className="flex items-center gap-2 py-3 text-sm text-primary font-medium"
+                >
+                  <MapPin className="size-4" />
+                  Adicionar endereço
+                </button>
+              )}
+
+              {/* SECÇÃO: Emergência */}
+              <SectionHeader
+                title="Contato de Emergência"
+                onEdit={() => setEmergencyOpen(true)}
+                className="mt-5"
+              />
+              {client.emergencyContact ? (
+                <>
+                  <InfoRow icon={User} label="Nome" value={client.emergencyContact.name} />
+                  <InfoRow icon={Phone} label="Telefone" value={client.emergencyContact.phone} />
+                  <InfoRow icon={Shield} label="Parentesco" value={client.emergencyContact.notes ?? client.emergencyContact.relationship} />
+                </>
+              ) : (
+                <button
+                  onClick={() => setEmergencyOpen(true)}
+                  className="flex items-center gap-2 py-3 text-sm text-primary font-medium"
+                >
+                  <Shield className="size-4" />
+                  Adicionar contato de emergência
+                </button>
               )}
             </div>
+          </TabsContent>
 
-            {isEditing ? (
-              <div className="flex flex-col gap-4">
-                <div>
-                  <Label>Nome completo</Label>
-                  <Input
-                    className="mt-1.5"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Email</Label>
-                  <Input
-                    type="email"
-                    inputMode="email"
-                    className="mt-1.5"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Telefone</Label>
-                  <Input
-                    type="tel"
-                    inputMode="tel"
-                    className="mt-1.5"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>CPF</Label>
-                  <Input
-                    inputMode="numeric"
-                    className="mt-1.5"
-                    value={formData.cpf}
-                    onChange={(e) =>
-                      setFormData({ ...formData, cpf: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Data de nascimento</Label>
-                  <Input
-                    type="date"
-                    className="mt-1.5"
-                    value={formData.birthDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, birthDate: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Gênero</Label>
-                  <Select
-                    value={formData.gender || undefined}
-                    onValueChange={(v) => {
-                      if (v !== null)
-                        setFormData({ ...formData, gender: v as string });
-                    }}
-                  >
-                    <SelectTrigger className="h-12 mt-1.5">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {GENDER_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Objetivo</Label>
-                  <Select
-                    value={formData.objective || undefined}
-                    onValueChange={(v) => {
-                      if (v !== null)
-                        setFormData({ ...formData, objective: v as string });
-                    }}
-                  >
-                    <SelectTrigger className="h-12 mt-1.5">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
-                      <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
-                      <SelectItem value="condicionamento">Condicionamento</SelectItem>
-                      <SelectItem value="saude">Saúde & Bem-estar</SelectItem>
-                      <SelectItem value="reabilitacao">Reabilitação</SelectItem>
-                      <SelectItem value="performance">Performance</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Nível de Atividade</Label>
-                  <Select
-                    value={formData.activityLevel || undefined}
-                    onValueChange={(v) => {
-                      if (v !== null)
-                        setFormData({ ...formData, activityLevel: v as string });
-                    }}
-                  >
-                    <SelectTrigger className="h-12 mt-1.5">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sedentary">Sedentário</SelectItem>
-                      <SelectItem value="light">Levemente ativo</SelectItem>
-                      <SelectItem value="moderate">Moderadamente ativo</SelectItem>
-                      <SelectItem value="active">Muito ativo</SelectItem>
-                      <SelectItem value="athlete">Atleta</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1">
-                <InfoRow icon={Mail} label="Email" value={client.email} />
-                <InfoRow icon={Phone} label="Telefone" value={client.phone} />
-                <InfoRow icon={User} label="CPF" value={client.cpf} />
-                <InfoRow
-                  icon={Calendar}
-                  label="Nascimento"
-                  value={
-                    birthDateFormatted
-                      ? `${birthDateFormatted} (${age} anos)`
-                      : null
-                  }
-                />
-                <InfoRow
-                  icon={User}
-                  label="Gênero"
-                  value={genderLabel}
-                />
-                <InfoRow
-                  icon={Dumbbell}
-                  label="Objetivo"
-                  value={
-                    client.objective
-                      ? client.objective.charAt(0).toUpperCase() +
-                        client.objective.slice(1)
-                      : null
-                  }
-                />
-                <InfoRow
-                  icon={Activity}
-                  label="Nível de Atividade"
-                  value={
-                    client.activityLevel
-                      ? client.activityLevel === "sedentary"
-                        ? "Sedentário"
-                        : client.activityLevel === "light"
-                        ? "Levemente ativo"
-                        : client.activityLevel === "moderate"
-                        ? "Moderadamente ativo"
-                        : client.activityLevel === "active"
-                        ? "Muito ativo"
-                        : "Atleta"
-                      : null
-                  }
-                />
-                {client.address && (
-                  <InfoRow
-                    icon={MapPin}
-                    label="Endereço"
-                    value={formatAddress(client.address)}
-                  />
-                )}
-                {client.emergencyContact && (
-                  <>
-                    <div className="border-t border-border mt-2 pt-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                        Contato de emergência
-                      </p>
-                    </div>
-                    <InfoRow
-                      icon={User}
-                      label="Nome"
-                      value={client.emergencyContact.name}
-                    />
-                    <InfoRow
-                      icon={Phone}
-                      label="Telefone"
-                      value={client.emergencyContact.phone}
-                    />
-                    <InfoRow
-                      icon={Shield}
-                      label="Parentesco"
-                      value={client.emergencyContact.relationship}
-                    />
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </TabsContent>
+          {/* ── Tab: Acesso ──────────────────────────────────────────────── */}
+          <TabsContent value="access" className="mt-0 flex-1">
+            <AccessTab client={client} router={router} />
+          </TabsContent>
 
-        {/* Tab: Acesso */}
-        <TabsContent value="access" className="mt-0 flex-1">
-          <div className="p-4 flex flex-col gap-4">
-            <div className="rounded-xl border border-border bg-card p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    Conta ativa
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Permitir que o cliente acesse o sistema
-                  </p>
-                </div>
-                <Switch
-                  checked={formData.status === "ACTIVE"}
-                  onCheckedChange={async (checked) => {
-                    const newStatus = checked ? "ACTIVE" : "INACTIVE";
-                    setFormData({ ...formData, status: newStatus });
-                    try {
-                      await fetch(`/api/clients/${client.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ status: newStatus }),
-                      });
-                      toast.success(
-                        checked ? "Acesso ativado" : "Acesso desativado"
-                      );
-                      router.refresh();
-                    } catch {
-                      toast.error("Erro ao alterar status.");
-                    }
-                  }}
-                />
-              </div>
-            </div>
+          {/* ── Tab: Avaliações ──────────────────────────────────────────── */}
+          <TabsContent value="assessments" className="mt-0 flex-1">
+            <AssessmentsTab assessments={client.assessments} clientId={client.id} />
+          </TabsContent>
 
-            <div className="rounded-xl border border-border bg-card p-4">
-              <p className="text-sm font-medium text-foreground mb-1">
-                Email de acesso
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {client.email ?? "Não configurado"}
-              </p>
-            </div>
+          {/* ── Tab: Prescrições ─────────────────────────────────────────── */}
+          <TabsContent value="prescriptions" className="mt-0 flex-1">
+            <PrescriptionsTab prescriptions={client.prescriptions} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </>
+  );
+}
 
-            <div className="rounded-xl border border-border bg-card p-4">
-              <p className="text-sm font-medium text-foreground mb-1">
-                Cadastrado em
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {format(
-                  new Date(client.createdAt),
-                  "dd/MM/yyyy 'às' HH:mm",
-                  { locale: ptBR }
-                )}
-              </p>
-            </div>
-          </div>
-        </TabsContent>
+// ── Sub-components ─────────────────────────────────────────────────────────
 
-        {/* Tab: Avaliações */}
-        <TabsContent value="assessments" className="mt-0 flex-1">
-          <div className="p-4">
-            {client.assessments.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <div className="flex items-center justify-center size-16 rounded-full bg-muted">
-                  <ClipboardList className="size-8 text-muted-foreground" />
-                </div>
-                <p className="text-sm text-muted-foreground text-center">
-                  Nenhuma avaliação realizada
-                </p>
-                <Link href="/app/avaliacoes/nova">
-                  <Button variant="outline" size="sm">
-                    Criar avaliação
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
-                {client.assessments.map((assessment, i) => (
-                  <Link
-                    key={assessment.id}
-                    href={`/app/avaliacoes/${assessment.id}`}
-                    className="flex items-center gap-3 px-4 py-3.5 bg-card active:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 shrink-0">
-                      <span className="text-xs font-bold text-primary">
-                        {i + 1}ª
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {assessment.modality ?? assessment.population}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(
-                          new Date(assessment.createdAt),
-                          "dd/MM/yyyy",
-                          { locale: ptBR }
-                        )}
-                      </p>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        "text-xs shrink-0",
-                        assessment.status === "COMPLETE"
-                          ? "bg-primary/10 text-primary"
-                          : "bg-accent text-muted-foreground"
-                      )}
-                    >
-                      {assessment.status === "COMPLETE"
-                        ? "Concluída"
-                        : "Pendente"}
-                    </Badge>
-                    <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Tab: Prescrições */}
-        <TabsContent value="prescriptions" className="mt-0 flex-1">
-          <div className="p-4">
-            {client.prescriptions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <div className="flex items-center justify-center size-16 rounded-full bg-muted">
-                  <Dumbbell className="size-8 text-muted-foreground" />
-                </div>
-                <p className="text-sm text-muted-foreground text-center">
-                  Nenhuma prescrição cadastrada
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
-                {client.prescriptions.map((prescription) => (
-                  <Link
-                    key={prescription.id}
-                    href={`/app/prescricoes/${prescription.id}`}
-                    className="flex items-center gap-3 px-4 py-3.5 bg-card active:bg-muted/50 transition-colors"
-                  >
-                    <div
-                      className={cn(
-                        "flex items-center justify-center size-10 rounded-lg shrink-0",
-                        prescription.type === "TRAINING"
-                          ? "bg-primary/10 text-primary"
-                          : "bg-accent text-accent-foreground"
-                      )}
-                    >
-                      <Dumbbell className="size-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {prescription.type === "TRAINING"
-                          ? "Ficha de Treino"
-                          : "Prescrição Aeróbica"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(
-                          new Date(prescription.createdAt),
-                          "dd/MM/yyyy",
-                          { locale: ptBR }
-                        )}
-                      </p>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className="text-xs shrink-0 bg-primary/10 text-primary"
-                    >
-                      Ativa
-                    </Badge>
-                    <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+function SectionHeader({
+  title,
+  onEdit,
+  className,
+}: {
+  title: string;
+  onEdit?: () => void;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex items-center justify-between pt-1 pb-1 border-b border-border mb-1", className)}>
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+        {title}
+      </p>
+      {onEdit && (
+        <button
+          onClick={onEdit}
+          className="flex items-center gap-1 text-xs text-primary font-medium py-1 px-2 rounded-lg hover:bg-primary/10 transition-colors active:scale-95"
+        >
+          <Pencil className="size-3" />
+          Editar
+        </button>
+      )}
     </div>
   );
 }
 
-/* Componentes auxiliares */
 function InfoRow({
   icon: Icon,
   label,
@@ -732,15 +443,188 @@ function InfoRow({
   value: string | null | undefined;
 }) {
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-border last:border-0">
+    <div className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0">
       <div className="flex items-center justify-center size-9 rounded-lg bg-muted text-muted-foreground shrink-0">
         <Icon className="size-4" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-medium text-foreground truncate">
+        <p className={cn("text-sm font-medium truncate", value ? "text-foreground" : "text-muted-foreground/50 italic")}>
           {value || "Não informado"}
         </p>
+      </div>
+    </div>
+  );
+}
+
+function AvailabilityDisplay({ availability }: { availability: any }) {
+  const DAYS: Array<{ key: string; short: string }> = [
+    { key: "monday", short: "Seg" },
+    { key: "tuesday", short: "Ter" },
+    { key: "wednesday", short: "Qua" },
+    { key: "thursday", short: "Qui" },
+    { key: "friday", short: "Sex" },
+    { key: "saturday", short: "Sáb" },
+    { key: "sunday", short: "Dom" },
+  ];
+
+  return (
+    <div className="flex gap-1.5 py-3 flex-wrap">
+      {DAYS.map(({ key, short }) => {
+        const active = availability?.[key]?.active;
+        return (
+          <span
+            key={key}
+            className={cn(
+              "px-2.5 py-1 rounded-lg text-xs font-medium",
+              active
+                ? "bg-primary/15 text-primary"
+                : "bg-muted text-muted-foreground/50"
+            )}
+          >
+            {short}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function AccessTab({ client, router }: { client: any; router: any }) {
+  return (
+    <div className="p-4 flex flex-col gap-4">
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Conta ativa</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Permitir acesso ao sistema
+            </p>
+          </div>
+          <Switch
+            checked={client.status === "ACTIVE"}
+            onCheckedChange={async (checked) => {
+              const newStatus = checked ? "ACTIVE" : "INACTIVE";
+              try {
+                await fetch(`/api/clients/${client.id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status: newStatus }),
+                });
+                toast.success(checked ? "Acesso ativado" : "Acesso desativado");
+                router.refresh();
+              } catch {
+                toast.error("Erro ao alterar status.");
+              }
+            }}
+          />
+        </div>
+      </div>
+      <div className="rounded-xl border border-border bg-card p-4">
+        <p className="text-sm font-medium mb-1">Email de acesso</p>
+        <p className="text-sm text-muted-foreground">{client.email ?? "Não configurado"}</p>
+      </div>
+      <div className="rounded-xl border border-border bg-card p-4">
+        <p className="text-sm font-medium mb-1">Cadastrado em</p>
+        <p className="text-sm text-muted-foreground">
+          {format(new Date(client.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function AssessmentsTab({ assessments, clientId }: { assessments: any[]; clientId: string }) {
+  if (assessments.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-3 p-4">
+        <div className="flex items-center justify-center size-16 rounded-full bg-muted">
+          <ClipboardList className="size-8 text-muted-foreground" />
+        </div>
+        <p className="text-sm text-muted-foreground text-center">Nenhuma avaliação realizada</p>
+        <Link href={`/app/avaliacoes/nova?clientId=${clientId}`}>
+          <Button variant="outline" size="sm">Criar avaliação</Button>
+        </Link>
+      </div>
+    );
+  }
+  return (
+    <div className="p-4">
+      <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
+        {assessments.map((a, i) => (
+          <Link
+            key={a.id}
+            href={`/app/avaliacoes/${a.id}`}
+            className="flex items-center gap-3 px-4 py-3.5 bg-card active:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 shrink-0">
+              <span className="text-xs font-bold text-primary">{i + 1}ª</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{a.modality ?? a.population}</p>
+              <p className="text-xs text-muted-foreground">
+                {format(new Date(a.createdAt), "dd/MM/yyyy", { locale: ptBR })}
+              </p>
+            </div>
+            <Badge
+              variant="secondary"
+              className={cn(
+                "text-xs shrink-0",
+                a.status === "COMPLETE" ? "bg-primary/10 text-primary" : "bg-accent text-muted-foreground"
+              )}
+            >
+              {a.status === "COMPLETE" ? "Concluída" : "Pendente"}
+            </Badge>
+            <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PrescriptionsTab({ prescriptions }: { prescriptions: any[] }) {
+  if (prescriptions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-3">
+        <div className="flex items-center justify-center size-16 rounded-full bg-muted">
+          <Dumbbell className="size-8 text-muted-foreground" />
+        </div>
+        <p className="text-sm text-muted-foreground text-center">Nenhuma prescrição cadastrada</p>
+      </div>
+    );
+  }
+  return (
+    <div className="p-4">
+      <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
+        {prescriptions.map((p) => (
+          <Link
+            key={p.id}
+            href={`/app/prescricoes/${p.id}`}
+            className="flex items-center gap-3 px-4 py-3.5 bg-card active:bg-muted/50 transition-colors"
+          >
+            <div
+              className={cn(
+                "flex items-center justify-center size-10 rounded-lg shrink-0",
+                p.type === "TRAINING" ? "bg-primary/10 text-primary" : "bg-accent text-accent-foreground"
+              )}
+            >
+              <Dumbbell className="size-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">
+                {p.type === "TRAINING" ? "Ficha de Treino" : "Prescrição Aeróbica"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {format(new Date(p.createdAt), "dd/MM/yyyy", { locale: ptBR })}
+              </p>
+            </div>
+            <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary">
+              Ativa
+            </Badge>
+            <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+          </Link>
+        ))}
       </div>
     </div>
   );

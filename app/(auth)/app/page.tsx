@@ -22,6 +22,8 @@ export default async function DashboardPage() {
         select: {
           id: true,
           name: true,
+          specialty: true,
+          photo: true,
           _count: {
             select: {
               clients: true,
@@ -61,6 +63,11 @@ export default async function DashboardPage() {
     redirect("/app");
   }
 
+  // Dispara onboarding para profissionais que ainda não definiram especialidade
+  if (user.role === "PROFESSIONAL" && user.professional && !user.professional.specialty) {
+    redirect("/app/onboarding");
+  }
+
   const trialActive = isTrialActive(user as any);
   const daysLeft = daysLeftInTrial(user as any);
 
@@ -85,7 +92,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <MobileLayout title="Dashboard">
+    <MobileLayout title="Dashboard" hideHeaderOnScroll>
       {trialActive && <TrialBanner daysLeft={daysLeft} />}
       <div className="p-4">
         {user.role === "PROFESSIONAL" && user.professional ? (
