@@ -10,24 +10,40 @@ import { toast } from "sonner";
 import { clientFormSchema, type ClientFormData } from "@/lib/validations/client";
 import { cn } from "@/lib/utils";
 
+import { isMinor } from "@/lib/validations/client";
 import { NameStep } from "./steps/NameStep";
 import { BirthDateStep } from "./steps/BirthDateStep";
 import { GenderStep } from "./steps/GenderStep";
+import { ResponsibleStep } from "./steps/ResponsibleStep";
 import { ActivityLevelStep } from "./steps/ActivityLevelStep";
 import { ObjectiveStep } from "./steps/ObjectiveStep";
 import { ContactStep } from "./steps/ContactStep";
 
-// ── Step configuration ──────────────────────────────────────────────────────
-const STEPS = [
+// ── Dynamic step configuration ──────────────────────────────────────────────
+// Base steps (always present)
+const BASE_STEPS = [
   { id: "name",          cta: "Continuar →" },
   { id: "birthDate",     cta: "Continuar →" },
   { id: "gender",        cta: "Continuar →" },
+  // { id: "responsible" } — inserted conditionally if minor
   { id: "activityLevel", cta: "Continuar →" },
   { id: "objective",     cta: "Continuar →" },
   { id: "contact",       cta: "Criar conta ✓" },
 ] as const;
 
-const TOTAL_STEPS = STEPS.length;
+function getStepsForAge(birthDate: string | undefined): typeof BASE_STEPS {
+  if (!birthDate || !isMinor(birthDate)) {
+    return BASE_STEPS;
+  }
+
+  // Insert responsible step after gender (index 2)
+  const stepsWithResponsible = [...BASE_STEPS];
+  stepsWithResponsible.splice(3, 0, {
+    id: "responsible",
+    cta: "Continuar →",
+  } as any);
+  return stepsWithResponsible;
+}
 
 // ── Component ───────────────────────────────────────────────────────────────
 export function ClientOnboardingFlow() {
@@ -60,6 +76,11 @@ export function ClientOnboardingFlow() {
   });
 
   const { trigger, getValues, watch } = methods;
+
+  // Get dynamic steps based on age
+  const birthDate = watch("birthDate");
+  const STEPS = getStepsForAge(birthDate);
+  const TOTAL_STEPS = STEPS.length;
 
   const progress = ((currentStep + 1) / TOTAL_STEPS) * 100;
 
@@ -101,22 +122,27 @@ export function ClientOnboardingFlow() {
 
   // ── Navigation ─────────────────────────────────────────────────────────────
   const handleNext = useCallback(async () => {
-    // Step 0 (name): validate name field
-    if (currentStep === 0) {
+    // Validate based on current step ID
+    if (currentStepId === "name") {
       const valid = await trigger("name");
       if (!valid) return;
-    }
-    // Last step (contact): validate then submit
-    else if (currentStep === TOTAL_STEPS - 1) {
+    } else if (currentStepId === "responsible") {
+      // Responsible is required for minors
+      const valid = await trigger(
+        ["responsible.name", "responsible.cpf", "responsible.phone"] as any
+      );
+      if (!valid) return;
+    } else if (currentStepId === "contact") {
+      // Last step: validate contact and submit
       const valid = await trigger(["email", "phone"] as any);
       if (!valid) return;
       onSubmit(getValues());
       return;
     }
-    // Steps 1-4 (birthDate, gender, activityLevel, objective) are optional
+    // Other steps (birthDate, gender, activityLevel, objective) are optional
     setDirection("forward");
     setCurrentStep((s) => s + 1);
-  }, [currentStep, trigger, getValues, onSubmit]);
+  }, [currentStepId, trigger, getValues, onSubmit]);
 
   const handleBack = useCallback(() => {
     if (currentStep === 0) {
@@ -157,14 +183,21 @@ export function ClientOnboardingFlow() {
   }
 
   // ── Step content map ────────────────────────────────────────────────────────
-  const stepContent: Record<number, React.ReactNode> = {
-    0: <NameStep />,
-    1: <BirthDateStep />,
-    2: <GenderStep />,
-    3: <ActivityLevelStep />,
-    4: <ObjectiveStep />,
-    5: <ContactStep />,
+  const getStepContent = (): Record<string, React.ReactNode> => {
+    const content: Record<string, React.ReactNode> = {
+      name: <NameStep />,
+      birthDate: <BirthDateStep />,
+      gender: <GenderStep />,
+      responsible: <ResponsibleStep />,
+      activityLevel: <ActivityLevelStep />,
+      objective: <ObjectiveStep />,
+      contact: <ContactStep />,
+    };
+    return content;
   };
+
+  const stepContent = getStepContent();
+  const currentStepId = STEPS[currentStep]?.id;
 
   // ── Main layout ─────────────────────────────────────────────────────────────
   return (
@@ -206,7 +239,7 @@ export function ClientOnboardingFlow() {
               : "slide-in-from-left-4"
           )}
         >
-          {stepContent[currentStep]}
+          {currentStepId && stepContent[currentStepId]}
         </div>
 
         {/* ── Sticky CTA ───────────────────────────────────────────────────── */}
@@ -230,7 +263,7 @@ export function ClientOnboardingFlow() {
                   ]
             )}
           >
-            {STEPS[currentStep].cta}
+            {STEPS[currentStep]?.cta}
           </button>
         </div>
 

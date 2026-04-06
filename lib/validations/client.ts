@@ -29,7 +29,7 @@ export function isMinor(birthDateStr: string | undefined | null): boolean {
 }
 
 // ── CPF Helper ──────────────────────────────────────────────────
-function isValidCPF(cpf: string): boolean {
+export function isValidCPF(cpf: string): boolean {
   const digits = cpf.replace(/\D/g, "");
   if (digits.length !== 11) return false;
   if (/^(\d)\1{10}$/.test(digits)) return false;
@@ -134,7 +134,8 @@ export const clientFormSchema = z
     availability: availabilitySchema.optional(),
   })
   .superRefine((data, ctx) => {
-    // Conditional validation: if client is a minor, responsible fields are required
+    // CRITICAL: Conditional validation for minors
+    // If client is under 18, responsible contact is MANDATORY
     if (isMinor(data.birthDate)) {
       const resp = data.responsible;
 
