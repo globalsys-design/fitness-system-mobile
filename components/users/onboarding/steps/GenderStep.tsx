@@ -9,8 +9,6 @@ import { cn } from "@/lib/utils";
 const GENDER_META: Record<string, { emoji: string }> = {
   M: { emoji: "♂️" },
   F: { emoji: "♀️" },
-  OTHER: { emoji: "⚧️" },
-  PREFER_NOT: { emoji: "🔒" },
 };
 
 export function GenderStep() {
@@ -25,7 +23,7 @@ export function GenderStep() {
           Qual o<br />seu género?
         </h1>
         <p className="text-base text-muted-foreground">
-          Ajuda a personalizar a avaliação física
+          Essencial para cálculos fisiológicos precisos
         </p>
       </div>
 
@@ -69,7 +67,7 @@ export function GenderStep() {
       </div>
 
       <p className="text-xs text-muted-foreground text-center">
-        Pode ignorar este campo se preferir
+        Utilizado nas equações de antropometria e metabolismo
       </p>
     </div>
   );

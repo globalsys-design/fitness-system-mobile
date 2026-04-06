@@ -89,6 +89,10 @@ export async function PATCH(
         birthDate: body.birthDate ? new Date(body.birthDate) : null,
       }),
       ...(body.gender !== undefined && { gender: body.gender }),
+      ...(body.objective !== undefined && { objective: body.objective || null }),
+      ...(body.activityLevel !== undefined && {
+        activityLevel: body.activityLevel || null,
+      }),
       ...(body.status !== undefined && { status: body.status }),
       ...(body.address !== undefined && { address: body.address }),
       ...(body.emergencyContact !== undefined && {

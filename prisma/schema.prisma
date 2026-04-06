@@ -197,6 +197,8 @@ model Client {
   address            Json?
   emergencyContact   Json?
   responsibleContact Json?
+  objective          String?
+  activityLevel      String?
   availability       Json?
   passwordHash       String?
   status             ClientStatus @default(ACTIVE)

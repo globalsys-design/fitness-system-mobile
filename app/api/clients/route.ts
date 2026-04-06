@@ -20,6 +20,8 @@ const createClientSchema = z.object({
   maritalStatus: z.string().optional().transform(v => v || undefined),
   healthInsurance: z.string().optional().transform(v => v || undefined),
   profession: z.string().optional().transform(v => v || undefined),
+  objective: z.string().optional().transform(v => v || undefined),
+  activityLevel: z.string().optional().transform(v => v || undefined),
   photo: z.string().optional().transform(v => v || undefined),
   address: z.any().optional(),
   responsibleContact: z.any().optional(),

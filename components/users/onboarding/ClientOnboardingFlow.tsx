@@ -11,16 +11,20 @@ import { clientFormSchema, type ClientFormData } from "@/lib/validations/client"
 import { cn } from "@/lib/utils";
 
 import { NameStep } from "./steps/NameStep";
+import { BirthDateStep } from "./steps/BirthDateStep";
 import { GenderStep } from "./steps/GenderStep";
+import { ActivityLevelStep } from "./steps/ActivityLevelStep";
 import { ObjectiveStep } from "./steps/ObjectiveStep";
 import { ContactStep } from "./steps/ContactStep";
 
 // ── Step configuration ──────────────────────────────────────────────────────
 const STEPS = [
-  { id: "name",      label: "Nome",       cta: "Continuar →" },
-  { id: "gender",    label: "Género",     cta: "Continuar →" },
-  { id: "objective", label: "Objetivo",   cta: "Continuar →" },
-  { id: "contact",   label: "Contacto",   cta: "Criar conta ✓" },
+  { id: "name",          cta: "Continuar →" },
+  { id: "birthDate",     cta: "Continuar →" },
+  { id: "gender",        cta: "Continuar →" },
+  { id: "activityLevel", cta: "Continuar →" },
+  { id: "objective",     cta: "Continuar →" },
+  { id: "contact",       cta: "Criar conta ✓" },
 ] as const;
 
 const TOTAL_STEPS = STEPS.length;
@@ -33,9 +37,6 @@ export function ClientOnboardingFlow() {
   const [direction, setDirection] = useState<"forward" | "back">("forward");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Objective is local UI state — not persisted to client model (set later via assessment)
-  const [selectedObjective, setSelectedObjective] = useState<string | null>(null);
-
   const methods = useForm<ClientFormData>({
     resolver: zodResolver(clientFormSchema) as any,
     defaultValues: {
@@ -46,6 +47,8 @@ export function ClientOnboardingFlow() {
       cpf: "",
       birthDate: "",
       gender: "",
+      activityLevel: "",
+      objective: "",
       maritalStatus: "",
       ethnicity: "",
       healthInsurance: "",
@@ -58,7 +61,6 @@ export function ClientOnboardingFlow() {
 
   const { trigger, getValues, watch } = methods;
 
-  // Progress fills proportionally as steps advance
   const progress = ((currentStep + 1) / TOTAL_STEPS) * 100;
 
   // Step 0 CTA is disabled until name has ≥ 2 chars
@@ -70,7 +72,6 @@ export function ClientOnboardingFlow() {
     async (data: ClientFormData) => {
       setIsSubmitting(true);
 
-      // Promise that resolves after minimum "ilusão de trabalho" time
       const minDelay = new Promise<void>((resolve) => setTimeout(resolve, 1800));
 
       try {
@@ -100,18 +101,19 @@ export function ClientOnboardingFlow() {
 
   // ── Navigation ─────────────────────────────────────────────────────────────
   const handleNext = useCallback(async () => {
-    // Validate fields relevant to the current step
+    // Step 0 (name): validate name field
     if (currentStep === 0) {
       const valid = await trigger("name");
       if (!valid) return;
-    } else if (currentStep === TOTAL_STEPS - 1) {
-      // Last step: validate contact fields then submit
+    }
+    // Last step (contact): validate then submit
+    else if (currentStep === TOTAL_STEPS - 1) {
       const valid = await trigger(["email", "phone"] as any);
       if (!valid) return;
       onSubmit(getValues());
       return;
     }
-    // Steps 1 & 2 (gender/objective) are optional — always allow advancing
+    // Steps 1-4 (birthDate, gender, activityLevel, objective) are optional
     setDirection("forward");
     setCurrentStep((s) => s + 1);
   }, [currentStep, trigger, getValues, onSubmit]);
@@ -125,17 +127,14 @@ export function ClientOnboardingFlow() {
     setCurrentStep((s) => s - 1);
   }, [currentStep, router]);
 
-  // ── Loading Screen (Efeito de Ilusão de Trabalho) ──────────────────────────
+  // ── Loading Screen ─────────────────────────────────────────────────────────
   if (isSubmitting) {
     return (
       <div className="flex flex-col items-center justify-center h-[100dvh] bg-background px-8 gap-8">
-        {/* Spinner */}
         <div className="relative size-20">
           <div className="absolute inset-0 rounded-full border-[3px] border-primary/15" />
           <div className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-primary animate-spin" />
         </div>
-
-        {/* Copy */}
         <div className="flex flex-col items-center gap-3 text-center">
           <p className="text-2xl font-bold tracking-tight leading-tight">
             Ajustando o<br />seu plano...
@@ -144,8 +143,6 @@ export function ClientOnboardingFlow() {
             Estamos preparando tudo para você ✨
           </p>
         </div>
-
-        {/* Animated dots */}
         <div className="flex gap-1.5 mt-2">
           {[0, 1, 2].map((i) => (
             <div
@@ -162,14 +159,11 @@ export function ClientOnboardingFlow() {
   // ── Step content map ────────────────────────────────────────────────────────
   const stepContent: Record<number, React.ReactNode> = {
     0: <NameStep />,
-    1: <GenderStep />,
-    2: (
-      <ObjectiveStep
-        selectedObjective={selectedObjective}
-        onSelect={setSelectedObjective}
-      />
-    ),
-    3: <ContactStep />,
+    1: <BirthDateStep />,
+    2: <GenderStep />,
+    3: <ActivityLevelStep />,
+    4: <ObjectiveStep />,
+    5: <ContactStep />,
   };
 
   // ── Main layout ─────────────────────────────────────────────────────────────
@@ -201,7 +195,7 @@ export function ClientOnboardingFlow() {
           </span>
         </div>
 
-        {/* ── Step Content (scrollable, with bottom padding for CTA) ──────── */}
+        {/* ── Step Content ────────────────────────────────────────────────── */}
         <div
           key={currentStep}
           className={cn(

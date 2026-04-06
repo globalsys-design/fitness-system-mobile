@@ -105,7 +105,7 @@ export const clientFormSchema = z
       .string()
       .optional()
       .refine((val) => !val || isValidCPF(val), { message: "CPF inválido" }),
-    gender: z.string().optional(),
+    gender: z.enum(["M", "F", ""]).optional(),
     maritalStatus: z.string().optional(),
     ethnicity: z.string().optional(),
     healthInsurance: z.string().optional(),
@@ -113,6 +113,10 @@ export const clientFormSchema = z
     phone: z.string().optional(),
     phoneDdi: z.string().default("+55"),
     emergencyPhone: z.string().optional(),
+
+    // OTPP — Objetivo e Nível de Atividade
+    objective: z.string().optional(),
+    activityLevel: z.string().optional(),
 
     // Step 2 — Endereço e Profissão
     address: addressSchema.optional(),
@@ -183,8 +187,6 @@ export const STEP_FIELDS: Record<number, (keyof ClientFormData)[]> = {
 export const GENDER_OPTIONS = [
   { value: "M", label: "Masculino" },
   { value: "F", label: "Feminino" },
-  { value: "OTHER", label: "Outro" },
-  { value: "PREFER_NOT", label: "Prefiro não informar" },
 ] as const;
 
 export const MARITAL_STATUS_OPTIONS = [

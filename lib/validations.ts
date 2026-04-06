@@ -36,7 +36,7 @@ export const clientSchema = z.object({
   phone: z.string().optional(),
   cpf: z.string().optional(),
   birthDate: z.string().optional(),
-  gender: z.string().optional(),
+  gender: z.enum(["M", "F", ""]).optional(),
   activityLevel: z.string().optional(),
   objective: z.string().optional(),
   address: z.object({
@@ -61,7 +61,7 @@ export const clientStep1Schema = z.object({
   email: z.string().email("Email inválido").optional().or(z.literal("")),
   phone: z.string().optional(),
   birthDate: z.string().optional(),
-  gender: z.string().optional(),
+  gender: z.enum(["M", "F", ""]).optional(),
 });
 
 export const assistantSchema = z.object({

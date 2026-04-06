@@ -17,6 +17,8 @@ import {
   User,
   Shield,
   ChevronRight,
+  CheckCircle2,
+  Activity,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +35,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Progress,
+  ProgressTrack,
+  ProgressIndicator,
+  ProgressLabel,
+  ProgressValue,
+} from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { GENDER_OPTIONS } from "@/lib/validations/client";
 import Link from "next/link";
@@ -48,6 +57,8 @@ interface ClientDetailProps {
     cpf: string | null;
     birthDate: string | null;
     gender: string | null;
+    objective: string | null;
+    activityLevel: string | null;
     photo: string | null;
     address: any;
     emergencyContact: any;
@@ -87,9 +98,26 @@ export function ClientDetail({ client }: ClientDetailProps) {
       ? "Masculino"
       : client.gender === "F"
         ? "Feminino"
-        : client.gender === "OTHER"
-          ? "Outro"
-          : null;
+        : null;
+
+  // Calculate profile completion
+  const profileFields = [
+    { key: "email", filled: !!client.email },
+    { key: "phone", filled: !!client.phone },
+    { key: "cpf", filled: !!client.cpf },
+    { key: "birthDate", filled: !!client.birthDate },
+    { key: "gender", filled: !!client.gender },
+    { key: "objective", filled: !!client.objective },
+    { key: "activityLevel", filled: !!client.activityLevel },
+    { key: "address", filled: !!client.address },
+    { key: "photo", filled: !!client.photo },
+  ];
+
+  const completedCount = profileFields.filter((f) => f.filled).length;
+  const completionPercentage = Math.round(
+    (completedCount / profileFields.length) * 100
+  );
+  const isProfileComplete = completionPercentage === 100;
 
   // Form state para edição
   const [formData, setFormData] = useState({
@@ -101,6 +129,8 @@ export function ClientDetail({ client }: ClientDetailProps) {
       ? format(new Date(client.birthDate), "yyyy-MM-dd")
       : "",
     gender: client.gender ?? "",
+    objective: client.objective ?? "",
+    activityLevel: client.activityLevel ?? "",
     status: client.status,
   });
 
@@ -176,6 +206,48 @@ export function ClientDetail({ client }: ClientDetailProps) {
         </div>
       </div>
 
+      {/* Progressive Profiling Banner */}
+      {!isProfileComplete && (
+        <div className="px-4 py-3 bg-primary/10 border-b border-primary/20">
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">
+                Completar perfil
+              </p>
+              <Progress value={completionPercentage} className="mb-2">
+                <ProgressLabel className="text-xs">
+                  {completedCount} de {profileFields.length} preenchidos
+                </ProgressLabel>
+                <ProgressValue>{completionPercentage}%</ProgressValue>
+                <ProgressTrack className="w-full">
+                  <ProgressIndicator />
+                </ProgressTrack>
+              </Progress>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setTab("info");
+                setIsEditing(true);
+              }}
+              className="shrink-0"
+            >
+              Editar
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {isProfileComplete && (
+        <div className="px-4 py-3 bg-primary/10 border-b border-primary/20 flex items-center gap-2">
+          <CheckCircle2 className="size-5 text-primary shrink-0" />
+          <p className="text-sm font-medium text-primary">
+            Perfil completo! 🎉
+          </p>
+        </div>
+      )}
+
       {/* Tabs */}
       <Tabs
         value={tab}
@@ -231,6 +303,8 @@ export function ClientDetail({ client }: ClientDetailProps) {
                           ? format(new Date(client.birthDate), "yyyy-MM-dd")
                           : "",
                         gender: client.gender ?? "",
+                        objective: client.objective ?? "",
+                        activityLevel: client.activityLevel ?? "",
                         status: client.status,
                       });
                     }}
@@ -336,6 +410,49 @@ export function ClientDetail({ client }: ClientDetailProps) {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label>Objetivo</Label>
+                  <Select
+                    value={formData.objective || undefined}
+                    onValueChange={(v) => {
+                      if (v !== null)
+                        setFormData({ ...formData, objective: v as string });
+                    }}
+                  >
+                    <SelectTrigger className="h-12 mt-1.5">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
+                      <SelectItem value="hipertrofia">Hipertrofia</SelectItem>
+                      <SelectItem value="condicionamento">Condicionamento</SelectItem>
+                      <SelectItem value="saude">Saúde & Bem-estar</SelectItem>
+                      <SelectItem value="reabilitacao">Reabilitação</SelectItem>
+                      <SelectItem value="performance">Performance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Nível de Atividade</Label>
+                  <Select
+                    value={formData.activityLevel || undefined}
+                    onValueChange={(v) => {
+                      if (v !== null)
+                        setFormData({ ...formData, activityLevel: v as string });
+                    }}
+                  >
+                    <SelectTrigger className="h-12 mt-1.5">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sedentary">Sedentário</SelectItem>
+                      <SelectItem value="light">Levemente ativo</SelectItem>
+                      <SelectItem value="moderate">Moderadamente ativo</SelectItem>
+                      <SelectItem value="active">Muito ativo</SelectItem>
+                      <SelectItem value="athlete">Atleta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col gap-1">
@@ -355,6 +472,33 @@ export function ClientDetail({ client }: ClientDetailProps) {
                   icon={User}
                   label="Gênero"
                   value={genderLabel}
+                />
+                <InfoRow
+                  icon={Dumbbell}
+                  label="Objetivo"
+                  value={
+                    client.objective
+                      ? client.objective.charAt(0).toUpperCase() +
+                        client.objective.slice(1)
+                      : null
+                  }
+                />
+                <InfoRow
+                  icon={Activity}
+                  label="Nível de Atividade"
+                  value={
+                    client.activityLevel
+                      ? client.activityLevel === "sedentary"
+                        ? "Sedentário"
+                        : client.activityLevel === "light"
+                        ? "Levemente ativo"
+                        : client.activityLevel === "moderate"
+                        ? "Moderadamente ativo"
+                        : client.activityLevel === "active"
+                        ? "Muito ativo"
+                        : "Atleta"
+                      : null
+                  }
                 />
                 {client.address && (
                   <InfoRow

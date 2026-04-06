@@ -24,9 +24,7 @@ export function ClientCard({ client }: ClientCardProps) {
       ? "Masculino"
       : client.gender === "F"
         ? "Feminino"
-        : client.gender === "OTHER"
-          ? "Outro"
-          : null;
+        : null;
 
   return (
     <Link
