@@ -25,16 +25,20 @@ export async function GET(_req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
+    const body = await req.json();
 
-  const professional = await db.professional.findUnique({
-    where: { userId: session.user.id },
-  });
+    const professional = await db.professional.findUnique({
+      where: { userId: session.user.id },
+    });
 
-  if (professional) {
+    if (!professional) {
+      return NextResponse.json({ error: "Professional not found" }, { status: 404 });
+    }
+
     // Build update data — only include defined fields
     const data: Record<string, any> = {};
     if (body.name      !== undefined) data.name      = body.name;
@@ -59,14 +63,20 @@ export async function PATCH(req: NextRequest) {
       where: { id: professional.id },
       data,
     });
-  }
 
-  if (body.name !== undefined) {
-    await db.user.update({
-      where: { id: session.user.id },
-      data: { name: body.name },
-    });
-  }
+    if (body.name !== undefined) {
+      await db.user.update({
+        where: { id: session.user.id },
+        data: { name: body.name },
+      });
+    }
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("PATCH /api/profile error:", error);
+    return NextResponse.json(
+      { error: "Failed to update profile" },
+      { status: 500 }
+    );
+  }
 }
