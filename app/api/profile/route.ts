@@ -51,14 +51,15 @@ export async function PATCH(req: NextRequest) {
 
     // Store city/state inside address JSON for compatibility
     if (body.city !== undefined || body.state !== undefined) {
-      const existing = typeof professional.address === 'object' && professional.address !== null
-        ? (professional.address as any)
-        : {};
-      data.address = {
-        ...existing,
-        ...(body.city  !== undefined ? { city:  body.city  } : {}),
-        ...(body.state !== undefined ? { state: body.state } : {}),
+      const existing = (professional.address as any) || {};
+      const newAddress = {
+        street: existing.street || null,
+        neighborhood: existing.neighborhood || null,
+        city: body.city !== undefined ? body.city : existing.city || null,
+        state: body.state !== undefined ? body.state : existing.state || null,
+        zipCode: existing.zipCode || null,
       };
+      data.address = newAddress;
     }
 
     await db.professional.update({
