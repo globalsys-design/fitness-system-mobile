@@ -16,6 +16,8 @@ export async function GET(_req: NextRequest) {
       profession: true,
       specialty: true,
       cref: true,
+      city: true,
+      state: true,
       photo: true,
       address: true,
     },
@@ -41,26 +43,15 @@ export async function PATCH(req: NextRequest) {
 
     // Build update data — only include defined fields
     const data: Record<string, any> = {};
-    if (body.name      !== undefined) data.name      = body.name;
-    if (body.phone     !== undefined) data.phone     = body.phone || null;
+    if (body.name       !== undefined) data.name       = body.name;
+    if (body.phone      !== undefined) data.phone      = body.phone || null;
     if (body.profession !== undefined) data.profession = body.profession || null;
-    if (body.specialty !== undefined) data.specialty = body.specialty || null;
-    if (body.cref      !== undefined) data.cref      = body.cref || null;
-    if (body.photo     !== undefined) data.photo     = body.photo || null;
-    if (body.address   !== undefined) data.address   = body.address || null;
-
-    // Store city/state inside address JSON for compatibility
-    if (body.city !== undefined || body.state !== undefined) {
-      const existing = (professional.address as any) || {};
-      const newAddress = {
-        street: existing.street || null,
-        neighborhood: existing.neighborhood || null,
-        city: body.city !== undefined ? body.city : existing.city || null,
-        state: body.state !== undefined ? body.state : existing.state || null,
-        zipCode: existing.zipCode || null,
-      };
-      data.address = newAddress;
-    }
+    if (body.specialty  !== undefined) data.specialty  = body.specialty || null;
+    if (body.cref       !== undefined) data.cref       = body.cref || null;
+    if (body.city       !== undefined) data.city       = body.city || null;
+    if (body.state      !== undefined) data.state      = body.state || null;
+    if (body.photo      !== undefined) data.photo      = body.photo || null;
+    if (body.address    !== undefined) data.address    = body.address || null;
 
     await db.professional.update({
       where: { id: professional.id },

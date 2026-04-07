@@ -137,6 +137,8 @@ model Professional {
   profession    String?
   specialty     String?
   cref          String?
+  city          String?
+  state         String?
   photo         String?
   address       Json?
   status        AssistantStatus @default(ACTIVE)
