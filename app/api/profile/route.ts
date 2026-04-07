@@ -50,12 +50,14 @@ export async function PATCH(req: NextRequest) {
     if (body.address   !== undefined) data.address   = body.address || null;
 
     // Store city/state inside address JSON for compatibility
-    if (body.city || body.state) {
-      const existing = (professional.address as any) ?? {};
+    if (body.city !== undefined || body.state !== undefined) {
+      const existing = typeof professional.address === 'object' && professional.address !== null
+        ? (professional.address as any)
+        : {};
       data.address = {
         ...existing,
-        ...(body.city  ? { city:  body.city  } : {}),
-        ...(body.state ? { state: body.state } : {}),
+        ...(body.city  !== undefined ? { city:  body.city  } : {}),
+        ...(body.state !== undefined ? { state: body.state } : {}),
       };
     }
 
