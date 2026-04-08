@@ -2,8 +2,10 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { MobileLayout } from "@/components/mobile/mobile-layout";
+import { ClientLayout } from "@/components/mobile/client-layout";
 import { DashboardProfessional } from "@/components/dashboard/dashboard-professional";
 import { DashboardAssistant } from "@/components/dashboard/dashboard-assistant";
+import { CustomerDashboard } from "@/components/dashboard/customer-dashboard";
 import { TrialBanner } from "@/components/paywall/trial-banner";
 import { isTrialActive, daysLeftInTrial } from "@/lib/subscription";
 
@@ -68,6 +70,51 @@ export default async function DashboardPage() {
     redirect("/app/onboarding");
   }
 
+  // ── CLIENT role: Hub do Aluno ──────────────────────────────────────────
+  if (user.role === "CLIENT") {
+    // Find the client record linked to this user
+    const client = await db.client.findFirst({
+      where: { email: session.user.email ?? "" },
+      select: {
+        id: true,
+        name: true,
+        professional: { select: { name: true } },
+        _count: {
+          select: { prescriptions: true, assessments: true },
+        },
+      },
+    });
+
+    const latestPrescription = client
+      ? await db.prescription.findFirst({
+          where: { clientId: client.id },
+          orderBy: { createdAt: "desc" },
+          select: { id: true, type: true, createdAt: true },
+        })
+      : null;
+
+    return (
+      <ClientLayout title="Inicio" hideHeaderOnScroll>
+        <CustomerDashboard
+          clientName={client?.name ?? session.user.name ?? "Aluno"}
+          professionalName={client?.professional?.name ?? null}
+          totalPrescriptions={client?._count?.prescriptions ?? 0}
+          totalAssessments={client?._count?.assessments ?? 0}
+          latestPrescription={
+            latestPrescription
+              ? {
+                  id: latestPrescription.id,
+                  type: latestPrescription.type,
+                  createdAt: latestPrescription.createdAt.toISOString(),
+                }
+              : null
+          }
+        />
+      </ClientLayout>
+    );
+  }
+
+  // ── PROFESSIONAL / ASSISTANT flow ──────────────────────────────────────
   const trialActive = isTrialActive(user as any);
   const daysLeft = daysLeftInTrial(user as any);
 

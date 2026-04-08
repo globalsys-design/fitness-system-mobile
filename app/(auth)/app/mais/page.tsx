@@ -5,6 +5,7 @@ import { MobileLayout } from "@/components/mobile/mobile-layout";
 import { ThemeToggleRow } from "@/components/settings/theme-toggle-row";
 import {
   CalendarDays,
+  CalendarCheck,
   Bell,
   HelpCircle,
   UserCircle,
@@ -18,8 +19,9 @@ const menuItems = [
   {
     section: "Ferramentas",
     items: [
-      { label: "Calendário", href: "/app/mais/calendario", icon: CalendarDays },
-      { label: "Notificações", href: "/app/mais/notificacoes", icon: Bell },
+      { label: "Agenda", href: "/app/mais/agenda", icon: CalendarCheck },
+      { label: "Calendario", href: "/app/mais/calendario", icon: CalendarDays },
+      { label: "Notificacoes", href: "/app/mais/notificacoes", icon: Bell },
     ],
   },
   {
