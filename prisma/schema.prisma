@@ -151,8 +151,25 @@ model Professional {
   assessments    Assessment[]
   prescriptions  Prescription[]
   calendarEvents CalendarEvent[]
+  exercises      Exercise[]
 
   @@map("professionals")
+}
+
+model Exercise {
+  id             String   @id @default(cuid())
+  professionalId String
+  name           String
+  category       String   // STRENGTH, AEROBIC
+  muscleGroups   String[]
+  videoUrl       String?
+  thumbnail      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@map("exercises")
 }
 
 model Assistant {
