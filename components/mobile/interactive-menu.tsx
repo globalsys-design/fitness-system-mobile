@@ -88,7 +88,7 @@ export const InteractiveMenu = memo(function InteractiveMenu() {
     <nav
       className={cn(
         "fixed z-40 flex items-center justify-between px-4 py-2 rounded-full shadow-2xl",
-        "bg-background/80 backdrop-blur-xl border border-border/50",
+        "glass-effect",
         "left-4 right-4 max-w-[400px] mx-auto",
         "bottom-[calc(env(safe-area-inset-bottom)+1.5rem)]"
       )}

@@ -194,3 +194,41 @@
     overscroll-behavior: none;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Liquid Glass Effect — Frosted glass morphism with backdrop blur
+   Usage: <div className="glass-effect"> or <div className="glass-effect glass-light">
+   ───────────────────────────────────────────────────────────────────────── */
+@layer utilities {
+  .glass-effect {
+    @apply backdrop-blur-xl border transition-all;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-effect.glass-light {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .glass-effect.glass-strong {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Dark mode variants */
+  .dark .glass-effect {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .glass-effect.glass-light {
+    background-color: rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .dark .glass-effect.glass-strong {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}
