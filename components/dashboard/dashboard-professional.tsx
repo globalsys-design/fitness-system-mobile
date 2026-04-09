@@ -258,59 +258,61 @@ export function DashboardProfessional({
             </Link>
           )}
         </div>
+      </section>
 
-        {/* ── Métricas do Ecossistema — Glass Bento Grid ─────────────── */}
-        <div className="flex flex-col gap-3 mt-6">
-          <h3 className="text-xl font-bold text-primary-foreground">
-            Métricas do Ecossistema
-          </h3>
+      {/* ═══════════════════════════════════════════════════════════════════
+          MÉTRICAS DO ECOSSISTEMA — Dark section, glass cards
+         ═══════════════════════════════════════════════════════════════════ */}
+      <section className="bg-secondary px-5 pt-6 pb-6 flex flex-col gap-3">
+        <h3 className="text-xl font-bold text-primary-foreground">
+          Métricas do Ecossistema
+        </h3>
 
-          {/* Large metric — Portfolio value */}
-          <div className="glass-effect flex items-center justify-between p-4 rounded-xl h-[108px]">
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-semibold text-primary-foreground">
-                Valor Total do Portfólio
-              </span>
-              <span className="text-[30px] font-extrabold leading-9 text-primary-foreground tabular-nums">
-                —
-              </span>
-            </div>
-            <div className="size-12 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
-              <TrendingUp className="size-5 text-success" />
-            </div>
+        {/* Large metric — Portfolio value */}
+        <div className="glass-effect flex items-center justify-between p-4 rounded-xl h-[108px]">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-semibold text-primary-foreground">
+              Valor Total do Portfólio
+            </span>
+            <span className="text-[30px] font-extrabold leading-9 text-primary-foreground tabular-nums">
+              —
+            </span>
           </div>
+          <div className="size-12 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+            <TrendingUp className="size-5 text-success" />
+          </div>
+        </div>
 
-          {/* 2×2 KPI Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {kpis.map((kpi) => {
-              const Icon = kpi.icon;
-              return (
-                <Link key={kpi.label} href={kpi.href}>
-                  <div className="glass-effect flex flex-col gap-1.5 p-3 rounded-xl active:scale-[0.97] transition-all shadow-[0_8px_24px_-10px_rgba(42,52,57,0.06)]">
-                    <span className="text-[10px] font-semibold text-primary-foreground uppercase tracking-[0.5px]">
-                      {kpi.label}
+        {/* 2×2 KPI Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          {kpis.map((kpi) => {
+            const Icon = kpi.icon;
+            return (
+              <Link key={kpi.label} href={kpi.href}>
+                <div className="glass-effect flex flex-col gap-1.5 p-3 rounded-xl active:scale-[0.97] transition-all shadow-[0_8px_24px_-10px_rgba(42,52,57,0.06)]">
+                  <span className="text-[10px] font-semibold text-primary-foreground uppercase tracking-[0.5px]">
+                    {kpi.label}
+                  </span>
+                  <div className="flex items-end justify-between pr-1">
+                    <span className={cn(
+                      "text-[30px] font-semibold leading-9 tabular-nums",
+                      kpi.valueColor
+                    )}>
+                      {String(kpi.value).padStart(2, "0")}
                     </span>
-                    <div className="flex items-end justify-between pr-1">
-                      <span className={cn(
-                        "text-[30px] font-semibold leading-9 tabular-nums",
-                        kpi.valueColor
-                      )}>
-                        {String(kpi.value).padStart(2, "0")}
-                      </span>
-                      <Icon className="size-5 text-primary-foreground/40" />
-                    </div>
+                    <Icon className="size-5 text-primary-foreground/40" />
                   </div>
-                </Link>
-              );
-            })}
-          </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
           CTA — Primeira Avaliação
          ═══════════════════════════════════════════════════════════════════ */}
-      <section className="px-5 pt-6 pb-8">
+      <section className="bg-secondary px-5 pb-8">
         <Link href="/app/avaliacoes/nova">
           <div className={cn(
             "relative overflow-hidden rounded-2xl p-5",
