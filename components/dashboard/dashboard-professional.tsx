@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Users,
@@ -318,17 +319,25 @@ export function DashboardProfessional({
             className={cn(
               "relative overflow-hidden rounded-xl h-[160px]",
               "active:scale-[0.98] transition-all",
-              /* Imagem de fundo simulada com gradient de atletismo */
-              "bg-[radial-gradient(ellipse_at_top_right,rgb(0,144,168)_0%,rgb(42,52,57)_70%)]"
+              "bg-secondary" /* fallback while image loads */
             )}
           >
-            {/* ── Figma Background overlay: gradient bottom→top ── */}
-            {/* from-[rgba(42,52,57,0.8)] via-50%-[rgba(42,52,57,0.2)] to-transparent */}
+            {/* ── Athlete background image (Figma node 48:1043) ── */}
+            <Image
+              src="/images/cta-athletes.png"
+              alt="Atletas em treino funcional"
+              fill
+              className="object-cover object-center"
+              sizes="(max-width: 768px) 100vw, 400px"
+              priority={false}
+            />
+
+            {/* ── Figma overlay: gradient bottom→top (node 1:163) ── */}
             <div
-              className="absolute inset-0 rounded-xl"
+              className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(to top, rgba(42,52,57,0.85) 0%, rgba(42,52,57,0.2) 50%, rgba(42,52,57,0) 100%)",
+                  "linear-gradient(to top, rgba(42,52,57,0.9) 0%, rgba(42,52,57,0.3) 50%, rgba(42,52,57,0) 100%)",
               }}
             />
 
