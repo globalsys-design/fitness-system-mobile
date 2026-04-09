@@ -52,14 +52,14 @@ const NavItem = memo(function NavItem({
         <Icon
           className={cn(
             "size-[18px] transition-colors duration-200",
-            active ? "text-info" : "text-muted-foreground"
+            active ? "text-primary" : "text-muted-foreground"
           )}
           strokeWidth={active ? 2.5 : 2}
         />
         <span
           className={cn(
             "text-[10px] font-semibold tracking-[0.25px] whitespace-nowrap transition-colors duration-200",
-            active ? "text-info" : "text-muted-foreground"
+            active ? "text-primary" : "text-muted-foreground"
           )}
         >
           {item.label}
