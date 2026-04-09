@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { MobileLayout } from "@/components/mobile/mobile-layout";
+import { InteractiveMenu } from "@/components/mobile/interactive-menu";
 import { ClientLayout } from "@/components/mobile/client-layout";
 import { DashboardProfessional } from "@/components/dashboard/dashboard-professional";
 import { DashboardAssistant } from "@/components/dashboard/dashboard-assistant";
@@ -118,37 +119,65 @@ export default async function DashboardPage() {
   const trialActive = isTrialActive(user as any);
   const daysLeft = daysLeftInTrial(user as any);
 
-  const last30Days = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-  let recentAssessments = 0;
-  let recentPrescriptions = 0;
+  // Fetch today's events for the professional dashboard agenda
+  let todayEvents: {
+    id: string;
+    title: string;
+    type: string;
+    startAt: string;
+    endAt: string;
+    client: { name: string } | null;
+  }[] = [];
 
   if (user.professional) {
-    recentAssessments = await db.assessment.count({
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const events = await db.calendarEvent.findMany({
       where: {
         professionalId: user.professional.id,
-        createdAt: { gte: last30Days },
+        startAt: { gte: todayStart, lte: todayEnd },
       },
+      include: { client: { select: { name: true } } },
+      orderBy: { startAt: "asc" },
     });
-    recentPrescriptions = await db.prescription.count({
-      where: {
-        professionalId: user.professional.id,
-        createdAt: { gte: last30Days },
-      },
-    });
+
+    todayEvents = events.map((e) => ({
+      id: e.id,
+      title: e.title,
+      type: e.type,
+      startAt: e.startAt.toISOString(),
+      endAt: e.endAt.toISOString(),
+      client: e.client ? { name: e.client.name } : null,
+    }));
+  }
+
+  // Professional dashboard uses custom layout (no MobileHeader — hero acts as header)
+  if (user.role === "PROFESSIONAL" && user.professional) {
+    return (
+      <div className="flex flex-col bg-background" style={{ height: "100dvh" }}>
+        <main
+          className="flex-1 overflow-y-auto"
+          style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+        >
+          {trialActive && <TrialBanner daysLeft={daysLeft} />}
+          <DashboardProfessional
+            professional={user.professional}
+            todayEvents={todayEvents}
+          />
+        </main>
+        <InteractiveMenu />
+      </div>
+    );
   }
 
   return (
     <MobileLayout title="Dashboard" hideHeaderOnScroll>
       {trialActive && <TrialBanner daysLeft={daysLeft} />}
       <div className="p-4">
-        {user.role === "PROFESSIONAL" && user.professional ? (
-          <DashboardProfessional
-            professional={user.professional}
-            recentAssessments={recentAssessments}
-            recentPrescriptions={recentPrescriptions}
-          />
-        ) : user.assistant ? (
+        {user.assistant ? (
           <DashboardAssistant assistant={user.assistant} />
         ) : (
           <div className="flex flex-col items-center justify-center py-16 gap-4">

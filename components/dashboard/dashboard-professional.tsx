@@ -1,19 +1,35 @@
+"use client";
+
+import { useMemo } from "react";
 import Link from "next/link";
 import {
   Users,
+  UserCheck,
   ClipboardList,
   Dumbbell,
-  UserCheck,
-  TrendingUp,
-  CalendarPlus,
+  CalendarClock,
+  ChevronRight,
+  Sparkles,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+/* ── Types ─────────────────────────────────────────────────────────────── */
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  type: string;
+  startAt: string;
+  endAt: string;
+  client: { name: string } | null;
+}
 
 interface DashboardProfessionalProps {
   professional: {
     id: string;
     name: string | null;
+    photo: string | null;
+    specialty: string | null;
     _count: {
       clients: number;
       assistants: number;
@@ -21,135 +37,293 @@ interface DashboardProfessionalProps {
       prescriptions: number;
     };
   };
-  recentAssessments: number;
-  recentPrescriptions: number;
+  todayEvents: CalendarEvent[];
 }
+
+/* ── Helpers ───────────────────────────────────────────────────────────── */
+
+function getGreeting(): string {
+  const h = new Date().getHours();
+  return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+}
+
+function formatDateLong(): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date());
+}
+
+/** Build 7-day window centered on today */
+function buildWeekDays(): { date: Date; label: string; dayNum: number; isToday: boolean }[] {
+  const today = new Date();
+  const days: { date: Date; label: string; dayNum: number; isToday: boolean }[] = [];
+  const weekdayShort = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
+
+  for (let offset = -3; offset <= 3; offset++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + offset);
+    days.push({
+      date: d,
+      label: weekdayShort[d.getDay()],
+      dayNum: d.getDate(),
+      isToday: offset === 0,
+    });
+  }
+  return days;
+}
+
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/* ── Component ─────────────────────────────────────────────────────────── */
 
 export function DashboardProfessional({
   professional,
-  recentAssessments,
-  recentPrescriptions,
+  todayEvents,
 }: DashboardProfessionalProps) {
+  const firstName = professional.name?.split(" ")[0] ?? "Profissional";
+  const greeting = getGreeting();
+  const dateLabel = formatDateLong();
+  const weekDays = useMemo(() => buildWeekDays(), []);
+
   const kpis = [
     {
       label: "Clientes",
       value: professional._count.clients,
       icon: Users,
       href: "/app/usuarios?tab=clientes",
-      color: "text-blue-500",
-      bg: "bg-blue-500/10",
+      color: "text-primary",
+      bg: "bg-primary/10",
     },
     {
       label: "Assistentes",
       value: professional._count.assistants,
       icon: UserCheck,
       href: "/app/usuarios?tab=assistentes",
-      color: "text-purple-500",
-      bg: "bg-purple-500/10",
+      color: "text-info",
+      bg: "bg-info/10",
     },
     {
       label: "Avaliações",
       value: professional._count.assessments,
       icon: ClipboardList,
       href: "/app/avaliacoes",
-      color: "text-primary",
-      bg: "bg-primary/10",
+      color: "text-warning",
+      bg: "bg-warning/10",
     },
     {
       label: "Prescrições",
       value: professional._count.prescriptions,
       icon: Dumbbell,
       href: "/app/prescricoes",
-      color: "text-orange-500",
-      bg: "bg-orange-500/10",
+      color: "text-success",
+      bg: "bg-success/10",
     },
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-lg font-semibold text-foreground">
-          Olá, {professional.name?.split(" ")[0] ?? "Profissional"} 👋
-        </h2>
-        <p className="text-sm text-muted-foreground">Visão geral do seu sistema</p>
-      </div>
+    <div className="flex flex-col">
+      {/* ═══════════════════════════════════════════════════════════════════
+          HERO SECTION — Gradient + Calendar Strip + Agenda
+         ═══════════════════════════════════════════════════════════════════ */}
+      <section
+        className={cn(
+          "relative overflow-hidden rounded-b-[1.5rem]",
+          "bg-gradient-to-br from-secondary via-primary/80 to-primary",
+          "px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-6"
+        )}
+      >
+        {/* ── Header: Brand + Status ─────────────────────────────────── */}
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xs font-bold tracking-[0.2em] uppercase text-white/60">
+            FITNESS SYSTEM
+          </h1>
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-success/20 text-success uppercase tracking-wide">
+            <span className="size-1.5 rounded-full bg-success" />
+            Ativo
+          </span>
+        </div>
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {kpis.map((kpi) => {
-          const Icon = kpi.icon;
-          return (
-            <Link key={kpi.label} href={kpi.href}>
-              <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex flex-col gap-2">
-                  <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${kpi.bg}`}>
-                    <Icon className={`w-5 h-5 ${kpi.color}`} />
+        {/* ── Greeting ───────────────────────────────────────────────── */}
+        <div className="mb-5">
+          <p className="text-sm text-white/60">{greeting}</p>
+          <h2 className="text-2xl font-bold text-white tracking-tight">
+            {firstName} <span className="inline-block">👋</span>
+          </h2>
+          <p className="text-xs text-white/50 mt-0.5 capitalize">{dateLabel}</p>
+        </div>
+
+        {/* ── Weekly Calendar Strip ──────────────────────────────────── */}
+        <div className="flex items-center gap-2 overflow-x-auto mb-5" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+          {weekDays.map((day) => (
+            <button
+              key={day.dayNum}
+              type="button"
+              className={cn(
+                "flex flex-col items-center gap-0.5 min-w-[3rem] py-2 px-1 rounded-2xl transition-all",
+                day.isToday
+                  ? "bg-white text-secondary shadow-lg border border-info/30"
+                  : "text-white/60"
+              )}
+            >
+              <span className="text-[10px] font-semibold uppercase">{day.label}</span>
+              <span className={cn(
+                "text-lg font-bold leading-none",
+                day.isToday ? "text-secondary" : "text-white"
+              )}>
+                {day.dayNum}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* ── Agenda do Dia ──────────────────────────────────────────── */}
+        <div className="flex flex-col gap-2">
+          <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wide">
+            Agenda de hoje
+          </h3>
+
+          {todayEvents.length === 0 ? (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+              <CalendarClock className="size-5 text-white/40 shrink-0" />
+              <p className="text-sm text-white/50">Nenhum compromisso hoje</p>
+            </div>
+          ) : (
+            todayEvents.slice(0, 3).map((event, idx) => (
+              <div
+                key={event.id}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all",
+                  idx === 0
+                    ? "bg-white/90 text-secondary border-white/20 shadow-sm"
+                    : "bg-white/10 text-white backdrop-blur-sm border-white/10"
+                )}
+              >
+                {/* Time */}
+                <div className="flex flex-col items-center shrink-0 min-w-[2.5rem]">
+                  <span className={cn(
+                    "text-xs font-bold",
+                    idx === 0 ? "text-secondary" : "text-white/80"
+                  )}>
+                    {formatTime(event.startAt)}
+                  </span>
+                </div>
+
+                {/* Divider */}
+                <div className={cn(
+                  "w-px h-8 rounded-full",
+                  idx === 0 ? "bg-primary/30" : "bg-white/20"
+                )} />
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <p className={cn(
+                    "text-sm font-semibold truncate",
+                    idx === 0 ? "text-secondary" : "text-white"
+                  )}>
+                    {event.title}
+                  </p>
+                  {event.client && (
+                    <p className={cn(
+                      "text-xs truncate",
+                      idx === 0 ? "text-secondary/60" : "text-white/50"
+                    )}>
+                      {event.client.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* Type badge */}
+                <span className={cn(
+                  "shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase",
+                  event.type === "ASSESSMENT"
+                    ? idx === 0 ? "bg-primary/10 text-primary" : "bg-primary/20 text-primary-foreground"
+                    : idx === 0 ? "bg-warning/10 text-warning" : "bg-warning/20 text-primary-foreground"
+                )}>
+                  {event.type === "ASSESSMENT" ? "Aval." : "Treino"}
+                </span>
+              </div>
+            ))
+          )}
+
+          {todayEvents.length > 3 && (
+            <Link
+              href="/app/mais/agenda"
+              className="text-xs text-white/50 text-center py-1 hover:text-white/70 transition-colors"
+            >
+              +{todayEvents.length - 3} compromissos • Ver agenda completa
+            </Link>
+          )}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          MÉTRICAS DO ECOSSISTEMA — Bento Grid
+         ═══════════════════════════════════════════════════════════════════ */}
+      <section className="px-5 pt-6 pb-4">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+          Métricas do Ecossistema
+        </h3>
+
+        <div className="grid grid-cols-2 gap-3">
+          {kpis.map((kpi) => {
+            const Icon = kpi.icon;
+            return (
+              <Link key={kpi.label} href={kpi.href}>
+                <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card border border-border shadow-sm active:scale-[0.97] transition-all">
+                  <div className={cn("size-10 rounded-xl flex items-center justify-center", kpi.bg)}>
+                    <Icon className={cn("size-5", kpi.color)} />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
+                    <p className="text-2xl font-bold text-foreground tabular-nums">{kpi.value}</p>
                     <p className="text-xs text-muted-foreground">{kpi.label}</p>
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* Últimos 30 dias */}
-      <div>
-        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-primary" />
-          Últimos 30 dias
-        </h3>
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
-            <div className="flex items-center gap-3">
-              <ClipboardList className="w-4 h-4 text-primary" />
-              <span className="text-sm text-foreground">Novas avaliações</span>
-            </div>
-            <span className="text-sm font-semibold text-foreground">{recentAssessments}</span>
-          </div>
-          <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
-            <div className="flex items-center gap-3">
-              <Dumbbell className="w-4 h-4 text-orange-500" />
-              <span className="text-sm text-foreground">Novas prescrições</span>
-            </div>
-            <span className="text-sm font-semibold text-foreground">{recentPrescriptions}</span>
-          </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
-      </div>
+      </section>
 
-      {/* Atalhos */}
-      <div>
-        <h3 className="text-sm font-semibold text-foreground mb-3">Ações rápidas</h3>
-        <div className="grid grid-cols-2 gap-2">
-          <Link href="/app/usuarios?tab=clientes">
-            <Button variant="outline" className="h-11 w-full text-xs">
-              <Users className="w-3.5 h-3.5 mr-1.5" />
-              Ver clientes
-            </Button>
-          </Link>
-          <Link href="/app/avaliacoes">
-            <Button variant="outline" className="h-11 w-full text-xs">
-              <ClipboardList className="w-3.5 h-3.5 mr-1.5" />
-              Avaliações
-            </Button>
-          </Link>
-          <Link href="/app/prescricoes">
-            <Button variant="outline" className="h-11 w-full text-xs">
-              <Dumbbell className="w-3.5 h-3.5 mr-1.5" />
-              Prescrições
-            </Button>
-          </Link>
-          <Link href="/app/mais/calendario">
-            <Button variant="outline" className="h-11 w-full text-xs">
-              <CalendarPlus className="w-3.5 h-3.5 mr-1.5" />
-              Agenda
-            </Button>
-          </Link>
-        </div>
-      </div>
+      {/* ═══════════════════════════════════════════════════════════════════
+          CTA — Primeira Avaliação
+         ═══════════════════════════════════════════════════════════════════ */}
+      <section className="px-5 pb-8">
+        <Link href="/app/avaliacoes/nova">
+          <div className={cn(
+            "relative overflow-hidden rounded-2xl p-5",
+            "bg-gradient-to-br from-primary/90 to-primary",
+            "active:scale-[0.98] transition-all"
+          )}>
+            {/* Badge */}
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white uppercase tracking-wide mb-3">
+              <Sparkles className="size-3" />
+              Recomendado
+            </span>
+
+            <h3 className="text-lg font-bold text-white mb-1">1ª Avaliação</h3>
+            <p className="text-sm text-white/70 mb-3">
+              Inicie uma avaliação completa para seu cliente
+            </p>
+
+            <div className="flex items-center gap-1 text-sm font-semibold text-white">
+              Começar agora
+              <ChevronRight className="size-4" />
+            </div>
+
+            {/* Decorative icon */}
+            <div className="absolute -right-4 -bottom-4 opacity-10">
+              <ClipboardList className="size-32 rotate-12" />
+            </div>
+          </div>
+        </Link>
+      </section>
     </div>
   );
 }
