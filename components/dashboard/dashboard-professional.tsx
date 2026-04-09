@@ -310,34 +310,49 @@ export function DashboardProfessional({
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          CTA — Primeira Avaliação
+          CTA — Primeira Avaliação (Liquid Glass + Figma gradient overlay)
          ═══════════════════════════════════════════════════════════════════ */}
       <section className="bg-secondary px-5 pb-8">
         <Link href="/app/avaliacoes/nova">
-          <div className={cn(
-            "relative overflow-hidden rounded-2xl p-5",
-            "bg-gradient-to-br from-primary/90 to-primary",
-            "active:scale-[0.98] transition-all"
-          )}>
-            {/* Badge */}
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white uppercase tracking-wide mb-3">
-              <Sparkles className="size-3" />
-              Recomendado
-            </span>
+          <div
+            className={cn(
+              "relative overflow-hidden rounded-xl h-[160px]",
+              "active:scale-[0.98] transition-all",
+              /* Imagem de fundo simulada com gradient de atletismo */
+              "bg-[radial-gradient(ellipse_at_top_right,rgb(0,144,168)_0%,rgb(42,52,57)_70%)]"
+            )}
+          >
+            {/* ── Figma Background overlay: gradient bottom→top ── */}
+            {/* from-[rgba(42,52,57,0.8)] via-50%-[rgba(42,52,57,0.2)] to-transparent */}
+            <div
+              className="absolute inset-0 rounded-xl"
+              style={{
+                background:
+                  "linear-gradient(to top, rgba(42,52,57,0.85) 0%, rgba(42,52,57,0.2) 50%, rgba(42,52,57,0) 100%)",
+              }}
+            />
 
-            <h3 className="text-lg font-bold text-white mb-1">1ª Avaliação</h3>
-            <p className="text-sm text-white/70 mb-3">
-              Inicie uma avaliação completa para seu cliente
-            </p>
-
-            <div className="flex items-center gap-1 text-sm font-semibold text-white">
-              Começar agora
-              <ChevronRight className="size-4" />
+            {/* ── Liquid glass chip: RECOMENDADO ── */}
+            <div className="absolute top-3 right-3">
+              <span className="glass-effect inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-wide">
+                <Sparkles className="size-3" />
+                Recomendado
+              </span>
             </div>
 
-            {/* Decorative icon */}
-            <div className="absolute -right-4 -bottom-4 opacity-10">
-              <ClipboardList className="size-32 rotate-12" />
+            {/* ── Content — pinned to bottom ── */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+              <div className="flex flex-col gap-0.5">
+                <h3 className="text-xl font-extrabold text-white tracking-tight leading-none">
+                  1ª AVALIAÇÃO
+                </h3>
+                <p className="text-xs text-white/60">
+                  Para situar a ordem temporal na listagem
+                </p>
+              </div>
+              <div className="glass-effect rounded-xl p-2.5 shrink-0">
+                <ChevronRight className="size-4 text-white" />
+              </div>
             </div>
           </div>
         </Link>
