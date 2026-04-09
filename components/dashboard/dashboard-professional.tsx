@@ -10,6 +10,7 @@ import {
   CalendarClock,
   ChevronRight,
   Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -98,32 +99,28 @@ export function DashboardProfessional({
       value: professional._count.clients,
       icon: Users,
       href: "/app/usuarios?tab=clientes",
-      color: "text-primary",
-      bg: "bg-primary/10",
+      valueColor: "text-primary",
     },
     {
       label: "Assistentes",
       value: professional._count.assistants,
       icon: UserCheck,
       href: "/app/usuarios?tab=assistentes",
-      color: "text-info",
-      bg: "bg-info/10",
+      valueColor: "text-primary-foreground",
     },
     {
       label: "Avaliações",
       value: professional._count.assessments,
       icon: ClipboardList,
       href: "/app/avaliacoes",
-      color: "text-warning",
-      bg: "bg-warning/10",
+      valueColor: "text-primary-foreground",
     },
     {
       label: "Prescrições",
       value: professional._count.prescriptions,
       icon: Dumbbell,
       href: "/app/prescricoes",
-      color: "text-success",
-      bg: "bg-success/10",
+      valueColor: "text-primary-foreground",
     },
   ];
 
@@ -261,40 +258,59 @@ export function DashboardProfessional({
             </Link>
           )}
         </div>
-      </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          MÉTRICAS DO ECOSSISTEMA — Bento Grid
-         ═══════════════════════════════════════════════════════════════════ */}
-      <section className="px-5 pt-6 pb-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-          Métricas do Ecossistema
-        </h3>
+        {/* ── Métricas do Ecossistema — Glass Bento Grid ─────────────── */}
+        <div className="flex flex-col gap-3 mt-6">
+          <h3 className="text-xl font-bold text-primary-foreground">
+            Métricas do Ecossistema
+          </h3>
 
-        <div className="grid grid-cols-2 gap-3">
-          {kpis.map((kpi) => {
-            const Icon = kpi.icon;
-            return (
-              <Link key={kpi.label} href={kpi.href}>
-                <div className="flex flex-col gap-3 p-4 rounded-2xl bg-card border border-border shadow-sm active:scale-[0.97] transition-all">
-                  <div className={cn("size-10 rounded-xl flex items-center justify-center", kpi.bg)}>
-                    <Icon className={cn("size-5", kpi.color)} />
+          {/* Large metric — Portfolio value */}
+          <div className="glass-effect flex items-center justify-between p-4 rounded-xl h-[108px]">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-semibold text-primary-foreground">
+                Valor Total do Portfólio
+              </span>
+              <span className="text-[30px] font-extrabold leading-9 text-primary-foreground tabular-nums">
+                —
+              </span>
+            </div>
+            <div className="size-12 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+              <TrendingUp className="size-5 text-success" />
+            </div>
+          </div>
+
+          {/* 2×2 KPI Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {kpis.map((kpi) => {
+              const Icon = kpi.icon;
+              return (
+                <Link key={kpi.label} href={kpi.href}>
+                  <div className="glass-effect flex flex-col gap-1.5 p-3 rounded-xl active:scale-[0.97] transition-all shadow-[0_8px_24px_-10px_rgba(42,52,57,0.06)]">
+                    <span className="text-[10px] font-semibold text-primary-foreground uppercase tracking-[0.5px]">
+                      {kpi.label}
+                    </span>
+                    <div className="flex items-end justify-between pr-1">
+                      <span className={cn(
+                        "text-[30px] font-semibold leading-9 tabular-nums",
+                        kpi.valueColor
+                      )}>
+                        {String(kpi.value).padStart(2, "0")}
+                      </span>
+                      <Icon className="size-5 text-primary-foreground/40" />
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground tabular-nums">{kpi.value}</p>
-                    <p className="text-xs text-muted-foreground">{kpi.label}</p>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
           CTA — Primeira Avaliação
          ═══════════════════════════════════════════════════════════════════ */}
-      <section className="px-5 pb-8">
+      <section className="px-5 pt-6 pb-8">
         <Link href="/app/avaliacoes/nova">
           <div className={cn(
             "relative overflow-hidden rounded-2xl p-5",
