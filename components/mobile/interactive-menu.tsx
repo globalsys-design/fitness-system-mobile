@@ -45,7 +45,7 @@ const NavItem = memo(function NavItem({
         className={cn(
           "flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-xl transition-all duration-200",
           active
-            ? "bg-[rgba(62,177,167,0.1)]"
+            ? "bg-primary/10"
             : "bg-transparent"
         )}
       >
@@ -80,8 +80,8 @@ export const InteractiveMenu = memo(function InteractiveMenu() {
         "fixed bottom-0 left-0 w-full z-50",
         /* Shape — rounded top corners like Figma */
         "rounded-tl-[12px] rounded-tr-[12px]",
-        /* Background — dark surface + subtle top border */
-        "bg-secondary border-t border-white/5",
+        /* Background — semantic: white in light mode, dark card in dark mode */
+        "bg-card border-t border-border",
         /* Safe area + internal padding */
         "pt-[11px] pb-[calc(env(safe-area-inset-bottom)+0.5rem)]",
         "px-6"

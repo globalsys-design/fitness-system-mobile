@@ -200,35 +200,60 @@
    Usage: <div className="glass-effect"> or <div className="glass-effect glass-light">
    ───────────────────────────────────────────────────────────────────────── */
 @layer utilities {
+  /*
+   * Liquid Glass — Frosted glass morphism.
+   * Intended for use ON TOP OF dark/gradient backgrounds (hero, cards with gradient).
+   * For semantic sections (metrics, lists), use bg-card border-border instead.
+   *
+   * Light mode: subtle dark tint (glass on light bg)
+   * Dark mode:  subtle white tint (glass on dark bg)
+   */
   .glass-effect {
+    @apply backdrop-blur-xl border transition-all;
+    /* Light mode default: dark-tinted glass */
+    background-color: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .glass-effect.glass-light {
+    background-color: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
+  }
+
+  .glass-effect.glass-strong {
+    background-color: rgba(0, 0, 0, 0.12);
+    border-color: rgba(0, 0, 0, 0.16);
+  }
+
+  /* Dark mode: white-tinted glass */
+  .dark .glass-effect {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .glass-effect.glass-light {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .dark .glass-effect.glass-strong {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  /*
+   * Glass On Dark — variant explicitly for use inside dark/gradient sections.
+   * Forces white-tinted glass regardless of the global theme.
+   * Use this class inside hero sections, gradient cards, etc.
+   */
+  .glass-on-dark {
     @apply backdrop-blur-xl border transition-all;
     background-color: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.1);
   }
 
-  .glass-effect.glass-light {
+  .glass-on-dark.glass-light {
     background-color: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.15);
-  }
-
-  .glass-effect.glass-strong {
-    background-color: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.2);
-  }
-
-  /* Dark mode variants */
-  .dark .glass-effect {
-    background-color: rgba(0, 0, 0, 0.1);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .dark .glass-effect.glass-light {
-    background-color: rgba(0, 0, 0, 0.15);
-    border-color: rgba(255, 255, 255, 0.15);
-  }
-
-  .dark .glass-effect.glass-strong {
-    background-color: rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.2);
   }
 }

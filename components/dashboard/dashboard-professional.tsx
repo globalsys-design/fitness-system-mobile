@@ -106,21 +106,21 @@ export function DashboardProfessional({
       value: professional._count.assistants,
       icon: UserCheck,
       href: "/app/usuarios?tab=assistentes",
-      valueColor: "text-primary-foreground",
+      valueColor: "text-foreground",
     },
     {
       label: "Avaliações",
       value: professional._count.assessments,
       icon: ClipboardList,
       href: "/app/avaliacoes",
-      valueColor: "text-primary-foreground",
+      valueColor: "text-foreground",
     },
     {
       label: "Prescrições",
       value: professional._count.prescriptions,
       icon: Dumbbell,
       href: "/app/prescricoes",
-      valueColor: "text-primary-foreground",
+      valueColor: "text-foreground",
     },
   ];
 
@@ -261,20 +261,20 @@ export function DashboardProfessional({
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          MÉTRICAS DO ECOSSISTEMA — Dark section, glass cards
+          MÉTRICAS DO ECOSSISTEMA — Semantic bg, adaptive cards
          ═══════════════════════════════════════════════════════════════════ */}
-      <section className="bg-secondary px-5 pt-6 pb-6 flex flex-col gap-3">
-        <h3 className="text-xl font-bold text-primary-foreground">
+      <section className="bg-muted dark:bg-secondary px-5 pt-6 pb-6 flex flex-col gap-3">
+        <h3 className="text-xl font-bold text-foreground">
           Métricas do Ecossistema
         </h3>
 
         {/* Large metric — Portfolio value */}
-        <div className="glass-effect flex items-center justify-between p-4 rounded-xl h-[108px]">
+        <div className="bg-card border border-border flex items-center justify-between p-4 rounded-xl h-[108px] shadow-sm">
           <div className="flex flex-col gap-1">
-            <span className="text-sm font-semibold text-primary-foreground">
+            <span className="text-sm font-semibold text-muted-foreground">
               Valor Total do Portfólio
             </span>
-            <span className="text-[30px] font-extrabold leading-9 text-primary-foreground tabular-nums">
+            <span className="text-[30px] font-extrabold leading-9 text-foreground tabular-nums">
               —
             </span>
           </div>
@@ -289,8 +289,8 @@ export function DashboardProfessional({
             const Icon = kpi.icon;
             return (
               <Link key={kpi.label} href={kpi.href}>
-                <div className="glass-effect flex flex-col gap-1.5 p-3 rounded-xl active:scale-[0.97] transition-all shadow-[0_8px_24px_-10px_rgba(42,52,57,0.06)]">
-                  <span className="text-[10px] font-semibold text-primary-foreground uppercase tracking-[0.5px]">
+                <div className="bg-card border border-border flex flex-col gap-1.5 p-3 rounded-xl active:scale-[0.97] transition-all shadow-sm">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.5px]">
                     {kpi.label}
                   </span>
                   <div className="flex items-end justify-between pr-1">
@@ -300,7 +300,7 @@ export function DashboardProfessional({
                     )}>
                       {String(kpi.value).padStart(2, "0")}
                     </span>
-                    <Icon className="size-5 text-primary-foreground/40" />
+                    <Icon className="size-5 text-muted-foreground/50" />
                   </div>
                 </div>
               </Link>
@@ -312,7 +312,7 @@ export function DashboardProfessional({
       {/* ═══════════════════════════════════════════════════════════════════
           CTA — Primeira Avaliação (Liquid Glass + Figma gradient overlay)
          ═══════════════════════════════════════════════════════════════════ */}
-      <section className="bg-secondary px-5 pb-8">
+      <section className="bg-muted dark:bg-secondary px-5 pb-8">
         <Link href="/app/avaliacoes/nova">
           <div
             className={cn(
@@ -332,9 +332,9 @@ export function DashboardProfessional({
               }}
             />
 
-            {/* ── Liquid glass chip: RECOMENDADO ── */}
+            {/* ── Liquid glass chip: RECOMENDADO (always on dark gradient) ── */}
             <div className="absolute top-3 right-3">
-              <span className="glass-effect inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-wide">
+              <span className="glass-on-dark inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-wide">
                 <Sparkles className="size-3" />
                 Recomendado
               </span>
@@ -350,7 +350,7 @@ export function DashboardProfessional({
                   Para situar a ordem temporal na listagem
                 </p>
               </div>
-              <div className="glass-effect rounded-xl p-2.5 shrink-0">
+              <div className="glass-on-dark rounded-xl p-2.5 shrink-0">
                 <ChevronRight className="size-4 text-white" />
               </div>
             </div>
