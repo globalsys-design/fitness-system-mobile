@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Sparkles,
   TrendingUp,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -142,10 +143,15 @@ export function DashboardProfessional({
           <h1 className="text-xs font-bold tracking-[0.2em] uppercase text-white/60">
             FITNESS SYSTEM
           </h1>
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-success/20 text-success uppercase tracking-wide">
-            <span className="size-1.5 rounded-full bg-success" />
-            Ativo
-          </span>
+          <Link
+            href="/app/mais/notificacoes"
+            className="glass-on-dark inline-flex items-center gap-3 px-3 py-[5px] rounded-xl"
+          >
+            <Bell className="size-4 text-primary-foreground shrink-0" />
+            <span className="text-xs font-medium text-primary-foreground whitespace-nowrap">
+              Alta Prioridade
+            </span>
+          </Link>
         </div>
 
         {/* ── Greeting ───────────────────────────────────────────────── */}
