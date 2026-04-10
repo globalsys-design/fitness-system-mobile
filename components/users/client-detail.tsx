@@ -457,6 +457,33 @@ function InfoRow({
   );
 }
 
+/**
+ * Função auxiliar segura para ler disponibilidade
+ * Retorna um Set com os dias ativos (string lowercase: "monday", "tuesday", etc)
+ */
+function getActiveDays(availability: any): Set<string> {
+  if (!availability || typeof availability !== "object") {
+    return new Set();
+  }
+
+  const activeDays = new Set<string>();
+  const dayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
+  dayKeys.forEach((key) => {
+    // Ler o estado ativo com fallback seguro
+    if (availability[key]?.active === true) {
+      activeDays.add(key);
+    }
+  });
+
+  return activeDays;
+}
+
+/**
+ * Renderização Dinâmica de Tags de Disponibilidade
+ * Source of Truth: availability[dayKey].active (true/false)
+ * Reatividade: Dispara após router.refresh() no EditAvailabilitySheet
+ */
 function AvailabilityDisplay({ availability }: { availability: any }) {
   const DAYS: Array<{ key: string; short: string }> = [
     { key: "monday", short: "Seg" },
@@ -468,18 +495,31 @@ function AvailabilityDisplay({ availability }: { availability: any }) {
     { key: "sunday", short: "Dom" },
   ];
 
+  // Extrair dias ativos usando função auxiliar segura
+  const activeDays = getActiveDays(availability);
+
+  // Se não há nenhum dia ativo, mostrar estado vazio
+  if (activeDays.size === 0) {
+    return (
+      <div className="py-3">
+        <p className="text-xs text-muted-foreground">Nenhum dia disponível configurado</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex gap-1.5 py-3 flex-wrap">
       {DAYS.map(({ key, short }) => {
-        const active = availability?.[key]?.active;
+        const isActive = activeDays.has(key);
+
         return (
           <span
             key={key}
             className={cn(
-              "px-2.5 py-1 rounded-lg text-xs font-medium",
-              active
-                ? "bg-primary/15 text-primary"
-                : "bg-muted text-muted-foreground/50"
+              "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
+              isActive
+                ? "bg-primary/20 text-primary border border-primary/30" // Ativo: cyan destacado
+                : "bg-muted/60 text-muted-foreground border border-border opacity-50" // Inativo: muted
             )}
           >
             {short}
