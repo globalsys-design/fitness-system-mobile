@@ -159,7 +159,7 @@ export default async function DashboardPage() {
     return (
       <div className="flex flex-col bg-background" style={{ height: "100dvh" }}>
         <main
-          className="flex-1 overflow-y-auto"
+          className="flex-1 overflow-y-auto bg-background"
           style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }}
         >
           {trialActive && <TrialBanner daysLeft={daysLeft} />}

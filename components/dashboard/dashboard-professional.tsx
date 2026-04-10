@@ -77,7 +77,12 @@ export function DashboardProfessional({
   ];
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-background">
+      {/* ═══════════════════════════════════════════════════════════
+          ✅ FIX: bg-background garante que a cor por trás da curva
+          do Hero seja consistente com o resto da página
+         ═══════════════════════════════════════════════════════════ */}
+
       {/* ───────────────────────────────────────────────────────────
           WEEKLY AGENDA — Client Component (Interactive Calendar)
          ─────────────────────────────────────────────────────────── */}
@@ -85,8 +90,9 @@ export function DashboardProfessional({
 
       {/* ═══════════════════════════════════════════════════════════════════
           MÉTRICAS DO ECOSSISTEMA — Semantic bg, adaptive cards
-         ═══════════════════════════════════════════════════════════════════ */}
-      <section className="bg-muted dark:bg-secondary px-5 pt-6 pb-6 flex flex-col gap-3">
+          ✅ Usa bg-background para consistência com a curva do Hero
+         ═════════════════════════════════════════════════════════════════ */}
+      <section className="bg-background px-5 pt-6 pb-6 flex flex-col gap-3">
         <h3 className="text-xl font-bold text-foreground">
           Métricas do Ecossistema
         </h3>
@@ -136,8 +142,9 @@ export function DashboardProfessional({
 
       {/* ═══════════════════════════════════════════════════════════════════
           CTA — Primeira Avaliação (Liquid Glass + Figma gradient overlay)
-         ═══════════════════════════════════════════════════════════════════ */}
-      <section className="bg-muted dark:bg-secondary px-5 pb-8">
+          ✅ Usa bg-background para consistência
+         ═════════════════════════════════════════════════════════════════ */}
+      <section className="bg-background px-5 pb-8">
         <Link href="/app/avaliacoes/nova">
           <div
             className={cn(
