@@ -4,19 +4,15 @@
     "cancel": "Cancelar",
     "delete": "Excluir",
     "edit": "Editar",
+    "close": "Fechar",
     "back": "Voltar",
-    "next": "Continuar",
+    "next": "Próximo",
+    "previous": "Anterior",
     "search": "Buscar",
     "loading": "Carregando...",
     "error": "Erro",
     "success": "Sucesso",
-    "confirm": "Confirmar",
-    "close": "Fechar",
-    "yes": "Sim",
-    "no": "Não",
-    "none": "Nenhum",
-    "optional": "opcional",
-    "required": "obrigatório",
+    "warning": "Aviso",
     "active": "Ativo",
     "inactive": "Inativo"
   },
@@ -26,106 +22,55 @@
     "email": "Email",
     "password": "Senha",
     "forgotPassword": "Esqueceu a senha?",
-    "professional": "Profissional",
-    "client": "Cliente",
-    "professionalDesc": "Gerencie avaliações, clientes e prescrições",
-    "clientDesc": "Acesse seus treinos e avaliações",
-    "howToAccess": "Como você deseja acessar?",
-    "loginWithGoogle": "Entrar com Google",
-    "loginWithEmail": "Entrar com Email",
-    "sendMagicLink": "Enviar link de acesso"
+    "signUp": "Cadastrar",
+    "signIn": "Entrar",
+    "or": "ou"
   },
-  "nav": {
-    "dashboard": "Dashboard",
-    "users": "Usuários",
-    "assessments": "Avaliações",
-    "prescriptions": "Prescrições",
+  "navigation": {
+    "home": "Início",
+    "users": "Pessoas",
+    "assessments": "Clínico",
+    "prescriptions": "Treinos",
     "more": "Mais"
   },
   "users": {
     "clients": "Clientes",
     "assistants": "Assistentes",
+    "professionals": "Profissionais",
+    "addClient": "Adicionar Cliente",
+    "addAssistant": "Adicionar Assistente",
     "newClient": "Novo Cliente",
-    "newAssistant": "Novo Assistente",
-    "searchClients": "Buscar por nome, email ou telefone...",
-    "searchAssistants": "Buscar assistentes...",
-    "noClients": "Nenhum cliente cadastrado",
-    "noAssistants": "Nenhum assistente cadastrado",
-    "noClientsFound": "Nenhum cliente encontrado",
-    "noAssistantsFound": "Nenhum assistente encontrado",
-    "registerFirstClient": "Cadastrar primeiro cliente",
-    "registerFirstClientDesc": "Cadastre seu primeiro cliente para começar a criar avaliações e prescrições."
-  },
-  "clientForm": {
-    "step1Title": "Dados Pessoais",
-    "step2Title": "Endereço",
-    "step3Title": "Responsável",
-    "step4Title": "Acesso",
-    "step5Title": "Disponibilidade",
-    "name": "Nome completo",
-    "birthDate": "Data de nascimento",
-    "cpf": "CPF",
-    "gender": "Gênero",
-    "maritalStatus": "Estado civil",
-    "ethnicity": "Etnia",
-    "healthInsurance": "Convênio",
-    "email": "Email",
-    "phone": "Telefone",
-    "emergencyPhone": "Telefone de emergência",
-    "select": "Selecione"
+    "newAssistant": "Novo Assistente"
   },
   "assessments": {
-    "title": "Avaliações",
-    "new": "Nova Avaliação",
-    "search": "Buscar avaliações...",
-    "noAssessments": "Nenhuma avaliação ainda",
-    "noAssessmentsFound": "Nenhuma avaliação encontrada",
+    "assessments": "Avaliações",
+    "newAssessment": "Nova Avaliação",
+    "objective": "Objetivo",
+    "anamnesis": "Anamnese",
+    "anthropometry": "Antropometria",
+    "clinicalExams": "Exames Clínicos",
+    "tests": "Testes",
     "complete": "Completa",
-    "draft": "Rascunho",
-    "viewFull": "Ver avaliação completa",
-    "generatePdf": "Gerar relatório PDF",
-    "compare": "Comparar avaliações",
-    "deleteAssessment": "Excluir avaliação"
+    "draft": "Rascunho"
   },
   "prescriptions": {
-    "title": "Prescrições",
-    "new": "Nova Prescrição",
-    "search": "Buscar prescrições...",
-    "noPrescriptions": "Nenhuma prescrição encontrada",
-    "all": "Todas",
+    "prescriptions": "Prescrições",
+    "newPrescription": "Nova Prescrição",
     "training": "Treino",
-    "aerobic": "Aeróbico"
+    "aerobic": "Aeróbico",
+    "all": "Todas"
   },
-  "professions": {
-    "doctor": "Médico",
-    "nutritionist": "Nutricionista",
-    "physiotherapist": "Fisioterapeuta",
-    "fitnessCoach": "Educador Físico",
-    "intern": "Estagiário",
-    "other": "Outro"
+  "validation": {
+    "required": "Campo obrigatório",
+    "invalidEmail": "Email inválido",
+    "passwordTooShort": "Senha muito curta",
+    "passwordMismatch": "As senhas não correspondem"
   },
-  "gender": {
-    "male": "Masculino",
-    "female": "Feminino",
-    "other": "Outro"
-  },
-  "population": {
-    "normal": "Normal",
-    "athlete": "Atleta",
-    "elderly": "Idoso",
-    "child": "Criança",
-    "pregnant": "Gestante"
-  },
-  "more": {
-    "title": "Mais",
-    "profile": "Meu Perfil",
-    "calendar": "Calendário",
-    "notifications": "Notificações",
-    "subscription": "Assinatura",
-    "settings": "Configurações",
-    "help": "Ajuda",
-    "about": "Sobre",
-    "darkMode": "Modo escuro",
-    "lightMode": "Modo claro"
+  "messages": {
+    "savingSuccess": "Salvo com sucesso!",
+    "savingError": "Erro ao salvar",
+    "deletingSuccess": "Deletado com sucesso!",
+    "deletingError": "Erro ao deletar",
+    "noResults": "Nenhum resultado encontrado"
   }
 }
