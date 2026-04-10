@@ -3,12 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Dumbbell, Wind, ChevronRight, Plus } from "lucide-react";
+import { Dumbbell, Wind, ChevronRight, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ListEmptyState } from "@/components/lists/list-header";
+import { ListHeader, ListEmptyState } from "@/components/lists/list-header";
 import { FAB } from "@/components/mobile/fab";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -92,27 +91,21 @@ export function PrescriptionsList({ prescriptions }: PrescriptionsListProps) {
       <Tabs value={tab} onValueChange={setTab} className="flex flex-col h-full overflow-hidden">
 
         {/* CABEÇALHO FIXO: shrink-0 = nunca encolhe, é o "teto" inamovível */}
-        <div className="shrink-0 bg-background z-10 px-4 pt-4 pb-2 flex flex-col gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar prescrições..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-11"
-            />
-          </div>
-          <TabsList className="w-full h-10">
+        <div className="shrink-0 bg-background z-10">
+          <ListHeader
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Buscar prescrições..."
+            count={countLabel}
+            countLabelSingular="prescrição"
+            countLabelPlural="prescrições"
+            className="bg-background px-0 pt-4 pb-2"
+          />
+          <TabsList className="w-full h-10 mx-4 mb-3 rounded-lg">
             <TabsTrigger value="todas"    className="flex-1 text-xs">Todas ({filtered.length})</TabsTrigger>
             <TabsTrigger value="treino"   className="flex-1 text-xs">Treino ({training.length})</TabsTrigger>
             <TabsTrigger value="aerobico" className="flex-1 text-xs">Aeróbico ({aerobic.length})</TabsTrigger>
           </TabsList>
-          {countLabel > 0 && (
-            <p className="text-xs text-muted-foreground px-1">
-              {countLabel} {countLabel === 1 ? "prescrição" : "prescrições"}
-            </p>
-          )}
         </div>
 
         {/* SCROLL ISOLADO: flex-1 ocupa só o espaço restante, pb-32 = segurança bottom nav */}
