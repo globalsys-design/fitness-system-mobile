@@ -98,6 +98,10 @@ export async function PATCH(
       ...(body.emergencyContact !== undefined && {
         emergencyContact: body.emergencyContact,
       }),
+      // ✅ FIX: Adicionar suporte para disponibilidade (pode ser objeto ou null)
+      ...(body.availability !== undefined && {
+        availability: body.availability || null,
+      }),
     },
   });
 

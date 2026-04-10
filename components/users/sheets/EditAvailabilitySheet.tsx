@@ -16,13 +16,16 @@ type DayKey = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "satu
 
 interface DayAvailability {
   active: boolean;
-  start: string;
-  end: string;
+  start: string;  // NEVER undefined — always a string (e.g., "06:00" or "")
+  end: string;    // NEVER undefined — always a string (e.g., "22:00" or "")
 }
 
 type AvailabilityData = Record<DayKey, DayAvailability>;
 
-const DEFAULT_DAY: DayAvailability = { active: false, start: "06:00", end: "22:00" };
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║ DEFAULT_DAY — Valores seguros, NUNCA undefined                  ║
+// ╚══════════════════════════════════════════════════════════════════╝
+const DEFAULT_DAY: DayAvailability = { active: false, start: "", end: "" };
 
 const DEFAULT_AVAILABILITY: AvailabilityData = {
   monday: { ...DEFAULT_DAY },
@@ -41,6 +44,29 @@ interface EditAvailabilitySheetProps {
   initialData?: AvailabilityData | null;
 }
 
+/**
+ * Normaliza dados de entrada para garantir que start/end NUNCA são undefined
+ * Converte qualquer valor inválido para string vazia ""
+ */
+function normalizeAvailability(data?: AvailabilityData | null): AvailabilityData {
+  if (!data) return DEFAULT_AVAILABILITY;
+
+  const normalized: AvailabilityData = { ...DEFAULT_AVAILABILITY };
+
+  DAYS_OF_WEEK.forEach(({ key }) => {
+    const dayData = data[key];
+    if (dayData) {
+      normalized[key] = {
+        active: dayData.active ?? false,
+        start: typeof dayData.start === "string" ? dayData.start : "",
+        end: typeof dayData.end === "string" ? dayData.end : "",
+      };
+    }
+  });
+
+  return normalized;
+}
+
 export function EditAvailabilitySheet({
   clientId,
   open,
@@ -48,32 +74,60 @@ export function EditAvailabilitySheet({
   initialData,
 }: EditAvailabilitySheetProps) {
   const router = useRouter();
+  // Sempre normalizar entrada para evitar undefined
   const [form, setForm] = useState<AvailabilityData>(
-    initialData ?? DEFAULT_AVAILABILITY
+    normalizeAvailability(initialData)
   );
   const [saving, setSaving] = useState(false);
 
+  /**
+   * Toggle dia — quando desativa, limpa horários
+   */
   function toggleDay(key: DayKey) {
-    setForm((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], active: !prev[key].active },
-    }));
+    setForm((prev) => {
+      const isCurrentlyActive = prev[key].active;
+      return {
+        ...prev,
+        [key]: {
+          active: !isCurrentlyActive,
+          // Se desativar, limpar horários
+          start: isCurrentlyActive ? "" : prev[key].start,
+          end: isCurrentlyActive ? "" : prev[key].end,
+        },
+      };
+    });
   }
 
+  /**
+   * Atualiza tempo — com validação defensiva
+   */
   function setTime(key: DayKey, field: "start" | "end", value: string) {
     setForm((prev) => ({
       ...prev,
-      [key]: { ...prev[key], [field]: value },
+      [key]: { ...prev[key], [field]: value || "" }, // Garante que nunca é undefined
     }));
   }
 
+  /**
+   * Salva apenas os dias ativos para manter BD limpa
+   */
   async function handleSave() {
     setSaving(true);
     try {
+      // Filtra apenas dias ativos para enviar à API
+      const activeDays = DAYS_OF_WEEK
+        .filter((d) => form[d.key].active)
+        .reduce<AvailabilityData>((acc, { key }) => {
+          acc[key] = form[key];
+          return acc;
+        }, {} as AvailabilityData);
+
       const res = await fetch(`/api/clients/${clientId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ availability: form }),
+        body: JSON.stringify({
+          availability: Object.keys(activeDays).length > 0 ? activeDays : null,
+        }),
       });
       if (!res.ok) throw new Error();
       toast.success("Disponibilidade atualizada!");
@@ -133,8 +187,9 @@ export function EditAvailabilitySheet({
                     <Input
                       type="time"
                       className="mt-1 h-10"
-                      value={day.start}
+                      value={day.start || ""}
                       onChange={(e) => setTime(key, "start", e.target.value)}
+                      placeholder="--:--"
                     />
                   </div>
                   <span className="text-muted-foreground mt-5">–</span>
@@ -143,8 +198,9 @@ export function EditAvailabilitySheet({
                     <Input
                       type="time"
                       className="mt-1 h-10"
-                      value={day.end}
+                      value={day.end || ""}
                       onChange={(e) => setTime(key, "end", e.target.value)}
+                      placeholder="--:--"
                     />
                   </div>
                 </div>

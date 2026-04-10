@@ -77,10 +77,14 @@ const emergencySchema = z.object({
   notes: z.string().optional(),
 });
 
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║ CRÍTICO: start/end NUNCA podem ser undefined                     ║
+// ║ Devem ser strings vazias "" ou horários válidos (HH:MM)          ║
+// ╚══════════════════════════════════════════════════════════════════╝
 const dayAvailabilitySchema = z.object({
   active: z.boolean().default(false),
-  start: z.string().optional(),
-  end: z.string().optional(),
+  start: z.string().default(""),  // NUNCA undefined
+  end: z.string().default(""),    // NUNCA undefined
 });
 
 const availabilitySchema = z.object({

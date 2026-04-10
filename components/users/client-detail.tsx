@@ -458,34 +458,57 @@ function InfoRow({
 }
 
 /**
- * Função auxiliar segura para ler disponibilidade
- * Retorna um Set com os dias ativos (string lowercase: "monday", "tuesday", etc)
+ * Função auxiliar robusta para ler disponibilidade
+ * Formatos suportados:
+ * 1. Record<DayKey, { active: boolean, start: string, end: string }>
+ * 2. null/undefined (sem disponibilidade configurada)
+ *
+ * Retorna um Set com os dias ativos
  */
 function getActiveDays(availability: any): Set<string> {
-  if (!availability || typeof availability !== "object") {
+  console.log("🔍 DEBUG DISPONIBILIDADE - Dados brutos:", availability);
+  console.log("🔍 DEBUG DISPONIBILIDADE - Tipo:", typeof availability);
+
+  if (!availability) {
+    console.log("⚠️  Disponibilidade é null/undefined");
     return new Set();
   }
 
   const activeDays = new Set<string>();
-  const dayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
-  dayKeys.forEach((key) => {
-    // Ler o estado ativo com fallback seguro
-    if (availability[key]?.active === true) {
-      activeDays.add(key);
-    }
-  });
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║ FORMATO PADRÃO: Objeto { monday: { active: true, ... }, ... }  ║
+  // ║ Lê cada dia e verifica se active === true                       ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+  if (typeof availability === "object" && !Array.isArray(availability)) {
+    const dayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
+    dayKeys.forEach((key) => {
+      try {
+        const dayData = availability[key];
+        if (dayData && typeof dayData === "object" && dayData.active === true) {
+          activeDays.add(key);
+          console.log(`✅ Dia ${key} ATIVO (from active: true)`);
+        } else {
+          console.log(`❌ Dia ${key} inativo`);
+        }
+      } catch (e) {
+        console.warn(`⚠️  Erro ao ler ${key}:`, e);
+      }
+    });
+  }
+
+  console.log("📊 RESULTADO FINAL - Dias ativos:", Array.from(activeDays));
   return activeDays;
 }
 
 /**
  * Renderização Dinâmica de Tags de Disponibilidade
- * Source of Truth: availability[dayKey].active (true/false)
- * Reatividade: Dispara após router.refresh() no EditAvailabilitySheet
+ * À prova de balas com classes Tailwind LITERAIS (sem interpolação)
+ * Source of Truth: availability
  */
 function AvailabilityDisplay({ availability }: { availability: any }) {
-  const DAYS: Array<{ key: string; short: string }> = [
+  const DAYS = [
     { key: "monday", short: "Seg" },
     { key: "tuesday", short: "Ter" },
     { key: "wednesday", short: "Qua" },
@@ -495,10 +518,8 @@ function AvailabilityDisplay({ availability }: { availability: any }) {
     { key: "sunday", short: "Dom" },
   ];
 
-  // Extrair dias ativos usando função auxiliar segura
   const activeDays = getActiveDays(availability);
 
-  // Se não há nenhum dia ativo, mostrar estado vazio
   if (activeDays.size === 0) {
     return (
       <div className="py-3">
@@ -508,23 +529,33 @@ function AvailabilityDisplay({ availability }: { availability: any }) {
   }
 
   return (
-    <div className="flex gap-1.5 py-3 flex-wrap">
+    <div className="flex gap-2 py-3 flex-wrap">
       {DAYS.map(({ key, short }) => {
         const isActive = activeDays.has(key);
 
-        return (
-          <span
-            key={key}
-            className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
-              isActive
-                ? "bg-primary/20 text-primary border border-primary/30" // Ativo: cyan destacado
-                : "bg-muted/60 text-muted-foreground border border-border opacity-50" // Inativo: muted
-            )}
-          >
-            {short}
-          </span>
-        );
+        // ╔════════════════════════════════════════════════════════════════╗
+        // ║ Classes Tailwind LITERAIS (não interpoladas)                   ║
+        // ║ Verifica em tempo de build (sem risco de perder classes)       ║
+        // ╚════════════════════════════════════════════════════════════════╝
+        if (isActive) {
+          return (
+            <span
+              key={key}
+              className="px-3 py-1.5 rounded-full text-xs font-semibold bg-primary text-primary-foreground border border-primary/50 shadow-sm"
+            >
+              {short}
+            </span>
+          );
+        } else {
+          return (
+            <span
+              key={key}
+              className="px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-muted-foreground opacity-40 border border-border"
+            >
+              {short}
+            </span>
+          );
+        }
       })}
     </div>
   );
