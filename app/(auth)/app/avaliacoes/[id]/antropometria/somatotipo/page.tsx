@@ -29,7 +29,7 @@ function getDominantType(endo: number, meso: number, ecto: number) {
   const max = Math.max(endo, meso, ecto);
   if (max === endo) return { label: "Endomorfo", description: "Tendência ao acúmulo de gordura corporal", color: "text-warning", bg: "bg-warning/10" };
   if (max === meso) return { label: "Mesomorfo", description: "Tendência ao desenvolvimento muscular", color: "text-primary", bg: "bg-primary/10" };
-  return { label: "Ectomorfo", description: "Tendência à linearidade e menor massa corporal", color: "text-blue-600", bg: "bg-blue-500/10" };
+  return { label: "Ectomorfo", description: "Tendência à linearidade e menor massa corporal", color: "text-info", bg: "bg-info/10" };
 }
 
 export default function SomatotipoPage() {
@@ -119,7 +119,7 @@ export default function SomatotipoPage() {
         {[
           { key: "endomorphy" as const, label: "Endomorfia", desc: "Gordura relativa", color: "text-warning", bg: "bg-warning/10" },
           { key: "mesomorphy" as const, label: "Mesomorfia", desc: "Desenvolvimento muscular", color: "text-primary", bg: "bg-primary/10" },
-          { key: "ectomorphy" as const, label: "Ectomorfia", desc: "Linearidade corporal", color: "text-blue-600", bg: "bg-blue-500/10" },
+          { key: "ectomorphy" as const, label: "Ectomorfia", desc: "Linearidade corporal", color: "text-info", bg: "bg-info/10" },
         ].map((comp) => (
           <Card key={comp.key}>
             <CardContent className="p-4">

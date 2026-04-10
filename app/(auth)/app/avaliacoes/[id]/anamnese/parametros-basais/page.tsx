@@ -24,7 +24,7 @@ interface BasalParam {
 const PARAMS: BasalParam[] = [
   { key: "systolic", label: "Pressão Sistólica", unit: "mmHg", icon: Activity, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
   { key: "diastolic", label: "Pressão Diastólica", unit: "mmHg", icon: Activity, iconColor: "text-red-400", iconBg: "bg-red-400/10" },
-  { key: "glucose", label: "Glicemia em Jejum", unit: "mg/dL", icon: Droplets, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
+  { key: "glucose", label: "Glicemia em Jejum", unit: "mg/dL", icon: Droplets, iconColor: "text-info", iconBg: "bg-info/10" },
   { key: "temperature", label: "Temperatura", unit: "°C", icon: Thermometer, iconColor: "text-orange-500", iconBg: "bg-orange-500/10" },
   { key: "heartRate", label: "Frequência Cardíaca", unit: "bpm", icon: Heart, iconColor: "text-pink-500", iconBg: "bg-pink-500/10" },
   { key: "saturation", label: "Saturação de O₂", unit: "%", icon: Activity, iconColor: "text-teal-500", iconBg: "bg-teal-500/10" },

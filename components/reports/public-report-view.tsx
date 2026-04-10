@@ -94,8 +94,8 @@ function ClassificationBadge({ classification }: { classification: string | null
   const colorMap: Record<string, string> = {
     Superior: "bg-success/10 text-success border-success/20",
     Excelente: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-    Bom: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-    Regular: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+    Bom: "bg-info/10 text-info border-info/20",
+    Regular: "bg-warning/10 text-warning border-warning/20",
     Fraco: "bg-orange-500/10 text-orange-600 border-orange-500/20",
     "Muito Fraco": "bg-destructive/10 text-destructive border-destructive/20",
   };
@@ -256,7 +256,7 @@ export function PublicReportView({ assessment }: { assessment: ReportAssessment 
               label="Peso"
               value={weight}
               unit="kg"
-              color="text-blue-500 bg-blue-500/10"
+              color="text-info bg-info/10"
             />
             {bmi && (
               <StatCard
@@ -264,7 +264,7 @@ export function PublicReportView({ assessment }: { assessment: ReportAssessment 
                 label="IMC"
                 value={bmi}
                 unit="kg/m2"
-                color="text-amber-500 bg-amber-500/10"
+                color="text-warning bg-warning/10"
               />
             )}
             {fatPct != null && (
@@ -296,7 +296,7 @@ export function PublicReportView({ assessment }: { assessment: ReportAssessment 
           {objective && (
             <AccordionItem value="objetivo" className="border-b border-border">
               <AccordionTrigger className="py-4">
-                <SectionIcon icon={Target} color="text-blue-500 bg-blue-500/10" />
+                <SectionIcon icon={Target} color="text-info bg-info/10" />
                 <span className="flex-1 text-sm font-semibold">Objetivo e Disponibilidade</span>
               </AccordionTrigger>
               <AccordionContent>
@@ -376,7 +376,7 @@ export function PublicReportView({ assessment }: { assessment: ReportAssessment 
           {anthro && (
             <AccordionItem value="antropometria" className="border-b border-border">
               <AccordionTrigger className="py-4">
-                <SectionIcon icon={Ruler} color="text-amber-500 bg-amber-500/10" />
+                <SectionIcon icon={Ruler} color="text-warning bg-warning/10" />
                 <span className="flex-1 text-sm font-semibold">Antropometria</span>
               </AccordionTrigger>
               <AccordionContent>

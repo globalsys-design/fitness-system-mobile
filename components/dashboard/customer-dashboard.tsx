@@ -111,8 +111,8 @@ export function CustomerDashboard({
           <p className="text-xs text-muted-foreground">Prescricoes</p>
         </div>
         <div className="flex flex-col gap-2 p-4 rounded-2xl border border-border bg-card">
-          <div className="size-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-            <TrendingUp className="size-5 text-blue-500" />
+          <div className="size-10 rounded-xl bg-info/10 flex items-center justify-center">
+            <TrendingUp className="size-5 text-info" />
           </div>
           <p className="text-2xl font-bold text-foreground tabular-nums">{totalAssessments}</p>
           <p className="text-xs text-muted-foreground">Avaliacoes</p>
@@ -126,7 +126,7 @@ export function CustomerDashboard({
         </h3>
         {[
           { label: "Minhas Prescricoes", href: "/app/fichas", icon: Dumbbell, color: "text-primary bg-primary/10" },
-          { label: "Meu Progresso", href: "/app/progresso", icon: TrendingUp, color: "text-blue-500 bg-blue-500/10" },
+          { label: "Meu Progresso", href: "/app/progresso", icon: TrendingUp, color: "text-info bg-info/10" },
         ].map((action) => (
           <a
             key={action.href}

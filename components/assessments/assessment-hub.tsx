@@ -133,7 +133,7 @@ function getSections(assessment: AssessmentData) {
       icon: Target,
       href: `/app/avaliacoes/${assessment.id}/objetivo`,
       progress: assessment.objective ? 100 : 0,
-      color: "text-blue-500 bg-blue-500/10",
+      color: "text-info bg-info/10",
     },
     {
       id: "anamnese",
@@ -151,7 +151,7 @@ function getSections(assessment: AssessmentData) {
       icon: Ruler,
       href: `/app/avaliacoes/${assessment.id}/antropometria`,
       progress: Math.round((anthropometryFields / 5) * 100),
-      color: "text-amber-500 bg-amber-500/10",
+      color: "text-warning bg-warning/10",
     },
     {
       id: "exames",
@@ -239,7 +239,7 @@ export function AssessmentHub({ assessment }: { assessment: AssessmentData }) {
             "text-[0.65rem]",
             assessment.status === "COMPLETE"
               ? "border-success/30 text-success"
-              : "border-amber-500/30 text-amber-500"
+              : "border-warning/30 text-warning"
           )}
         >
           {assessment.status === "COMPLETE" ? "Completa" : "Rascunho"}
