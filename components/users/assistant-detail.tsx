@@ -35,6 +35,7 @@ import {
 import { PermissionsToggle, PermissionsMap } from "./permissions-toggle";
 import { cn } from "@/lib/utils";
 import { PROFESSIONS } from "@/lib/constants/professions";
+import { USER_STATUS_OPTIONS } from "@/lib/constants/user";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -341,8 +342,11 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ACTIVE">Ativo</SelectItem>
-                      <SelectItem value="INACTIVE">Inativo</SelectItem>
+                      {USER_STATUS_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
