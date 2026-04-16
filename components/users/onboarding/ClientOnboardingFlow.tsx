@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, type Resolver, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -18,30 +18,36 @@ import { ResponsibleStep } from "./steps/ResponsibleStep";
 import { ActivityLevelStep } from "./steps/ActivityLevelStep";
 import { ObjectiveStep } from "./steps/ObjectiveStep";
 import { ContactStep } from "./steps/ContactStep";
+import { AddressStep } from "./steps/AddressStep";
+import { EmergencyStep } from "./steps/EmergencyStep";
+import { AvailabilityStep } from "./steps/AvailabilityStep";
+import { ReviewStep } from "./steps/ReviewStep";
 
 // ── Dynamic step configuration ──────────────────────────────────────────────
-// Base steps (always present)
-const BASE_STEPS = [
+type StepConfig = { id: string; cta: string };
+
+const BASE_STEPS: StepConfig[] = [
   { id: "name",          cta: "Continuar →" },
   { id: "birthDate",     cta: "Continuar →" },
   { id: "gender",        cta: "Continuar →" },
   // { id: "responsible" } — inserted conditionally if minor
   { id: "activityLevel", cta: "Continuar →" },
   { id: "objective",     cta: "Continuar →" },
-  { id: "contact",       cta: "Criar conta ✓" },
-] as const;
+  { id: "contact",       cta: "Continuar →" },
+  { id: "address",       cta: "Continuar →" },
+  { id: "emergency",     cta: "Continuar →" },
+  { id: "availability",  cta: "Continuar →" },
+  { id: "review",        cta: "Criar conta ✓" },
+];
 
-function getStepsForAge(birthDate: string | undefined): typeof BASE_STEPS {
+function getStepsForAge(birthDate: string | undefined): StepConfig[] {
   if (!birthDate || !isMinor(birthDate)) {
     return BASE_STEPS;
   }
 
   // Insert responsible step after gender (index 2)
   const stepsWithResponsible = [...BASE_STEPS];
-  stepsWithResponsible.splice(3, 0, {
-    id: "responsible",
-    cta: "Continuar →",
-  } as any);
+  stepsWithResponsible.splice(3, 0, { id: "responsible", cta: "Continuar →" });
   return stepsWithResponsible;
 }
 
@@ -54,7 +60,7 @@ export function ClientOnboardingFlow() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const methods = useForm<ClientFormData>({
-    resolver: zodResolver(clientFormSchema) as any,
+    resolver: zodResolver(clientFormSchema) as Resolver<ClientFormData>,
     defaultValues: {
       name: "",
       email: "",
@@ -81,6 +87,7 @@ export function ClientOnboardingFlow() {
   const birthDate = watch("birthDate");
   const STEPS = getStepsForAge(birthDate);
   const TOTAL_STEPS = STEPS.length;
+  const currentStepId = STEPS[currentStep]?.id;
 
   const progress = ((currentStep + 1) / TOTAL_STEPS) * 100;
 
@@ -112,9 +119,9 @@ export function ClientOnboardingFlow() {
 
         const client = await response.json();
         router.push(`/app/usuarios/clientes/${client.id}`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         setIsSubmitting(false);
-        toast.error(error?.message || "Erro inesperado. Tente novamente.");
+        toast.error(error instanceof Error ? error.message : "Erro inesperado. Tente novamente.");
       }
     },
     [router]
@@ -129,13 +136,14 @@ export function ClientOnboardingFlow() {
     } else if (currentStepId === "responsible") {
       // Responsible is required for minors
       const valid = await trigger(
-        ["responsible.name", "responsible.cpf", "responsible.phone"] as any
+        ["responsible.name", "responsible.cpf", "responsible.phone"] as Path<ClientFormData>[]
       );
       if (!valid) return;
     } else if (currentStepId === "contact") {
-      // Last step: validate contact and submit
-      const valid = await trigger(["email", "phone"] as any);
+      const valid = await trigger(["email", "phone"] as Path<ClientFormData>[]);
       if (!valid) return;
+    } else if (currentStepId === "review") {
+      // Last step: submit
       onSubmit(getValues());
       return;
     }
@@ -183,21 +191,19 @@ export function ClientOnboardingFlow() {
   }
 
   // ── Step content map ────────────────────────────────────────────────────────
-  const getStepContent = (): Record<string, React.ReactNode> => {
-    const content: Record<string, React.ReactNode> = {
-      name: <NameStep />,
-      birthDate: <BirthDateStep />,
-      gender: <GenderStep />,
-      responsible: <ResponsibleStep />,
-      activityLevel: <ActivityLevelStep />,
-      objective: <ObjectiveStep />,
-      contact: <ContactStep />,
-    };
-    return content;
+  const stepContent: Record<string, React.ReactNode> = {
+    name: <NameStep />,
+    birthDate: <BirthDateStep />,
+    gender: <GenderStep />,
+    responsible: <ResponsibleStep />,
+    activityLevel: <ActivityLevelStep />,
+    objective: <ObjectiveStep />,
+    contact: <ContactStep />,
+    address: <AddressStep />,
+    emergency: <EmergencyStep />,
+    availability: <AvailabilityStep />,
+    review: <ReviewStep />,
   };
-
-  const stepContent = getStepContent();
-  const currentStepId = STEPS[currentStep]?.id;
 
   // ── Main layout ─────────────────────────────────────────────────────────────
   return (

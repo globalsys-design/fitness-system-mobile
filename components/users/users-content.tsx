@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Plus, Users, UserX } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Search, Plus, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { FAB } from "@/components/mobile/fab";
-import { ListEmptyState } from "@/components/lists/list-header";
 import { AssistantsList } from "./assistants-list";
 import { ClientsList } from "./clients-list";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -36,12 +35,47 @@ export function UsersContent({ assistants, clients }: UsersContentProps) {
   const router = useRouter();
   const defaultTab = searchParams.get("tab") === "assistentes" ? "assistentes" : "clientes";
   const [tab, setTab] = useState(defaultTab);
+  const [inputValue, setInputValue] = useState("");
   const [search, setSearch] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset busca ao trocar de aba
+  // Debounce: atualiza `search` 300ms após parar de digitar
+  const handleSearchChange = useCallback((value: string) => {
+    setInputValue(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setSearch(value), 300);
+  }, []);
+
+  // Cleanup do debounce no unmount
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
+
+  // Cmd+K / Ctrl+K foca o campo de busca
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  function clearSearch() {
+    setInputValue("");
+    setSearch("");
+  }
+
   function handleTabChange(value: string) {
     setTab(value);
-    setSearch("");
+    clearSearch();
+  }
+
+  function handleClear() {
+    clearSearch();
+    searchRef.current?.focus();
   }
 
   function handleAdd() {
@@ -96,14 +130,25 @@ export function UsersContent({ assistants, clients }: UsersContentProps) {
 
           {/* Busca */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
+              ref={searchRef}
               type="search"
-              placeholder={isClientes ? "Buscar por nome, email ou telefone..." : "Buscar assistentes..."}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-11"
+              placeholder={isClientes ? "Buscar por nome, email ou telefone... ⌘K" : "Buscar assistentes... ⌘K"}
+              value={inputValue}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-9 pr-9 h-11"
             />
+            {inputValue && (
+              <button
+                type="button"
+                onClick={handleClear}
+                aria-label="Limpar busca"
+                className="absolute right-3 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center rounded-full bg-muted-foreground/20 hover:bg-muted-foreground/30 transition-colors"
+              >
+                <X className="size-3 text-muted-foreground" />
+              </button>
+            )}
           </div>
 
           {/* Contador */}

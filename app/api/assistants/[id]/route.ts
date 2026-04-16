@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+
+const patchAssistantSchema = z.object({
+  name: z.string().min(2).optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  phone: z.string().optional(),
+  cpf: z.string().optional(),
+  profession: z.string().optional(),
+  status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
+  permissions: z.record(z.unknown()).optional(),
+  address: z.record(z.string().optional()).optional(),
+  birthCity: z.string().optional(),
+  maritalStatus: z.string().optional(),
+}).strict();
 
 export async function GET(
   _req: NextRequest,
@@ -66,7 +80,15 @@ export async function PATCH(
     return NextResponse.json({ error: "Assistant not found" }, { status: 404 });
   }
 
-  const body = await req.json();
+  const raw = await req.json();
+  const parsed = patchAssistantSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Dados inválidos", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const body = parsed.data;
 
   const assistant = await db.assistant.update({
     where: { id },

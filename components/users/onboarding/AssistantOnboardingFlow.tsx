@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -15,15 +15,19 @@ import { AssistantNameStep } from "./steps/AssistantNameStep";
 import { AssistantProfessionStep } from "./steps/AssistantProfessionStep";
 import { AssistantPermissionsStep, type PermissionsState } from "./steps/AssistantPermissionsStep";
 import { AssistantContactStep } from "./steps/AssistantContactStep";
+import { AssistantAddressStep } from "./steps/AssistantAddressStep";
+import { AssistantPersonalDataStep } from "./steps/AssistantPersonalDataStep";
 
 type AssistantFormData = z.infer<typeof assistantSchema>;
 
 // ── Step configuration ──────────────────────────────────────────────────────
 const STEPS = [
-  { id: "name",        cta: "Continuar →" },
-  { id: "profession",  cta: "Continuar →" },
-  { id: "permissions", cta: "Continuar →" },
-  { id: "contact",     cta: "Adicionar assistente ✓" },
+  { id: "name",         cta: "Continuar →" },
+  { id: "profession",   cta: "Continuar →" },
+  { id: "permissions",  cta: "Continuar →" },
+  { id: "contact",      cta: "Continuar →" },
+  { id: "address",      cta: "Continuar →" },
+  { id: "personalData", cta: "Adicionar assistente ✓" },
 ] as const;
 
 const TOTAL_STEPS = STEPS.length;
@@ -50,7 +54,7 @@ export function AssistantOnboardingFlow() {
   const [permissions, setPermissions] = useState<PermissionsState>(DEFAULT_PERMISSIONS);
 
   const methods = useForm<AssistantFormData>({
-    resolver: zodResolver(assistantSchema) as any,
+    resolver: zodResolver(assistantSchema) as Resolver<AssistantFormData>,
     defaultValues: {
       name: "",
       email: "",
@@ -109,9 +113,9 @@ export function AssistantOnboardingFlow() {
 
         const assistant = await response.json();
         router.push(`/app/usuarios/assistentes/${assistant.id}`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         setIsSubmitting(false);
-        toast.error(error?.message || "Erro inesperado. Tente novamente.");
+        toast.error(error instanceof Error ? error.message : "Erro inesperado. Tente novamente.");
       }
     },
     [router, selectedProfession, permissions]
@@ -119,12 +123,15 @@ export function AssistantOnboardingFlow() {
 
   // ── Navigation ──────────────────────────────────────────────────────────
   const handleNext = useCallback(async () => {
-    if (currentStep === 0) {
+    const stepId = STEPS[currentStep]?.id;
+    if (stepId === "name") {
       const valid = await trigger("name");
       if (!valid) return;
-    } else if (currentStep === TOTAL_STEPS - 1) {
+    } else if (stepId === "contact") {
       const valid = await trigger("email");
       if (!valid) return;
+    } else if (stepId === "personalData") {
+      // Last step: submit
       onSubmit(getValues());
       return;
     }
@@ -186,6 +193,8 @@ export function AssistantOnboardingFlow() {
       />
     ),
     3: <AssistantContactStep />,
+    4: <AssistantAddressStep />,
+    5: <AssistantPersonalDataStep />,
   };
 
   // ── Main layout — identical Molde ───────────────────────────────────────

@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+
+const patchClientSchema = z.object({
+  name: z.string().min(2).optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  phone: z.string().optional(),
+  cpf: z.string().optional(),
+  birthDate: z.string().optional(),
+  gender: z.enum(["M", "F", ""]).optional(),
+  objective: z.string().optional(),
+  activityLevel: z.string().optional(),
+  status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
+  address: z.record(z.string().optional()).optional(),
+  emergencyContact: z.record(z.unknown()).optional(),
+  availability: z.record(z.unknown()).nullable().optional(),
+}).strict();
 
 export async function GET(
   _req: NextRequest,
@@ -76,7 +92,15 @@ export async function PATCH(
     return NextResponse.json({ error: "Client not found" }, { status: 404 });
   }
 
-  const body = await req.json();
+  const raw = await req.json();
+  const parsed = patchClientSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Dados inválidos", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const body = parsed.data;
 
   const client = await db.client.update({
     where: { id },
