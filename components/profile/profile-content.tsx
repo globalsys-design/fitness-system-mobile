@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput, unMaskPhone } from "@/components/ui/phone-input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,7 +29,7 @@ export function ProfileContent({ user }: { user: any }) {
       await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, profession, specialty }),
+        body: JSON.stringify({ name, phone: unMaskPhone(phone) || null, profession, specialty }),
       });
       toast.success("Perfil atualizado!");
       setIsEditing(false);
@@ -79,7 +80,7 @@ export function ProfileContent({ user }: { user: any }) {
                   </div>
                   <div>
                     <Label>Telefone</Label>
-                    <Input type="tel" className="mt-1.5" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                    <PhoneInput className="mt-1.5" value={phone} onChange={(e) => setPhone(e.target.value)} />
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" className="flex-1 h-11" onClick={() => setIsEditing(false)}>

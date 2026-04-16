@@ -7,15 +7,16 @@ const patchClientSchema = z.object({
   name: z.string().min(2).optional(),
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
+  phoneDdi: z.string().optional(),
   cpf: z.string().optional(),
   birthDate: z.string().optional(),
   gender: z.enum(["M", "F", ""]).optional(),
   objective: z.string().optional(),
   activityLevel: z.string().optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
-  address: z.record(z.string().optional()).optional(),
-  emergencyContact: z.record(z.unknown()).optional(),
-  availability: z.record(z.unknown()).nullable().optional(),
+  address: z.record(z.string(), z.string().optional()).optional(),
+  emergencyContact: z.record(z.string(), z.unknown()).nullable().optional(),
+  availability: z.record(z.string(), z.unknown()).nullable().optional(),
 }).strict();
 
 export async function GET(
@@ -92,7 +93,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Client not found" }, { status: 404 });
   }
 
-  const raw = await req.json();
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+  }
+
   const parsed = patchClientSchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
@@ -102,32 +109,36 @@ export async function PATCH(
   }
   const body = parsed.data;
 
-  const client = await db.client.update({
-    where: { id },
-    data: {
-      ...(body.name !== undefined && { name: body.name }),
-      ...(body.email !== undefined && { email: body.email || null }),
-      ...(body.phone !== undefined && { phone: body.phone || null }),
-      ...(body.cpf !== undefined && { cpf: body.cpf || null }),
-      ...(body.birthDate !== undefined && {
-        birthDate: body.birthDate ? new Date(body.birthDate) : null,
-      }),
-      ...(body.gender !== undefined && { gender: body.gender }),
-      ...(body.objective !== undefined && { objective: body.objective || null }),
-      ...(body.activityLevel !== undefined && {
-        activityLevel: body.activityLevel || null,
-      }),
-      ...(body.status !== undefined && { status: body.status }),
-      ...(body.address !== undefined && { address: body.address }),
-      ...(body.emergencyContact !== undefined && {
-        emergencyContact: body.emergencyContact,
-      }),
-      // ✅ FIX: Adicionar suporte para disponibilidade (pode ser objeto ou null)
-      ...(body.availability !== undefined && {
-        availability: body.availability || null,
-      }),
-    },
-  });
+  try {
+    const client = await db.client.update({
+      where: { id },
+      data: {
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.email !== undefined && { email: body.email || null }),
+        ...(body.phone !== undefined && { phone: body.phone || null }),
+        ...(body.phoneDdi !== undefined && { phoneDdi: body.phoneDdi || null }),
+        ...(body.cpf !== undefined && { cpf: body.cpf || null }),
+        ...(body.birthDate !== undefined && {
+          birthDate: body.birthDate ? new Date(body.birthDate) : null,
+        }),
+        ...(body.gender !== undefined && { gender: body.gender }),
+        ...(body.objective !== undefined && { objective: body.objective || null }),
+        ...(body.activityLevel !== undefined && {
+          activityLevel: body.activityLevel || null,
+        }),
+        ...(body.status !== undefined && { status: body.status }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(body.address !== undefined && { address: body.address as any }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(body.emergencyContact !== undefined && { emergencyContact: body.emergencyContact as any }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(body.availability !== undefined && { availability: (body.availability || null) as any }),
+      },
+    });
 
-  return NextResponse.json(client);
+    return NextResponse.json(client);
+  } catch (err) {
+    console.error("[PATCH /api/clients/:id] DB error:", err);
+    return NextResponse.json({ error: "Erro interno ao atualizar cliente" }, { status: 500 });
+  }
 }

@@ -5,6 +5,7 @@ import { useFormContext } from "react-hook-form";
 import { Camera, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { maskPhone } from "@/components/ui/phone-input";
 import {
   Select,
   SelectContent,
@@ -188,7 +189,8 @@ export function StepPersonal() {
             inputMode="tel"
             className="flex-1"
             placeholder="(00) 00000-0000"
-            {...register("phone")}
+            value={maskPhone(watched.phone ?? "")}
+            onChange={(e) => setValue("phone", maskPhone(e.target.value), { shouldValidate: true })}
           />
         </div>
       </div>
@@ -202,7 +204,8 @@ export function StepPersonal() {
           inputMode="tel"
           className="mt-1.5"
           placeholder="(00) 00000-0000"
-          {...register("emergencyPhone")}
+          value={maskPhone(watched.emergencyPhone ?? "")}
+          onChange={(e) => setValue("emergencyPhone", maskPhone(e.target.value))}
         />
       </div>
 

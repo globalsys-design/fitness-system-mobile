@@ -2,12 +2,14 @@
 
 import { useFormContext } from "react-hook-form";
 import { cn } from "@/lib/utils";
+import { maskPhone } from "@/components/ui/phone-input";
 
 // Uses a simplified shape with email (required), phone, cpf
 export function AssistantContactStep() {
   const {
     register,
     watch,
+    setValue,
     formState: { errors },
   } = useFormContext<{ email: string; phone?: string; cpf?: string }>();
 
@@ -77,7 +79,8 @@ export function AssistantContactStep() {
                 ? "border-primary caret-primary"
                 : "border-border caret-primary focus:border-primary"
             )}
-            {...register("phone")}
+            value={maskPhone(phone)}
+            onChange={(e) => setValue("phone", maskPhone(e.target.value))}
           />
         </div>
 

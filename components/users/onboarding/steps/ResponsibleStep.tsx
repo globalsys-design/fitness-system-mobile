@@ -7,6 +7,7 @@ import { isValidCPF } from "@/lib/validations/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { maskPhone } from "@/components/ui/phone-input";
 
 export function ResponsibleStep() {
   const {
@@ -97,14 +98,13 @@ export function ResponsibleStep() {
             placeholder="(27) 98888-3838"
             type="tel"
             inputMode="tel"
-            value={responsible.phone ?? ""}
-            onChange={(e) => {
-              const cleaned = e.target.value.replace(/\D/g, "");
+            value={maskPhone(responsible.phone ?? "")}
+            onChange={(e) =>
               setValue("responsible", {
                 ...responsible,
-                phone: cleaned,
-              });
-            }}
+                phone: maskPhone(e.target.value),
+              })
+            }
             className={cn(
               "mt-2 h-12",
               errors.responsible?.phone && "border-destructive"

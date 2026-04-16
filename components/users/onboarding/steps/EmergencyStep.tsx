@@ -3,6 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import type { ClientFormData } from "@/lib/validations/client";
 import { cn } from "@/lib/utils";
+import { maskPhone } from "@/components/ui/phone-input";
 
 const FIELD_CLASS = cn(
   "w-full bg-transparent border-0 border-b-2 border-border rounded-none px-0 py-3",
@@ -22,8 +23,11 @@ const RELATIONSHIP_OPTIONS = [
   { value: "outro", label: "Outro" },
 ];
 
+type EmergencyValues = { name?: string; phone?: string; landline?: string; notes?: string };
+
 export function EmergencyStep() {
-  const { register } = useFormContext<ClientFormData>();
+  const { register, watch, setValue } = useFormContext<ClientFormData>();
+  const emergency = (watch("emergency") ?? {}) as EmergencyValues;
 
   return (
     <div className="flex flex-col gap-10">
@@ -71,7 +75,10 @@ export function EmergencyStep() {
             inputMode="tel"
             placeholder="(00) 00000-0000"
             className={FIELD_CLASS}
-            {...register("emergency.phone")}
+            value={maskPhone(emergency.phone ?? "")}
+            onChange={(e) =>
+              setValue("emergency", { ...emergency, phone: maskPhone(e.target.value) })
+            }
           />
         </div>
 
@@ -83,7 +90,10 @@ export function EmergencyStep() {
             inputMode="tel"
             placeholder="(00) 0000-0000"
             className={FIELD_CLASS}
-            {...register("emergency.landline")}
+            value={maskPhone(emergency.landline ?? "")}
+            onChange={(e) =>
+              setValue("emergency", { ...emergency, landline: maskPhone(e.target.value) })
+            }
           />
         </div>
       </div>

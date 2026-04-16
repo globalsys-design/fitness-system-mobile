@@ -11,6 +11,7 @@ import {
 import type { ClientFormData } from "@/lib/validations/client";
 import { DDI_OPTIONS } from "@/lib/validations/client";
 import { cn } from "@/lib/utils";
+import { maskPhone } from "@/components/ui/phone-input";
 
 export function ContactStep() {
   const {
@@ -106,7 +107,10 @@ export function ContactStep() {
                 "text-xl font-medium placeholder:text-muted-foreground/35",
                 "focus:outline-none"
               )}
-              {...register("phone")}
+              value={maskPhone(phone)}
+              onChange={(e) =>
+                setValue("phone", maskPhone(e.target.value), { shouldValidate: true })
+              }
             />
           </div>
           {errors.phone && (

@@ -4,6 +4,7 @@ import { useFormContext } from "react-hook-form";
 import { AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { maskPhone } from "@/components/ui/phone-input";
 import type { ClientFormData } from "@/lib/validations/client";
 
 interface StepResponsibleProps {
@@ -118,8 +119,8 @@ export function StepResponsible({ isMinor }: StepResponsibleProps) {
               inputMode="tel"
               className="mt-1.5"
               placeholder="(00) 00000-0000"
-              value={resp.phone || ""}
-              onChange={(e) => setResponsibleField("phone", e.target.value)}
+              value={maskPhone(resp.phone || "")}
+              onChange={(e) => setResponsibleField("phone", maskPhone(e.target.value))}
             />
             {respErrors?.phone && (
               <p className="text-xs text-destructive mt-1">
@@ -177,8 +178,8 @@ export function StepResponsible({ isMinor }: StepResponsibleProps) {
           inputMode="tel"
           className="mt-1.5"
           placeholder="(00) 00000-0000"
-          value={emerg.phone || ""}
-          onChange={(e) => setEmergencyField("phone", e.target.value)}
+          value={maskPhone(emerg.phone || "")}
+          onChange={(e) => setEmergencyField("phone", maskPhone(e.target.value))}
         />
       </div>
 
@@ -189,8 +190,8 @@ export function StepResponsible({ isMinor }: StepResponsibleProps) {
           inputMode="tel"
           className="mt-1.5"
           placeholder="(00) 0000-0000"
-          value={emerg.landline || ""}
-          onChange={(e) => setEmergencyField("landline", e.target.value)}
+          value={maskPhone(emerg.landline || "")}
+          onChange={(e) => setEmergencyField("landline", maskPhone(e.target.value))}
         />
       </div>
 

@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DDI_OPTIONS } from "@/lib/validations/client";
+import { PhoneInput, unMaskPhone } from "@/components/ui/phone-input";
 
 interface ContactData {
   email: string;
@@ -43,21 +44,25 @@ export function EditContactSheet({
   async function handleSave() {
     setSaving(true);
     try {
+      const rawPhone = unMaskPhone(form.phone);
       const res = await fetch(`/api/clients/${clientId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: form.email || null,
-          phone: form.phone || null,
+          phone: rawPhone || null,
           phoneDdi: form.phoneDdi,
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.error ?? `HTTP ${res.status}`);
+      }
       toast.success("Contato atualizado!");
       onOpenChange(false);
       router.refresh();
-    } catch {
-      toast.error("Erro ao salvar. Tente novamente.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar. Tente novamente.");
     } finally {
       setSaving(false);
     }
@@ -101,15 +106,10 @@ export function EditContactSheet({
                 ))}
               </SelectContent>
             </Select>
-            <Input
-              type="tel"
-              inputMode="tel"
-              placeholder="(27) 98888-3838"
+            <PhoneInput
               className="flex-1 h-12"
               value={form.phone}
-              onChange={(e) =>
-                setForm({ ...form, phone: e.target.value.replace(/\D/g, "") })
-              }
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
             />
           </div>
         </div>

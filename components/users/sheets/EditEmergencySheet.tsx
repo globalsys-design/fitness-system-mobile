@@ -8,6 +8,7 @@ import { BottomSheet } from "@/components/mobile/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput, unMaskPhone } from "@/components/ui/phone-input";
 
 interface EmergencyData {
   name: string;
@@ -37,22 +38,26 @@ export function EditEmergencySheet({
   async function handleSave() {
     setSaving(true);
     try {
-      const hasData = form.name.trim() || form.phone.trim();
+      const rawPhone = unMaskPhone(form.phone);
+      const hasData = form.name.trim() || rawPhone;
       const res = await fetch(`/api/clients/${clientId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           emergencyContact: hasData
-            ? { name: form.name, phone: form.phone, notes: form.notes }
+            ? { name: form.name, phone: rawPhone, notes: form.notes }
             : null,
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.error ?? `HTTP ${res.status}`);
+      }
       toast.success("Contato de emergência atualizado!");
       onOpenChange(false);
       router.refresh();
-    } catch {
-      toast.error("Erro ao salvar. Tente novamente.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar. Tente novamente.");
     } finally {
       setSaving(false);
     }
@@ -77,15 +82,10 @@ export function EditEmergencySheet({
 
         <div>
           <Label>Telefone</Label>
-          <Input
-            type="tel"
-            inputMode="tel"
-            placeholder="(27) 98888-3838"
+          <PhoneInput
             className="mt-1.5 h-12"
             value={form.phone}
-            onChange={(e) =>
-              setForm({ ...form, phone: e.target.value.replace(/\D/g, "") })
-            }
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
           />
         </div>
 

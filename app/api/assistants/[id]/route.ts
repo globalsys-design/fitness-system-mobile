@@ -10,8 +10,8 @@ const patchAssistantSchema = z.object({
   cpf: z.string().optional(),
   profession: z.string().optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
-  permissions: z.record(z.unknown()).optional(),
-  address: z.record(z.string().optional()).optional(),
+  permissions: z.record(z.string(), z.unknown()).optional(),
+  address: z.record(z.string(), z.string().optional()).optional(),
   birthCity: z.string().optional(),
   maritalStatus: z.string().optional(),
 }).strict();
@@ -80,7 +80,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Assistant not found" }, { status: 404 });
   }
 
-  const raw = await req.json();
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+  }
+
   const parsed = patchAssistantSchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
@@ -90,21 +96,28 @@ export async function PATCH(
   }
   const body = parsed.data;
 
-  const assistant = await db.assistant.update({
-    where: { id },
-    data: {
-      ...(body.name !== undefined && { name: body.name }),
-      ...(body.email !== undefined && { email: body.email }),
-      ...(body.phone !== undefined && { phone: body.phone }),
-      ...(body.cpf !== undefined && { cpf: body.cpf }),
-      ...(body.profession !== undefined && { profession: body.profession }),
-      ...(body.status !== undefined && { status: body.status }),
-      ...(body.permissions !== undefined && { permissions: body.permissions }),
-      ...(body.address !== undefined && { address: body.address }),
-      ...(body.birthCity !== undefined && { birthCity: body.birthCity }),
-      ...(body.maritalStatus !== undefined && { maritalStatus: body.maritalStatus }),
-    },
-  });
+  try {
+    const assistant = await db.assistant.update({
+      where: { id },
+      data: {
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.email !== undefined && { email: body.email }),
+        ...(body.phone !== undefined && { phone: body.phone || null }),
+        ...(body.cpf !== undefined && { cpf: body.cpf || null }),
+        ...(body.profession !== undefined && { profession: body.profession || null }),
+        ...(body.status !== undefined && { status: body.status }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(body.permissions !== undefined && { permissions: body.permissions as any }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(body.address !== undefined && { address: body.address as any }),
+        ...(body.birthCity !== undefined && { birthCity: body.birthCity || null }),
+        ...(body.maritalStatus !== undefined && { maritalStatus: body.maritalStatus || null }),
+      },
+    });
 
-  return NextResponse.json(assistant);
+    return NextResponse.json(assistant);
+  } catch (err) {
+    console.error("[PATCH /api/assistants/:id] DB error:", err);
+    return NextResponse.json({ error: "Erro interno ao atualizar assistente" }, { status: 500 });
+  }
 }

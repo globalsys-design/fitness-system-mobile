@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput, unMaskPhone } from "@/components/ui/phone-input";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -106,14 +107,17 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
       const res = await fetch(`/api/assistants/${assistant.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, phone: unMaskPhone(formData.phone) || null }),
       });
-      if (!res.ok) throw new Error("Erro ao salvar");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.error ?? "Erro ao salvar");
+      }
       toast.success("Dados atualizados com sucesso!");
       setIsEditing(false);
       router.refresh();
-    } catch {
-      toast.error("Erro ao salvar. Tente novamente.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar. Tente novamente.");
     } finally {
       setIsSaving(false);
     }
@@ -291,9 +295,7 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
                 </div>
                 <div>
                   <Label>Telefone</Label>
-                  <Input
-                    type="tel"
-                    inputMode="tel"
+                  <PhoneInput
                     className="mt-1.5"
                     value={formData.phone}
                     onChange={(e) =>
