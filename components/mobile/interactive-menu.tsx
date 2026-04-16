@@ -25,6 +25,12 @@ const isActive = (href: string, pathname: string): boolean =>
   href === "/app" ? pathname === "/app" : pathname.startsWith(href);
 
 /* ── Single nav item ─────────────────────────────────────────────────────── */
+function triggerHaptic() {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    navigator.vibrate(10);
+  }
+}
+
 const NavItem = memo(function NavItem({
   item,
   active,
@@ -39,6 +45,7 @@ const NavItem = memo(function NavItem({
       href={item.href}
       aria-current={active ? "page" : undefined}
       className="flex flex-col items-center justify-center outline-none"
+      onClick={triggerHaptic}
     >
       {/* Icon + label wrapper — gets background chip when active */}
       <div
