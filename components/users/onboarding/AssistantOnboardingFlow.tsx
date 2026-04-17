@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { assistantSchema, type AssistantFormData } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 import { unMaskPhone } from "@/components/ui/phone-input";
+import { unMaskCpf } from "@/components/ui/cpf-input";
 
 import { AssistantNameStep } from "./steps/AssistantNameStep";
 import { AssistantContactStep } from "./steps/AssistantContactStep";
@@ -93,33 +94,49 @@ export function AssistantOnboardingFlow() {
         ])
       );
 
+      // ── Sanitize payload ─────────────────────────────────────────────────
+      // Strip masks and convert empty strings to undefined so Prisma 6
+      // doesn't receive explicit `undefined` for optional fields.
+      const clean = (v: string | undefined) =>
+        v && v.trim() !== "" ? v.trim() : undefined;
+
+      const payload = {
+        name: data.name.trim(),
+        email: data.email.trim(),
+        // Strip phone masks — raw digits only
+        phone:          unMaskPhone(data.phone)          || undefined,
+        emergencyPhone: unMaskPhone(data.emergencyPhone) || undefined,
+        // Strip CPF mask — raw digits only
+        cpf:          unMaskCpf(data.cpf)   || undefined,
+        birthDate:    clean(data.birthDate),
+        birthCity:    clean(data.birthCity),
+        maritalStatus: clean(data.maritalStatus),
+        profession:   clean(data.profession),
+        role:         clean(data.role),
+        status:       data.status,
+        // Only send password when toggle was ON and length ≥ 8
+        password: data.password && data.password.length >= 8 ? data.password : undefined,
+        // Address: only if user filled at least one field
+        address: data.address,
+        permissions: permissionsPayload,
+      };
+
+      console.debug("[AssistantOnboardingFlow] payload:", payload);
+
       try {
         const [response] = await Promise.all([
           fetch("/api/assistants", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...data,
-              // Strip masks before sending
-              phone: unMaskPhone(data.phone) || undefined,
-              emergencyPhone: unMaskPhone(data.emergencyPhone) || undefined,
-              // Empty strings → undefined
-              cpf: data.cpf || undefined,
-              birthDate: data.birthDate || undefined,
-              birthCity: data.birthCity || undefined,
-              maritalStatus: data.maritalStatus || undefined,
-              profession: data.profession || undefined,
-              role: data.role || undefined,
-              // Only send password if user actually set one (min 8 chars)
-              password: data.password && data.password.length >= 8 ? data.password : undefined,
-              permissions: permissionsPayload,
-            }),
+            body: JSON.stringify(payload),
           }),
           minDelay,
         ]);
 
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
+          console.error("[AssistantOnboardingFlow] API error:", errData);
+
           let errorMessage = "Erro ao criar assistente";
           if (typeof errData?.message === "string") {
             errorMessage = errData.message;
@@ -130,6 +147,9 @@ export function AssistantOnboardingFlow() {
               errData.error.fieldErrors as Record<string, string[]>
             ).flat();
             if (firstErrors.length > 0) errorMessage = firstErrors[0];
+          } else if (typeof errData?.debug === "string") {
+            // Dev-mode detail surfaced by the API
+            errorMessage = errData.debug;
           }
           throw new Error(errorMessage);
         }
@@ -138,6 +158,7 @@ export function AssistantOnboardingFlow() {
         router.push(`/app/usuarios/assistentes/${assistant.id}`);
       } catch (error: unknown) {
         setIsSubmitting(false);
+        console.error("[AssistantOnboardingFlow] catch:", error);
         toast.error(error instanceof Error ? error.message : "Erro inesperado. Tente novamente.");
       }
     },
