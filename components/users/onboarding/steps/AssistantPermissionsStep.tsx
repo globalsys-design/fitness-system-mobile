@@ -118,7 +118,7 @@ export function AssistantPermissionsStep({
           </p>
         </div>
         <Switch
-          checked={isAdmin}
+          checked={isAdmin ?? false}
           onCheckedChange={onToggleAdmin}
           aria-label="Ativar assistente administrador"
           className="shrink-0"
@@ -196,7 +196,7 @@ function ModuleCard({
           <ActionToggle
             key={key}
             label={label}
-            checked={permission[key]}
+            checked={permission[key] ?? false}
             disabled={disabled}
             onChange={(value) => onChangeAction(key, value)}
           />
@@ -234,7 +234,7 @@ function ActionToggle({
     >
       <span className="truncate">{label}</span>
       <Switch
-        checked={checked}
+        checked={checked ?? false}
         onCheckedChange={onChange}
         disabled={disabled}
         size="sm"

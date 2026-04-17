@@ -45,10 +45,18 @@ export function PasswordGeneratorBlock({
       return;
     }
     try {
-      await navigator.clipboard.writeText(value);
-      toast.success("Senha copiada!");
-    } catch {
-      toast.error("Não foi possível copiar. Copie manualmente.");
+      // Defensive: Clipboard API requer HTTPS + permissão do usuário.
+      // Em alguns contextos (iframe, http, permissões revogadas) writeText
+      // lança "Write permission denied" ou nem existe.
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+        toast.success("Senha copiada!");
+      } else {
+        throw new Error("Clipboard não suportado");
+      }
+    } catch (err) {
+      console.warn("[PasswordGeneratorBlock] clipboard falhou:", err);
+      toast.error("Erro ao copiar. Selecione o texto manualmente.");
     }
   }
 

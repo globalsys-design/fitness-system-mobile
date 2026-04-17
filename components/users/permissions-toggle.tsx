@@ -55,14 +55,30 @@ const CRUD_ACTIONS: Array<{ key: CrudAction; label: string }> = [
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
+// Garante que cada módulo tenha SEMPRE as 4 chaves CRUD como boolean. Isso evita
+// o warning "Switch changing from uncontrolled to controlled" em dados legados
+// (ex: assistentes antigos com formato `{read, write}`).
+function normalizeCrud(c: unknown): CrudPermission {
+  const obj = (c ?? {}) as Record<string, unknown>;
+  // Compatibilidade com formato legado {read, write}
+  const legacyRead  = typeof obj.read  === "boolean" ? obj.read  : false;
+  const legacyWrite = typeof obj.write === "boolean" ? obj.write : false;
+  return {
+    view:   typeof obj.view   === "boolean" ? obj.view   : legacyRead,
+    create: typeof obj.create === "boolean" ? obj.create : legacyWrite,
+    edit:   typeof obj.edit   === "boolean" ? obj.edit   : legacyWrite,
+    delete: typeof obj.delete === "boolean" ? obj.delete : false,
+  };
+}
+
 function normalize(p: PermissionsMap | undefined | null): Required<PermissionsMap> {
   return {
     isAdmin: p?.isAdmin ?? false,
-    clients:       p?.clients       ?? { ...EMPTY_CRUD },
-    assessments:   p?.assessments   ?? { ...EMPTY_CRUD },
-    prescriptions: p?.prescriptions ?? { ...EMPTY_CRUD },
-    calendar:      p?.calendar      ?? { ...EMPTY_CRUD },
-    billing:       p?.billing       ?? { ...EMPTY_CRUD },
+    clients:       normalizeCrud(p?.clients),
+    assessments:   normalizeCrud(p?.assessments),
+    prescriptions: normalizeCrud(p?.prescriptions),
+    calendar:      normalizeCrud(p?.calendar),
+    billing:       normalizeCrud(p?.billing),
   };
 }
 
@@ -136,7 +152,7 @@ export function PermissionsToggle({
           </p>
         </div>
         <Switch
-          checked={isAdmin}
+          checked={isAdmin ?? false}
           onCheckedChange={setAdmin}
           disabled={disabled}
           aria-label="Ativar assistente administrador"
@@ -212,7 +228,7 @@ function ModuleCard({
           <ActionToggle
             key={key}
             label={label}
-            checked={permission[key]}
+            checked={permission[key] ?? false}
             disabled={disabled}
             onChange={(value) => onChange(key, value)}
           />
@@ -250,7 +266,7 @@ function ActionToggle({
     >
       <span className="truncate">{label}</span>
       <Switch
-        checked={checked}
+        checked={checked ?? false}
         onCheckedChange={onChange}
         disabled={disabled}
         size="sm"

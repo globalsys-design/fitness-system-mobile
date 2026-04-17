@@ -169,22 +169,44 @@ export function AssistantOnboardingFlow() {
         ]);
 
         if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          console.error("[AssistantOnboardingFlow] API error:", errData);
+          // Fallback textual caso o corpo não seja JSON válido (ex: HTML 500
+          // de crash pré-handler). Preserva a pista para o usuário.
+          const rawText = await response.text();
+          let errData: Record<string, unknown> = {};
+          try {
+            errData = rawText ? JSON.parse(rawText) : {};
+          } catch {
+            errData = { raw: rawText?.slice(0, 300) };
+          }
+          console.error(
+            "[AssistantOnboardingFlow] API error:",
+            response.status,
+            errData
+          );
 
           let errorMessage = "Erro ao criar assistente";
-          if (typeof errData?.message === "string") {
-            errorMessage = errData.message;
-          } else if (typeof errData?.error === "string") {
-            errorMessage = errData.error;
-          } else if (errData?.error?.fieldErrors) {
-            const firstErrors = Object.values(
-              errData.error.fieldErrors as Record<string, string[]>
-            ).flat();
+          const asRecord = errData as {
+            message?: unknown;
+            error?: unknown;
+            debug?: unknown;
+            details?: { fieldErrors?: Record<string, string[]> };
+            raw?: unknown;
+          };
+
+          // Prioridade: zod fieldErrors → error string → message string → debug → raw
+          if (asRecord?.details?.fieldErrors) {
+            const firstErrors = Object.values(asRecord.details.fieldErrors).flat();
             if (firstErrors.length > 0) errorMessage = firstErrors[0];
-          } else if (typeof errData?.debug === "string") {
-            // Dev-mode detail surfaced by the API
-            errorMessage = errData.debug;
+          } else if (typeof asRecord?.error === "string") {
+            errorMessage = asRecord.error;
+          } else if (typeof asRecord?.message === "string") {
+            errorMessage = asRecord.message;
+          } else if (typeof asRecord?.debug === "string") {
+            errorMessage = asRecord.debug;
+          } else if (typeof asRecord?.raw === "string" && asRecord.raw.length > 0) {
+            errorMessage = `HTTP ${response.status}: ${asRecord.raw}`;
+          } else {
+            errorMessage = `HTTP ${response.status}`;
           }
           throw new Error(errorMessage);
         }
@@ -193,8 +215,25 @@ export function AssistantOnboardingFlow() {
         router.push(`/app/usuarios/assistentes/${assistant.id}`);
       } catch (error: unknown) {
         setIsSubmitting(false);
-        console.error("[AssistantOnboardingFlow] catch:", error);
-        toast.error(error instanceof Error ? error.message : "Erro inesperado. Tente novamente.");
+        // Expõe o erro real no console e no toast para QA/debug.
+        let errorMessage = "Erro desconhecido ao criar assistente";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === "object" && error !== null) {
+          try {
+            errorMessage = JSON.stringify(error);
+          } catch {
+            errorMessage = String(error);
+          }
+        } else if (typeof error === "string") {
+          errorMessage = error;
+        }
+        console.error(
+          "[AssistantOnboardingFlow] API error details:",
+          errorMessage,
+          error
+        );
+        toast.error(`Erro ao criar assistente: ${errorMessage}`);
       }
     },
     [router, permissions]
