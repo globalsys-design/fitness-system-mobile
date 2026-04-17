@@ -54,14 +54,15 @@ const CRUD_ACTIONS: Array<{ key: CrudAction; label: string }> = [
 interface AssistantPermissionsStepProps {
   permissions: PermissionsState;
   onToggleAdmin: (isAdmin: boolean) => void;
-  onToggleAction: (module: ModuleKey, action: CrudAction) => void;
+  /** Chamado pelo Switch com o NOVO valor. Use sempre o value recebido (idempotente). */
+  onChangeAction: (module: ModuleKey, action: CrudAction, value: boolean) => void;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 export function AssistantPermissionsStep({
   permissions,
   onToggleAdmin,
-  onToggleAction,
+  onChangeAction,
 }: AssistantPermissionsStepProps) {
   const isAdmin = permissions.isAdmin;
 
@@ -88,11 +89,10 @@ export function AssistantPermissionsStep({
       </Alert>
 
       {/* ── Master toggle: Administrador ────────────────────────────────── */}
-      <button
-        type="button"
-        onClick={() => onToggleAdmin(!isAdmin)}
+      {/* <label> permite clicar em qualquer parte para togglear o Switch interno */}
+      <label
         className={cn(
-          "w-full flex items-center gap-4 px-4 py-4 rounded-2xl border-2 text-left transition-all duration-200 active:scale-[0.99]",
+          "w-full flex items-center gap-4 px-4 py-4 rounded-2xl border-2 cursor-pointer select-none transition-all duration-200",
           isAdmin
             ? "border-primary bg-primary/8"
             : "border-border bg-muted/30 hover:bg-muted/60"
@@ -121,9 +121,9 @@ export function AssistantPermissionsStep({
           checked={isAdmin}
           onCheckedChange={onToggleAdmin}
           aria-label="Ativar assistente administrador"
-          className="shrink-0 pointer-events-none"
+          className="shrink-0"
         />
-      </button>
+      </label>
 
       {/* ── Grid de módulos CRUD ────────────────────────────────────────── */}
       <div className="flex flex-col gap-3">
@@ -133,7 +133,7 @@ export function AssistantPermissionsStep({
             module={mod}
             permission={permissions[mod.key]}
             disabled={isAdmin}
-            onToggleAction={(action) => onToggleAction(mod.key, action)}
+            onChangeAction={(action, value) => onChangeAction(mod.key, action, value)}
           />
         ))}
       </div>
@@ -149,12 +149,12 @@ function ModuleCard({
   module,
   permission,
   disabled,
-  onToggleAction,
+  onChangeAction,
 }: {
   module: typeof MODULES[number];
   permission: CrudPermission;
   disabled: boolean;
-  onToggleAction: (action: CrudAction) => void;
+  onChangeAction: (action: CrudAction, value: boolean) => void;
 }) {
   const Icon = module.icon;
   const anyActive =
@@ -198,7 +198,7 @@ function ModuleCard({
             label={label}
             checked={permission[key]}
             disabled={disabled}
-            onToggle={() => onToggleAction(key)}
+            onChange={(value) => onChangeAction(key, value)}
           />
         ))}
       </div>
@@ -207,25 +207,25 @@ function ModuleCard({
 }
 
 // ── ActionToggle ─────────────────────────────────────────────────────────────
+// Usa <label> no lugar de <button> para evitar nesting inválido do base-ui Switch
+// (que internamente renderiza um <input type="checkbox">). Assim o clique no
+// label dispara nativamente o onCheckedChange do Switch, mantendo sync de estado.
 function ActionToggle({
   label,
   checked,
   disabled,
-  onToggle,
+  onChange,
 }: {
   label: string;
   checked: boolean;
   disabled?: boolean;
-  onToggle: () => void;
+  onChange: (value: boolean) => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      disabled={disabled}
+    <label
       className={cn(
         "flex items-center justify-between gap-2 rounded-xl border px-3 h-11",
-        "text-sm font-medium transition-colors duration-200 active:scale-[0.98]",
+        "text-sm font-medium cursor-pointer select-none transition-colors duration-200",
         disabled && "opacity-60 cursor-not-allowed",
         checked
           ? "border-primary/40 bg-primary/10 text-foreground"
@@ -235,13 +235,13 @@ function ActionToggle({
       <span className="truncate">{label}</span>
       <Switch
         checked={checked}
-        onCheckedChange={onToggle}
+        onCheckedChange={onChange}
         disabled={disabled}
         size="sm"
         aria-label={label}
-        className="shrink-0 pointer-events-none"
+        className="shrink-0"
       />
-    </button>
+    </label>
   );
 }
 

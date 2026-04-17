@@ -89,14 +89,14 @@ export function AssistantOnboardingFlow() {
     setPermissions((prev) => ({ ...prev, isAdmin }));
   }, []);
 
-  // ── Permissions: toggle de uma ação CRUD em um módulo específico ────────
-  const handleToggleAction = useCallback(
-    (module: ModuleKey, action: CrudAction) => {
+  // ── Permissions: recebe diretamente o NOVO valor do Switch (idempotente) ─
+  const handleChangeAction = useCallback(
+    (module: ModuleKey, action: CrudAction, value: boolean) => {
       setPermissions((prev) => ({
         ...prev,
         [module]: {
           ...prev[module],
-          [action]: !prev[module][action],
+          [action]: value,
         },
       }));
     },
@@ -268,7 +268,7 @@ export function AssistantOnboardingFlow() {
       <AssistantPermissionsStep
         permissions={permissions}
         onToggleAdmin={handleToggleAdmin}
-        onToggleAction={handleToggleAction}
+        onChangeAction={handleChangeAction}
       />
     ),
     5: <AssistantAccessStep />,

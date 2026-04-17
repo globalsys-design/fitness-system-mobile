@@ -86,11 +86,11 @@ export function PermissionsToggle({
     onChange({ ...state, isAdmin: value });
   }
 
-  function toggleAction(module: ModuleKey, action: CrudAction) {
+  function setAction(module: ModuleKey, action: CrudAction, value: boolean) {
     const current = state[module];
     onChange({
       ...state,
-      [module]: { ...current, [action]: !current[action] },
+      [module]: { ...current, [action]: value },
     });
   }
 
@@ -106,14 +106,14 @@ export function PermissionsToggle({
         </AlertDescription>
       </Alert>
 
-      {/* Master toggle: Administrador */}
-      <div
+      {/* Master toggle: Administrador — <label> permite clique na área toda */}
+      <label
         className={cn(
-          "flex items-center gap-4 px-4 py-4 rounded-2xl border-2 transition-all duration-200",
+          "flex items-center gap-4 px-4 py-4 rounded-2xl border-2 cursor-pointer select-none transition-all duration-200",
           isAdmin
             ? "border-primary bg-primary/8"
             : "border-border bg-muted/30",
-          disabled && "opacity-60 pointer-events-none",
+          disabled && "opacity-60 pointer-events-none cursor-not-allowed",
         )}
       >
         <div
@@ -142,7 +142,7 @@ export function PermissionsToggle({
           aria-label="Ativar assistente administrador"
           className="shrink-0"
         />
-      </div>
+      </label>
 
       {/* Grid de módulos */}
       <div className="flex flex-col gap-3">
@@ -152,7 +152,7 @@ export function PermissionsToggle({
             module={mod}
             permission={state[mod.key]}
             disabled={disabled || isAdmin}
-            onToggle={(action) => toggleAction(mod.key, action)}
+            onChange={(action, value) => setAction(mod.key, action, value)}
           />
         ))}
       </div>
@@ -165,12 +165,12 @@ function ModuleCard({
   module,
   permission,
   disabled,
-  onToggle,
+  onChange,
 }: {
   module: typeof MODULES[number];
   permission: CrudPermission;
   disabled: boolean;
-  onToggle: (action: CrudAction) => void;
+  onChange: (action: CrudAction, value: boolean) => void;
 }) {
   const Icon = module.icon;
   const anyActive =
@@ -214,7 +214,7 @@ function ModuleCard({
             label={label}
             checked={permission[key]}
             disabled={disabled}
-            onToggle={() => onToggle(key)}
+            onChange={(value) => onChange(key, value)}
           />
         ))}
       </div>
@@ -223,25 +223,25 @@ function ModuleCard({
 }
 
 // ── ActionToggle ────────────────────────────────────────────────────────────
+// Usa <label> (não <button>) pois o base-ui Switch renderiza internamente um
+// <input type="checkbox">; aninhar um controle interativo dentro de <button> é
+// HTML inválido e quebra a sincronização de estado checked/unchecked.
 function ActionToggle({
   label,
   checked,
   disabled,
-  onToggle,
+  onChange,
 }: {
   label: string;
   checked: boolean;
   disabled?: boolean;
-  onToggle: () => void;
+  onChange: (value: boolean) => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      disabled={disabled}
+    <label
       className={cn(
         "flex items-center justify-between gap-2 rounded-xl border px-3 h-11",
-        "text-sm font-medium transition-colors duration-200 active:scale-[0.98]",
+        "text-sm font-medium cursor-pointer select-none transition-colors duration-200",
         disabled && "opacity-60 cursor-not-allowed",
         checked
           ? "border-primary/40 bg-primary/10 text-foreground"
@@ -251,12 +251,12 @@ function ActionToggle({
       <span className="truncate">{label}</span>
       <Switch
         checked={checked}
-        onCheckedChange={onToggle}
+        onCheckedChange={onChange}
         disabled={disabled}
         size="sm"
         aria-label={label}
-        className="shrink-0 pointer-events-none"
+        className="shrink-0"
       />
-    </button>
+    </label>
   );
 }
