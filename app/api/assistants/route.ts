@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { assistantSchema } from "@/lib/validations";
@@ -35,7 +36,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { address, permissions, birthDate, ...rest } = parsed.data;
+  const { address, permissions, birthDate, password, ...rest } = parsed.data;
+
+  // Hash password if provided
+  let passwordHash: string | undefined;
+  if (password) {
+    passwordHash = await bcrypt.hash(password, 12);
+  }
 
   let assistant;
   try {
@@ -44,6 +51,7 @@ export async function POST(req: NextRequest) {
         ...rest,
         professionalId: professional.id,
         ...(birthDate ? { birthDate: new Date(birthDate) } : {}),
+        ...(passwordHash ? { passwordHash } : {}),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(address ? { address: address as any } : {}),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

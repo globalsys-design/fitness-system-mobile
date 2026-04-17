@@ -16,6 +16,7 @@ import { AssistantContactStep } from "./steps/AssistantContactStep";
 import { AssistantAddressStep } from "./steps/AssistantAddressStep";
 import { AssistantProfessionStep } from "./steps/AssistantProfessionStep";
 import { AssistantPermissionsStep, type PermissionsState } from "./steps/AssistantPermissionsStep";
+import { AssistantAccessStep } from "./steps/AssistantAccessStep";
 
 // ── Step configuration ──────────────────────────────────────────────────────
 const STEPS = [
@@ -23,7 +24,8 @@ const STEPS = [
   { id: "personal",    label: "Dados Pessoais",   cta: "Continuar →" },
   { id: "address",     label: "Endereço",         cta: "Continuar →" },
   { id: "profession",  label: "Dados Profissionais", cta: "Continuar →" },
-  { id: "permissions", label: "Permissões",       cta: "Adicionar assistente ✓" },
+  { id: "permissions", label: "Permissões",       cta: "Continuar →" },
+  { id: "access",      label: "Acesso",           cta: "Adicionar assistente ✓" },
 ] as const;
 
 const TOTAL_STEPS = STEPS.length;
@@ -108,6 +110,8 @@ export function AssistantOnboardingFlow() {
               maritalStatus: data.maritalStatus || undefined,
               profession: data.profession || undefined,
               role: data.role || undefined,
+              // Only send password if user actually set one (min 8 chars)
+              password: data.password && data.password.length >= 8 ? data.password : undefined,
               permissions: permissionsPayload,
             }),
           }),
@@ -139,7 +143,7 @@ export function AssistantOnboardingFlow() {
     } else if (stepId === "personal") {
       const valid = await trigger("email");
       if (!valid) return;
-    } else if (stepId === "permissions") {
+    } else if (stepId === "access") {
       // Last step: submit
       onSubmit(getValues());
       return;
@@ -199,6 +203,7 @@ export function AssistantOnboardingFlow() {
         onToggle={handlePermissionToggle}
       />
     ),
+    5: <AssistantAccessStep />,
   };
 
   // ── Main layout ─────────────────────────────────────────────────────────

@@ -75,6 +75,7 @@ export const assistantSchema = z.object({
   maritalStatus: z.string().optional(),
   profession: z.string().optional(),
   role: z.string().optional(),
+  password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres").optional().or(z.literal("")),
   address: z.object({
     cep: z.string().optional(),
     street: z.string().optional(),

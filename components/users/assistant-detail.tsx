@@ -25,6 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PermissionsToggle, PermissionsMap } from "./permissions-toggle";
 import { AssistantEditSheet } from "./sheets/AssistantEditSheet";
+import { PasswordGeneratorBlock } from "./PasswordGeneratorBlock";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -77,6 +78,8 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
   const [tab, setTab] = useState("info");
   const [editOpen, setEditOpen] = useState(false);
   const [statusActive, setStatusActive] = useState(assistant.status === "ACTIVE");
+  const [accessPassword, setAccessPassword] = useState("");
+  const [savingPwd, setSavingPwd] = useState(false);
 
   // Permissions state
   const [permissions, setPermissions] = useState<PermissionsMap>(
@@ -89,6 +92,31 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
     }
   );
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
+
+  async function handleSavePassword() {
+    if (accessPassword.length < 8) {
+      toast.error("A senha deve ter no mínimo 8 caracteres.");
+      return;
+    }
+    setSavingPwd(true);
+    try {
+      const res = await fetch(`/api/assistants/${assistant.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: accessPassword }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.error ?? `HTTP ${res.status}`);
+      }
+      toast.success("Senha definida com sucesso!");
+      setAccessPassword("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar senha.");
+    } finally {
+      setSavingPwd(false);
+    }
+  }
 
   async function handleToggleStatus(checked: boolean) {
     const newStatus = checked ? "ACTIVE" : "INACTIVE";
@@ -288,6 +316,25 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
               <div className="rounded-xl border border-border bg-card p-4">
                 <p className="text-sm font-medium text-foreground mb-1">Email de acesso</p>
                 <p className="text-sm text-muted-foreground">{assistant.email}</p>
+              </div>
+
+              {/* Gerador de senha */}
+              <div className="rounded-xl border border-border bg-card p-4 flex flex-col gap-4">
+                <p className="text-sm font-medium text-foreground">Senha de acesso</p>
+                <PasswordGeneratorBlock
+                  value={accessPassword}
+                  onChange={setAccessPassword}
+                />
+                {accessPassword.length >= 8 && (
+                  <Button
+                    size="sm"
+                    className="w-full h-11 mt-1"
+                    onClick={handleSavePassword}
+                    disabled={savingPwd}
+                  >
+                    {savingPwd ? "Salvando…" : "Salvar nova senha"}
+                  </Button>
+                )}
               </div>
 
               <div className="rounded-xl border border-border bg-card p-4">

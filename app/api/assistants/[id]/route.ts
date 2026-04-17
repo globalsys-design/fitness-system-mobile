@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -14,6 +15,7 @@ const patchAssistantSchema = z.object({
   maritalStatus: z.string().optional(),
   profession: z.string().optional(),
   role: z.string().optional(),
+  password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres").optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
   permissions: z.record(z.string(), z.unknown()).optional(),
   address: z.record(z.string(), z.string().optional()).optional(),
@@ -99,6 +101,12 @@ export async function PATCH(
   }
   const body = parsed.data;
 
+  // Hash password if provided
+  let passwordHash: string | undefined;
+  if (body.password) {
+    passwordHash = await bcrypt.hash(body.password, 12);
+  }
+
   try {
     const assistant = await db.assistant.update({
       where: { id },
@@ -116,6 +124,7 @@ export async function PATCH(
         ...(body.profession !== undefined && { profession: body.profession || null }),
         ...(body.role !== undefined && { role: body.role || null }),
         ...(body.status !== undefined && { status: body.status }),
+        ...(passwordHash !== undefined && { passwordHash }),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(body.permissions !== undefined && { permissions: body.permissions as any }),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

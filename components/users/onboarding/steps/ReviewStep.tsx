@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import type { ClientFormData } from "@/lib/validations/client";
 import { DAYS_OF_WEEK } from "@/lib/validations/client";
 import { cn } from "@/lib/utils";
+import { PasswordGeneratorBlock } from "@/components/users/PasswordGeneratorBlock";
 
 function Row({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
@@ -46,8 +48,9 @@ const ACTIVITY_LABELS: Record<string, string> = {
 };
 
 export function ReviewStep() {
-  const { watch } = useFormContext<ClientFormData>();
+  const { watch, setValue } = useFormContext<ClientFormData>();
   const data = watch();
+  const [grantAccess, setGrantAccess] = useState(false);
 
   const activeDays = DAYS_OF_WEEK.filter(
     ({ key }) => data.availability?.[key]?.active
@@ -136,6 +139,54 @@ export function ReviewStep() {
               ))}
             </div>
           </Section>
+        )}
+      </div>
+
+      {/* ── Bloco de Acesso à Plataforma ─────────────────────── */}
+      <div className="flex flex-col gap-4">
+        {/* Toggle principal */}
+        <button
+          type="button"
+          onClick={() => {
+            const next = !grantAccess;
+            setGrantAccess(next);
+            if (!next) setValue("password", "");
+          }}
+          className={cn(
+            "w-full flex items-center justify-between px-5 py-4 rounded-2xl border-2 text-left transition-all duration-200 active:scale-[0.98]",
+            grantAccess
+              ? "border-primary bg-primary/8"
+              : "border-border bg-muted/40 hover:bg-muted/70"
+          )}
+        >
+          <div className="flex flex-col">
+            <span className={cn("font-semibold text-base", grantAccess ? "text-primary" : "text-foreground")}>
+              Permitir acesso ao sistema
+            </span>
+            <span className="text-sm text-muted-foreground mt-0.5">
+              O cliente poderá entrar na plataforma
+            </span>
+          </div>
+          <div className={cn(
+            "size-6 rounded-full border-2 shrink-0 transition-all duration-200 flex items-center justify-center",
+            grantAccess ? "border-primary bg-primary" : "border-border"
+          )}>
+            {grantAccess && (
+              <svg className="size-3.5 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+        </button>
+
+        {/* Gerador de senha — aparece quando o toggle está ativo */}
+        {grantAccess && (
+          <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+            <PasswordGeneratorBlock
+              value={data.password ?? ""}
+              onChange={(pwd) => setValue("password", pwd, { shouldValidate: true })}
+            />
+          </div>
         )}
       </div>
 

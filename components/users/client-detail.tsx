@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PasswordGeneratorBlock } from "./PasswordGeneratorBlock";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Progress,
@@ -562,8 +563,37 @@ function AvailabilityDisplay({ availability }: { availability: any }) {
 }
 
 function AccessTab({ client, router }: { client: any; router: any }) {
+  const [password, setPassword] = useState("");
+  const [savingPwd, setSavingPwd] = useState(false);
+
+  async function handleSavePassword() {
+    if (password.length < 8) {
+      toast.error("A senha deve ter no mínimo 8 caracteres.");
+      return;
+    }
+    setSavingPwd(true);
+    try {
+      const res = await fetch(`/api/clients/${client.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.error ?? `HTTP ${res.status}`);
+      }
+      toast.success("Senha definida com sucesso!");
+      setPassword("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar senha.");
+    } finally {
+      setSavingPwd(false);
+    }
+  }
+
   return (
     <div className="p-4 flex flex-col gap-4">
+      {/* Toggle de conta */}
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <div>
@@ -591,10 +621,30 @@ function AccessTab({ client, router }: { client: any; router: any }) {
           />
         </div>
       </div>
+
+      {/* Email de acesso */}
       <div className="rounded-xl border border-border bg-card p-4">
         <p className="text-sm font-medium mb-1">Email de acesso</p>
         <p className="text-sm text-muted-foreground">{client.email ?? "Não configurado"}</p>
       </div>
+
+      {/* Gerador de senha */}
+      <div className="rounded-xl border border-border bg-card p-4 flex flex-col gap-4">
+        <p className="text-sm font-medium text-foreground">Senha de acesso</p>
+        <PasswordGeneratorBlock value={password} onChange={setPassword} />
+        {password.length >= 8 && (
+          <Button
+            size="sm"
+            className="w-full h-11 mt-1"
+            onClick={handleSavePassword}
+            disabled={savingPwd}
+          >
+            {savingPwd ? "Salvando…" : "Salvar nova senha"}
+          </Button>
+        )}
+      </div>
+
+      {/* Cadastrado em */}
       <div className="rounded-xl border border-border bg-card p-4">
         <p className="text-sm font-medium mb-1">Cadastrado em</p>
         <p className="text-sm text-muted-foreground">

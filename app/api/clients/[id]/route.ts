@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -17,6 +18,7 @@ const patchClientSchema = z.object({
   address: z.record(z.string(), z.string().optional()).optional(),
   emergencyContact: z.record(z.string(), z.unknown()).nullable().optional(),
   availability: z.record(z.string(), z.unknown()).nullable().optional(),
+  password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres").optional(),
 }).strict();
 
 export async function GET(
@@ -109,6 +111,12 @@ export async function PATCH(
   }
   const body = parsed.data;
 
+  // Hash password if provided
+  let passwordHash: string | undefined;
+  if (body.password) {
+    passwordHash = await bcrypt.hash(body.password, 12);
+  }
+
   try {
     const client = await db.client.update({
       where: { id },
@@ -133,6 +141,7 @@ export async function PATCH(
         ...(body.emergencyContact !== undefined && { emergencyContact: body.emergencyContact as any }),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(body.availability !== undefined && { availability: (body.availability || null) as any }),
+        ...(passwordHash !== undefined && { passwordHash }),
       },
     });
 
