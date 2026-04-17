@@ -5,6 +5,9 @@ import { useFormContext } from "react-hook-form";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { BRAZIL_STATES } from "@/lib/constants/brazil-states";
+import { useIbgeCities } from "@/lib/hooks/use-ibge-cities";
 import type { ClientFormData } from "@/lib/validations/client";
 
 export function StepAddress() {
@@ -12,6 +15,27 @@ export function StepAddress() {
   const watched = watch();
   const [isFetchingCep, setIsFetchingCep] = useState(false);
   const [cepFilled, setCepFilled] = useState(false);
+
+  const addr = (watched.address as Record<string, string>) ?? {};
+  const selectedState = addr.state || "";
+  const selectedCity  = addr.city  || "";
+
+  const { cities, loading: citiesLoading } = useIbgeCities(selectedState || null);
+
+  function setAddressField(field: string, value: string) {
+    setValue("address", {
+      ...((watched.address as Record<string, string>) ?? {}),
+      [field]: value,
+    });
+  }
+
+  function handleStateChange(uf: string) {
+    setValue("address", {
+      ...((watched.address as Record<string, string>) ?? {}),
+      state: uf,
+      city: "", // limpa cidade ao trocar UF
+    });
+  }
 
   async function handleCepBlur(cep: string) {
     const digits = cep.replace(/\D/g, "");
@@ -24,14 +48,15 @@ export function StepAddress() {
       const data = await res.json();
       if (data.erro) return;
 
-      const current = (watched.address as any) ?? {};
+      const current = (watched.address as Record<string, string>) ?? {};
       setValue("address", {
         ...current,
         cep: digits,
-        street: data.logradouro || current.street || "",
-        neighborhood: data.bairro || current.neighborhood || "",
-        city: data.localidade || current.city || "",
-        state: data.uf || current.state || "",
+        street:       data.logradouro || current.street       || "",
+        neighborhood: data.bairro     || current.neighborhood || "",
+        // Seta state ANTES de city — useIbgeCities inicia o fetch
+        state: data.uf        || current.state || "",
+        city:  data.localidade || current.city  || "",
       });
       setCepFilled(true);
       setTimeout(() => setCepFilled(false), 3000);
@@ -41,15 +66,6 @@ export function StepAddress() {
       setIsFetchingCep(false);
     }
   }
-
-  function setAddressField(field: string, value: string) {
-    setValue("address", {
-      ...((watched.address as any) ?? {}),
-      [field]: value,
-    });
-  }
-
-  const addr = (watched.address as any) ?? {};
 
   return (
     <div className="flex flex-col gap-4">
@@ -126,29 +142,44 @@ export function StepAddress() {
         />
       </div>
 
-      {/* Cidade + Estado */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="col-span-2">
-          <Label htmlFor="city">Cidade</Label>
-          <Input
-            id="city"
-            className="mt-1.5"
-            value={addr.city || ""}
-            onChange={(e) => setAddressField("city", e.target.value)}
-          />
-        </div>
-        <div>
-          <Label htmlFor="state">UF</Label>
-          <Input
-            id="state"
-            className="mt-1.5"
-            maxLength={2}
-            value={addr.state || ""}
-            onChange={(e) =>
-              setAddressField("state", e.target.value.toUpperCase())
-            }
-          />
-        </div>
+      {/* Estado (UF) */}
+      <div>
+        <Label htmlFor="state">Estado</Label>
+        <NativeSelect
+          id="state"
+          className="mt-1.5"
+          value={selectedState}
+          onChange={(e) => handleStateChange(e.target.value)}
+        >
+          <option value="">Selecione o estado</option>
+          {BRAZIL_STATES.map(({ sigla, nome }) => (
+            <option key={sigla} value={sigla}>{sigla} — {nome}</option>
+          ))}
+        </NativeSelect>
+      </div>
+
+      {/* Cidade — dependente do estado */}
+      <div>
+        <Label htmlFor="city">Cidade</Label>
+        <NativeSelect
+          id="city"
+          className="mt-1.5"
+          value={selectedCity}
+          disabled={!selectedState}
+          loading={citiesLoading}
+          onChange={(e) => setAddressField("city", e.target.value)}
+        >
+          <option value="">
+            {citiesLoading
+              ? "Carregando cidades..."
+              : !selectedState
+              ? "Selecione o estado primeiro"
+              : "Selecione a cidade"}
+          </option>
+          {cities.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </NativeSelect>
       </div>
 
       {/* Profissão */}

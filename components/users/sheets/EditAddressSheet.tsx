@@ -8,6 +8,9 @@ import { BottomSheet } from "@/components/mobile/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { BRAZIL_STATES } from "@/lib/constants/brazil-states";
+import { useIbgeCities } from "@/lib/hooks/use-ibge-cities";
 
 interface AddressData {
   cep: string;
@@ -46,6 +49,7 @@ export function EditAddressSheet({
   const [form, setForm] = useState<AddressData>(initialData ?? EMPTY);
   const [saving, setSaving] = useState(false);
   const [searching, setSearching] = useState(false);
+  const { cities: ibgeCities, loading: citiesLoading } = useIbgeCities(form.state || null);
 
   function applyCepMask(raw: string) {
     const d = raw.replace(/\D/g, "").slice(0, 8);
@@ -188,32 +192,48 @@ export function EditAddressSheet({
           />
         </div>
 
-        {/* Cidade + Estado */}
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <Label>Cidade</Label>
-            <Input
-              placeholder="Ex: Vitória"
-              className="mt-1.5 h-12"
-              value={form.city}
-              onChange={set("city")}
-            />
-          </div>
-          <div className="w-20">
-            <Label>UF</Label>
-            <Input
-              placeholder="ES"
-              maxLength={2}
-              className="mt-1.5 h-12 uppercase"
-              value={form.state}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  state: e.target.value.toUpperCase().slice(0, 2),
-                }))
-              }
-            />
-          </div>
+        {/* Estado (UF) */}
+        <div>
+          <Label>Estado</Label>
+          <NativeSelect
+            className="mt-1.5 h-12"
+            value={form.state}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, state: e.target.value, city: "" }))
+            }
+          >
+            <option value="">Selecione o estado</option>
+            {BRAZIL_STATES.map(({ sigla, nome }) => (
+              <option key={sigla} value={sigla}>{sigla} — {nome}</option>
+            ))}
+          </NativeSelect>
+        </div>
+
+        {/* Cidade — dependente do estado */}
+        <div>
+          <Label>Cidade</Label>
+          <NativeSelect
+            className="mt-1.5 h-12"
+            value={form.city}
+            disabled={!form.state}
+            loading={citiesLoading}
+            onChange={(e) => setForm((prev) => ({ ...prev, city: e.target.value }))}
+          >
+            <option value="">
+              {citiesLoading
+                ? "Carregando cidades..."
+                : !form.state
+                ? "Selecione o estado primeiro"
+                : "Selecione a cidade"}
+            </option>
+            {/* Garante que valor existente no DB sempre aparece como opção */}
+            {form.city && !ibgeCities.includes(form.city) && (
+              <option value={form.city}>{form.city}</option>
+            )}
+            {ibgeCities.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </NativeSelect>
         </div>
 
         <Button className="w-full h-13 mt-2" onClick={handleSave} disabled={saving}>

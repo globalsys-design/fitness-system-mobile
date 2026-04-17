@@ -1,8 +1,11 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { z } from "zod";
 import { assistantSchema } from "@/lib/validations";
+import { BRAZIL_STATES } from "@/lib/constants/brazil-states";
+import { useIbgeCities } from "@/lib/hooks/use-ibge-cities";
 import { cn } from "@/lib/utils";
 
 type AssistantFormData = z.infer<typeof assistantSchema>;
@@ -16,16 +19,16 @@ const FIELD_CLASS = cn(
 const LABEL_CLASS =
   "text-xs font-semibold text-muted-foreground uppercase tracking-widest";
 
-const BRASIL_STATES = [
-  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS",
-  "MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC",
-  "SP","SE","TO",
-];
-
 export function AssistantAddressStep() {
   const { register, watch, setValue } = useFormContext<AssistantFormData>();
-  const cep = watch("address.cep") ?? "";
 
+  const cep        = watch("address.cep") ?? "";
+  const state      = watch("address.state") ?? "";
+  const city       = watch("address.city") ?? "";
+
+  const { cities, loading: citiesLoading } = useIbgeCities(state || null);
+
+  // ── ViaCEP autocomplete ────────────────────────────────────────────────────
   async function handleCepBlur() {
     const digits = cep.replace(/\D/g, "");
     if (digits.length !== 8) return;
@@ -33,10 +36,11 @@ export function AssistantAddressStep() {
       const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
       const data = await res.json();
       if (data.erro) return;
-      setValue("address.street", data.logradouro ?? "");
-      setValue("address.neighborhood", data.bairro ?? "");
-      setValue("address.city", data.localidade ?? "");
-      setValue("address.state", data.uf ?? "");
+      setValue("address.street",       data.logradouro ?? "");
+      setValue("address.neighborhood", data.bairro     ?? "");
+      // Seta state ANTES de city para que useIbgeCities já inicie o fetch
+      setValue("address.state", data.uf         ?? "");
+      setValue("address.city",  data.localidade ?? "");
     } catch {
       // silencioso
     }
@@ -54,6 +58,7 @@ export function AssistantAddressStep() {
       </div>
 
       <div className="flex flex-col gap-8">
+        {/* ── CEP ─────────────────────────────────────────────── */}
         <div className="flex flex-col gap-1.5">
           <label className={LABEL_CLASS}>CEP</label>
           <input
@@ -66,42 +71,108 @@ export function AssistantAddressStep() {
           />
         </div>
 
+        {/* ── Rua + Nº ─────────────────────────────────────────── */}
         <div className="flex gap-4">
           <div className="flex flex-col gap-1.5 flex-1">
             <label className={LABEL_CLASS}>Rua / Av.</label>
-            <input type="text" placeholder="Nome da rua" className={FIELD_CLASS} {...register("address.street")} />
+            <input
+              type="text"
+              placeholder="Nome da rua"
+              className={FIELD_CLASS}
+              {...register("address.street")}
+            />
           </div>
           <div className="flex flex-col gap-1.5 w-24">
             <label className={LABEL_CLASS}>Nº</label>
-            <input type="text" inputMode="numeric" placeholder="000" className={FIELD_CLASS} {...register("address.number")} />
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="000"
+              className={FIELD_CLASS}
+              {...register("address.number")}
+            />
           </div>
         </div>
 
+        {/* ── Complemento ──────────────────────────────────────── */}
         <div className="flex flex-col gap-1.5">
           <label className={LABEL_CLASS}>Complemento</label>
-          <input type="text" placeholder="Apto, Bloco..." className={FIELD_CLASS} {...register("address.complement")} />
+          <input
+            type="text"
+            placeholder="Apto, Bloco..."
+            className={FIELD_CLASS}
+            {...register("address.complement")}
+          />
         </div>
 
+        {/* ── Bairro ───────────────────────────────────────────── */}
         <div className="flex flex-col gap-1.5">
           <label className={LABEL_CLASS}>Bairro</label>
-          <input type="text" placeholder="Nome do bairro" className={FIELD_CLASS} {...register("address.neighborhood")} />
+          <input
+            type="text"
+            placeholder="Nome do bairro"
+            className={FIELD_CLASS}
+            {...register("address.neighborhood")}
+          />
         </div>
 
-        <div className="flex gap-4">
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label className={LABEL_CLASS}>Cidade</label>
-            <input type="text" placeholder="Cidade" className={FIELD_CLASS} {...register("address.city")} />
-          </div>
-          <div className="flex flex-col gap-1.5 w-24">
-            <label className={LABEL_CLASS}>UF</label>
-            <select className={cn(FIELD_CLASS, "appearance-none")} {...register("address.state")}>
-              <option value="">--</option>
-              {BRASIL_STATES.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
+        {/* ── Estado (UF) — native select ──────────────────────── */}
+        <div className="flex flex-col gap-1.5">
+          <label className={LABEL_CLASS}>Estado</label>
+          <div className="relative">
+            <select
+              className={cn(FIELD_CLASS, "appearance-none pr-6", state && "border-primary")}
+              value={state}
+              onChange={(e) => {
+                setValue("address.state", e.target.value);
+                setValue("address.city",  ""); // limpa cidade ao trocar UF
+              }}
+            >
+              <option value="">Selecione o estado</option>
+              {BRAZIL_STATES.map(({ sigla, nome }) => (
+                <option key={sigla} value={sigla}>{sigla} — {nome}</option>
+              ))}
             </select>
+            <ChevronDown className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          </div>
+        </div>
+
+        {/* ── Cidade — carregada via IBGE ───────────────────────── */}
+        <div className="flex flex-col gap-1.5">
+          <label className={cn(LABEL_CLASS, !state && "opacity-40")}>Cidade</label>
+          <div className="relative">
+            <select
+              className={cn(
+                FIELD_CLASS,
+                "appearance-none pr-6",
+                !state && "opacity-40",
+                city && "border-primary"
+              )}
+              value={city}
+              disabled={!state || citiesLoading}
+              onChange={(e) => setValue("address.city", e.target.value)}
+            >
+              <option value="">
+                {citiesLoading
+                  ? "Carregando cidades..."
+                  : !state
+                  ? "Selecione o estado primeiro"
+                  : "Selecione a cidade"}
+              </option>
+              {cities.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            {citiesLoading ? (
+              <Loader2 className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 size-4 text-muted-foreground animate-spin" />
+            ) : (
+              <ChevronDown className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            )}
           </div>
         </div>
       </div>
 
+      {/* ── Dica CEP ─────────────────────────────────────────────── */}
       <div className="flex items-start gap-3 bg-muted/40 rounded-2xl px-4 py-3.5">
         <span className="text-lg mt-0.5 shrink-0">💡</span>
         <p className="text-sm text-muted-foreground leading-relaxed">

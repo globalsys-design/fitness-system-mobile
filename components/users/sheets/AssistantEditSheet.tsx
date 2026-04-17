@@ -19,7 +19,10 @@ import {
 } from "@/components/ui/select";
 import { PhoneInput, unMaskPhone, maskPhone } from "@/components/ui/phone-input";
 import { CpfInput } from "@/components/ui/cpf-input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { PROFESSIONS } from "@/lib/constants/professions";
+import { BRAZIL_STATES } from "@/lib/constants/brazil-states";
+import { useIbgeCities } from "@/lib/hooks/use-ibge-cities";
 import { USER_STATUS_OPTIONS } from "@/lib/constants/user";
 
 interface AssistantData {
@@ -69,6 +72,7 @@ export function AssistantEditSheet({
 }: AssistantEditSheetProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const { cities: ibgeCities, loading: citiesLoading } = useIbgeCities(form.address.state || null);
 
   const [form, setForm] = useState({
     // Dados Pessoais
@@ -317,26 +321,47 @@ export function AssistantEditSheet({
               />
             </div>
 
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <Label>Cidade</Label>
-                <Input
-                  className="mt-1.5 h-12"
-                  placeholder="São Paulo"
-                  value={form.address.city}
-                  onChange={(e) => setAddress("city", e.target.value)}
-                />
-              </div>
-              <div className="w-24">
-                <Label>Estado</Label>
-                <Input
-                  className="mt-1.5 h-12"
-                  placeholder="SP"
-                  maxLength={2}
-                  value={form.address.state}
-                  onChange={(e) => setAddress("state", e.target.value.toUpperCase())}
-                />
-              </div>
+            <div>
+              <Label>Estado</Label>
+              <NativeSelect
+                className="mt-1.5 h-12"
+                value={form.address.state}
+                onChange={(e) => {
+                  setAddress("state", e.target.value);
+                  setAddress("city", ""); // limpa cidade ao trocar UF
+                }}
+              >
+                <option value="">Selecione o estado</option>
+                {BRAZIL_STATES.map(({ sigla, nome }) => (
+                  <option key={sigla} value={sigla}>{sigla} — {nome}</option>
+                ))}
+              </NativeSelect>
+            </div>
+
+            <div>
+              <Label>Cidade</Label>
+              <NativeSelect
+                className="mt-1.5 h-12"
+                value={form.address.city}
+                disabled={!form.address.state}
+                loading={citiesLoading}
+                onChange={(e) => setAddress("city", e.target.value)}
+              >
+                <option value="">
+                  {citiesLoading
+                    ? "Carregando cidades..."
+                    : !form.address.state
+                    ? "Selecione o estado primeiro"
+                    : "Selecione a cidade"}
+                </option>
+                {/* Garante que valor existente no DB sempre aparece como opção */}
+                {form.address.city && !ibgeCities.includes(form.address.city) && (
+                  <option value={form.address.city}>{form.address.city}</option>
+                )}
+                {ibgeCities.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </NativeSelect>
             </div>
           </div>
 
