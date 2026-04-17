@@ -33,10 +33,22 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const parsed = assistantSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const zodErrors = parsed.error.flatten();
+    const firstFieldError = Object.values(zodErrors.fieldErrors as Record<string, string[]>).flat()[0];
+    return NextResponse.json(
+      { error: firstFieldError ?? "Dados inválidos", details: zodErrors },
+      { status: 400 }
+    );
   }
 
   const { address, permissions, birthDate, password, ...rest } = parsed.data;
+
+  // Clean address: ignore if all fields are empty
+  const cleanAddress =
+    address && typeof address === "object" &&
+    Object.values(address).some((v) => v && String(v).trim() !== "")
+      ? address
+      : undefined;
 
   // Hash password if provided
   let passwordHash: string | undefined;
@@ -50,10 +62,11 @@ export async function POST(req: NextRequest) {
       data: {
         ...rest,
         professionalId: professional.id,
-        ...(birthDate ? { birthDate: new Date(birthDate) } : {}),
+        // Use UTC noon to avoid timezone shifting the date by ±1 day
+        ...(birthDate ? { birthDate: new Date(birthDate + "T12:00:00Z") } : {}),
         ...(passwordHash ? { passwordHash } : {}),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(address ? { address: address as any } : {}),
+        ...(cleanAddress ? { address: cleanAddress as any } : {}),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(permissions ? { permissions: permissions as any } : {}),
       },

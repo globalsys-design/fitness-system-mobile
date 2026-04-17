@@ -120,7 +120,18 @@ export function AssistantOnboardingFlow() {
 
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
-          throw new Error(errData?.message || errData?.error || "Erro ao criar assistente");
+          let errorMessage = "Erro ao criar assistente";
+          if (typeof errData?.message === "string") {
+            errorMessage = errData.message;
+          } else if (typeof errData?.error === "string") {
+            errorMessage = errData.error;
+          } else if (errData?.error?.fieldErrors) {
+            const firstErrors = Object.values(
+              errData.error.fieldErrors as Record<string, string[]>
+            ).flat();
+            if (firstErrors.length > 0) errorMessage = firstErrors[0];
+          }
+          throw new Error(errorMessage);
         }
 
         const assistant = await response.json();

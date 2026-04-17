@@ -18,8 +18,8 @@ const patchAssistantSchema = z.object({
   password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres").optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
   permissions: z.record(z.string(), z.unknown()).optional(),
-  address: z.record(z.string(), z.string().optional()).optional(),
-}).strict();
+  address: z.record(z.string(), z.string().or(z.null()).optional()).optional(),
+});
 
 export async function GET(
   _req: NextRequest,
@@ -117,7 +117,8 @@ export async function PATCH(
         ...(body.emergencyPhone !== undefined && { emergencyPhone: body.emergencyPhone || null }),
         ...(body.cpf !== undefined && { cpf: body.cpf || null }),
         ...(body.birthDate !== undefined && {
-          birthDate: body.birthDate ? new Date(body.birthDate) : null,
+          // UTC noon avoids timezone shifts of ±1 day
+          birthDate: body.birthDate ? new Date(body.birthDate + "T12:00:00Z") : null,
         }),
         ...(body.birthCity !== undefined && { birthCity: body.birthCity || null }),
         ...(body.maritalStatus !== undefined && { maritalStatus: body.maritalStatus || null }),
