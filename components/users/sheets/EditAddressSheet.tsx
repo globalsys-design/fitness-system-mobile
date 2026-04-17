@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -49,7 +49,18 @@ export function EditAddressSheet({
   const [form, setForm] = useState<AddressData>(initialData ?? EMPTY);
   const [saving, setSaving] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [pendingCity, setPendingCity] = useState<string | null>(null);
   const { cities: ibgeCities, loading: citiesLoading } = useIbgeCities(form.state || null);
+
+  // Aplica pendingCity assim que o IBGE terminar de carregar a lista
+  useEffect(() => {
+    if (!pendingCity || citiesLoading || ibgeCities.length === 0) return;
+    const match =
+      ibgeCities.find((c) => c.toLowerCase() === pendingCity.toLowerCase()) ??
+      pendingCity; // fallback: usa o nome bruto do ViaCEP
+    setForm((prev) => ({ ...prev, city: match }));
+    setPendingCity(null);
+  }, [ibgeCities, citiesLoading, pendingCity]);
 
   function applyCepMask(raw: string) {
     const d = raw.replace(/\D/g, "").slice(0, 8);
@@ -68,13 +79,16 @@ export function EditAddressSheet({
         toast.error("CEP não encontrado.");
         return;
       }
+      // 1) Seta UF → dispara useIbgeCities
+      // 2) Zera cidade → será preenchida pelo useEffect após lista carregar
       setForm((prev) => ({
         ...prev,
-        street: data.logradouro ?? prev.street,
-        neighborhood: data.bairro ?? prev.neighborhood,
-        city: data.localidade ?? prev.city,
-        state: data.uf ?? prev.state,
+        street:       data.logradouro ?? prev.street,
+        neighborhood: data.bairro     ?? prev.neighborhood,
+        state:        data.uf         ?? prev.state,
+        city:         "", // limpa — será preenchida via pendingCity
       }));
+      setPendingCity(data.localidade ?? null);
       toast.success("Endereço encontrado!");
     } catch {
       toast.error("Erro ao buscar CEP. Verifique a conexão.");

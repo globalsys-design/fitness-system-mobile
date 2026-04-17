@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -16,11 +16,25 @@ export function StepAddress() {
   const [isFetchingCep, setIsFetchingCep] = useState(false);
   const [cepFilled, setCepFilled] = useState(false);
 
-  const addr = (watched.address as Record<string, string>) ?? {};
+  const addr          = (watched.address as Record<string, string>) ?? {};
   const selectedState = addr.state || "";
   const selectedCity  = addr.city  || "";
 
   const { cities, loading: citiesLoading } = useIbgeCities(selectedState || null);
+
+  // Cidade pendente: preenchida pelo ViaCEP antes das opções do IBGE carregarem
+  const [pendingCity, setPendingCity] = useState<string | null>(null);
+
+  // Aplica pendingCity assim que o IBGE terminar de carregar a lista
+  useEffect(() => {
+    if (!pendingCity || citiesLoading || cities.length === 0) return;
+    const match =
+      cities.find((c) => c.toLowerCase() === pendingCity.toLowerCase()) ??
+      pendingCity; // fallback: usa o nome bruto do ViaCEP
+    setAddressField("city", match);
+    setPendingCity(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cities, citiesLoading, pendingCity]);
 
   function setAddressField(field: string, value: string) {
     setValue("address", {
@@ -49,15 +63,17 @@ export function StepAddress() {
       if (data.erro) return;
 
       const current = (watched.address as Record<string, string>) ?? {};
+      // 1) Seta UF → dispara useIbgeCities
+      // 2) Zera cidade → aplica após lista carregar via pendingCity
       setValue("address", {
         ...current,
-        cep: digits,
+        cep:          digits,
         street:       data.logradouro || current.street       || "",
         neighborhood: data.bairro     || current.neighborhood || "",
-        // Seta state ANTES de city — useIbgeCities inicia o fetch
-        state: data.uf        || current.state || "",
-        city:  data.localidade || current.city  || "",
+        state:        data.uf         || current.state        || "",
+        city:         "", // limpa — será preenchida pelo useEffect
       });
+      setPendingCity(data.localidade || null);
       setCepFilled(true);
       setTimeout(() => setCepFilled(false), 3000);
     } catch {

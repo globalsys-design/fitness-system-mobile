@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -22,11 +23,24 @@ const LABEL_CLASS =
 export function AssistantAddressStep() {
   const { register, watch, setValue } = useFormContext<AssistantFormData>();
 
-  const cep        = watch("address.cep") ?? "";
-  const state      = watch("address.state") ?? "";
-  const city       = watch("address.city") ?? "";
+  const cep   = watch("address.cep")   ?? "";
+  const state = watch("address.state") ?? "";
+  const city  = watch("address.city")  ?? "";
 
   const { cities, loading: citiesLoading } = useIbgeCities(state || null);
+
+  // Cidade pendente: preenchida pelo ViaCEP antes das opções do IBGE carregarem
+  const [pendingCity, setPendingCity] = useState<string | null>(null);
+
+  // Aplica pendingCity assim que o IBGE terminar de carregar a lista
+  useEffect(() => {
+    if (!pendingCity || citiesLoading || cities.length === 0) return;
+    const match =
+      cities.find((c) => c.toLowerCase() === pendingCity.toLowerCase()) ??
+      pendingCity; // fallback: usa o nome bruto do ViaCEP
+    setValue("address.city", match);
+    setPendingCity(null);
+  }, [cities, citiesLoading, pendingCity, setValue]);
 
   // ── ViaCEP autocomplete ────────────────────────────────────────────────────
   async function handleCepBlur() {
@@ -38,9 +52,11 @@ export function AssistantAddressStep() {
       if (data.erro) return;
       setValue("address.street",       data.logradouro ?? "");
       setValue("address.neighborhood", data.bairro     ?? "");
-      // Seta state ANTES de city para que useIbgeCities já inicie o fetch
-      setValue("address.state", data.uf         ?? "");
-      setValue("address.city",  data.localidade ?? "");
+      // 1) Seta UF → dispara useIbgeCities
+      setValue("address.state", data.uf ?? "");
+      // 2) Limpa cidade e guarda para aplicar após lista carregar
+      setValue("address.city", "");
+      setPendingCity(data.localidade ?? null);
     } catch {
       // silencioso
     }
