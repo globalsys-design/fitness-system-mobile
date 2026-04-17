@@ -64,6 +64,28 @@ export const clientStep1Schema = z.object({
   gender: z.enum(["M", "F", ""]).optional(),
 });
 
+// ── Permissões (modelo CRUD) ────────────────────────────────────────────────
+// Cada módulo tem 4 eixos: visualizar, criar, editar, deletar.
+// `isAdmin`: master toggle — concede acesso total, ignorando os eixos específicos.
+export const crudPermissionSchema = z.object({
+  view: z.boolean(),
+  create: z.boolean(),
+  edit: z.boolean(),
+  delete: z.boolean(),
+});
+
+export const permissionsSchema = z.object({
+  isAdmin: z.boolean().optional(),
+  clients: crudPermissionSchema.optional(),
+  assessments: crudPermissionSchema.optional(),
+  prescriptions: crudPermissionSchema.optional(),
+  calendar: crudPermissionSchema.optional(),
+  billing: crudPermissionSchema.optional(),
+});
+
+export type CrudPermission = z.infer<typeof crudPermissionSchema>;
+export type PermissionsMap = z.infer<typeof permissionsSchema>;
+
 export const assistantSchema = z.object({
   name: z.string().min(2, "Nome deve ter no mínimo 2 caracteres"),
   email: z.string().email("Email inválido"),
@@ -86,13 +108,7 @@ export const assistantSchema = z.object({
     state: z.string().optional(),
   }).optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
-  permissions: z.object({
-    clients: z.object({ read: z.boolean(), write: z.boolean() }).optional(),
-    assessments: z.object({ read: z.boolean(), write: z.boolean() }).optional(),
-    prescriptions: z.object({ read: z.boolean(), write: z.boolean() }).optional(),
-    calendar: z.object({ read: z.boolean(), write: z.boolean() }).optional(),
-    billing: z.object({ read: z.boolean(), write: z.boolean() }).optional(),
-  }).optional(),
+  permissions: permissionsSchema.optional(),
 });
 
 export type AssistantFormData = z.infer<typeof assistantSchema>;

@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PermissionsToggle, PermissionsMap } from "./permissions-toggle";
+import { PermissionsToggle, EMPTY_CRUD, type PermissionsMap } from "./permissions-toggle";
 import { AssistantEditSheet } from "./sheets/AssistantEditSheet";
 import { PasswordGeneratorBlock } from "./PasswordGeneratorBlock";
 import { cn } from "@/lib/utils";
@@ -81,15 +81,17 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
   const [accessPassword, setAccessPassword] = useState("");
   const [savingPwd, setSavingPwd] = useState(false);
 
-  // Permissions state
+  // Permissions state (modelo CRUD + isAdmin)
+  const DEFAULT_PERMISSIONS: PermissionsMap = {
+    isAdmin: false,
+    clients:       { ...EMPTY_CRUD, view: true },
+    assessments:   { ...EMPTY_CRUD, view: true },
+    prescriptions: { ...EMPTY_CRUD, view: true },
+    calendar:      { ...EMPTY_CRUD, view: true },
+    billing:       { ...EMPTY_CRUD },
+  };
   const [permissions, setPermissions] = useState<PermissionsMap>(
-    (assistant.permissions as PermissionsMap) ?? {
-      clients:       { read: true, write: false },
-      assessments:   { read: true, write: false },
-      prescriptions: { read: true, write: false },
-      calendar:      { read: true, write: false },
-      billing:       { read: false, write: false },
-    }
+    (assistant.permissions as PermissionsMap) ?? DEFAULT_PERMISSIONS
   );
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
 
@@ -148,15 +150,7 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
       toast.success("Permissões atualizadas!");
     } catch {
       toast.error("Erro ao salvar permissões.");
-      setPermissions(
-        (assistant.permissions as PermissionsMap) ?? {
-          clients:       { read: true, write: false },
-          assessments:   { read: true, write: false },
-          prescriptions: { read: true, write: false },
-          calendar:      { read: true, write: false },
-          billing:       { read: false, write: false },
-        }
-      );
+      setPermissions((assistant.permissions as PermissionsMap) ?? DEFAULT_PERMISSIONS);
     } finally {
       setIsSavingPermissions(false);
     }
@@ -404,20 +398,16 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
           {/* ── Tab: Permissões ──────────────────────────────────── */}
           <TabsContent value="permissions" className="mt-0 flex-1">
             <div className="p-4 flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Permissões do módulo</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Defina o que este assistente pode acessar
-                  </p>
+              {isSavingPermissions && (
+                <div className="flex items-center justify-end gap-2 text-xs text-primary">
+                  <Loader2 className="size-3.5 animate-spin" />
+                  <span>Salvando…</span>
                 </div>
-                {isSavingPermissions && (
-                  <Loader2 className="size-4 animate-spin text-primary" />
-                )}
-              </div>
+              )}
               <PermissionsToggle
                 permissions={permissions}
                 onChange={handleSavePermissions}
+                disabled={isSavingPermissions}
               />
             </div>
           </TabsContent>

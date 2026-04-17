@@ -16,7 +16,14 @@ import { AssistantNameStep } from "./steps/AssistantNameStep";
 import { AssistantContactStep } from "./steps/AssistantContactStep";
 import { AssistantAddressStep } from "./steps/AssistantAddressStep";
 import { AssistantProfessionStep } from "./steps/AssistantProfessionStep";
-import { AssistantPermissionsStep, type PermissionsState } from "./steps/AssistantPermissionsStep";
+import {
+  AssistantPermissionsStep,
+  EMPTY_CRUD,
+  FULL_CRUD,
+  type PermissionsState,
+  type ModuleKey,
+  type CrudAction,
+} from "./steps/AssistantPermissionsStep";
 import { AssistantAccessStep } from "./steps/AssistantAccessStep";
 
 // ── Step configuration ──────────────────────────────────────────────────────
@@ -31,13 +38,15 @@ const STEPS = [
 
 const TOTAL_STEPS = STEPS.length;
 
-// Default: read+write for clinical modules, billing locked
+// Defaults CRUD: leitura habilitada nos módulos clínicos, billing bloqueado.
+// O profissional decide explicitamente sobre criar/editar/excluir.
 const DEFAULT_PERMISSIONS: PermissionsState = {
-  clients: true,
-  assessments: true,
-  prescriptions: true,
-  calendar: true,
-  billing: false,
+  isAdmin: false,
+  clients:       { ...EMPTY_CRUD, view: true },
+  assessments:   { ...EMPTY_CRUD, view: true },
+  prescriptions: { ...EMPTY_CRUD, view: true },
+  calendar:      { ...EMPTY_CRUD, view: true },
+  billing:       { ...EMPTY_CRUD },
 };
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -75,10 +84,24 @@ export function AssistantOnboardingFlow() {
   const name = watch("name") ?? "";
   const isNextDisabled = currentStep === 0 && name.length < 2;
 
-  // ── Permissions toggle ──────────────────────────────────────────────────
-  const handlePermissionToggle = useCallback((key: keyof PermissionsState) => {
-    setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
+  // ── Permissions: master toggle (Administrador) ──────────────────────────
+  const handleToggleAdmin = useCallback((isAdmin: boolean) => {
+    setPermissions((prev) => ({ ...prev, isAdmin }));
   }, []);
+
+  // ── Permissions: toggle de uma ação CRUD em um módulo específico ────────
+  const handleToggleAction = useCallback(
+    (module: ModuleKey, action: CrudAction) => {
+      setPermissions((prev) => ({
+        ...prev,
+        [module]: {
+          ...prev[module],
+          [action]: !prev[module][action],
+        },
+      }));
+    },
+    []
+  );
 
   // ── Submission ─────────────────────────────────────────────────────────
   const onSubmit = useCallback(
@@ -86,13 +109,25 @@ export function AssistantOnboardingFlow() {
       setIsSubmitting(true);
       const minDelay = new Promise<void>((resolve) => setTimeout(resolve, 1800));
 
-      // Map boolean permissions state → { read, write } shape for API
-      const permissionsPayload = Object.fromEntries(
-        Object.entries(permissions).map(([key, isOn]) => [
-          key,
-          { read: isOn, write: isOn },
-        ])
-      );
+      // Administrador → todos os módulos com CRUD total. Caso contrário,
+      // enviamos os toggles explícitos marcados pelo profissional.
+      const permissionsPayload = permissions.isAdmin
+        ? {
+            isAdmin: true,
+            clients:       FULL_CRUD,
+            assessments:   FULL_CRUD,
+            prescriptions: FULL_CRUD,
+            calendar:      FULL_CRUD,
+            billing:       FULL_CRUD,
+          }
+        : {
+            isAdmin: false,
+            clients:       permissions.clients,
+            assessments:   permissions.assessments,
+            prescriptions: permissions.prescriptions,
+            calendar:      permissions.calendar,
+            billing:       permissions.billing,
+          };
 
       // ── Sanitize payload ─────────────────────────────────────────────────
       // Strip masks and convert empty strings to undefined so Prisma 6
@@ -232,7 +267,8 @@ export function AssistantOnboardingFlow() {
     4: (
       <AssistantPermissionsStep
         permissions={permissions}
-        onToggle={handlePermissionToggle}
+        onToggleAdmin={handleToggleAdmin}
+        onToggleAction={handleToggleAction}
       />
     ),
     5: <AssistantAccessStep />,
