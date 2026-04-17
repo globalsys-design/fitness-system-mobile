@@ -72,7 +72,6 @@ export function AssistantEditSheet({
 }: AssistantEditSheetProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const { cities: ibgeCities, loading: citiesLoading } = useIbgeCities(form.address.state || null);
 
   const [form, setForm] = useState({
     // Dados Pessoais
@@ -101,6 +100,11 @@ export function AssistantEditSheet({
     profession: assistant.profession ?? "",
     role: assistant.role ?? "",
   });
+
+  // Hook DEVE ficar após o useState de `form` para evitar TDZ
+  const { cities: ibgeCities, loading: citiesLoading } = useIbgeCities(
+    form.address.state || null
+  );
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
