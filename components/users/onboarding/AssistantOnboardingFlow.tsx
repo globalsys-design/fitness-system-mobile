@@ -6,28 +6,24 @@ import { useForm, FormProvider, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { z } from "zod";
 
-import { assistantSchema } from "@/lib/validations";
+import { assistantSchema, type AssistantFormData } from "@/lib/validations";
 import { cn } from "@/lib/utils";
+import { unMaskPhone } from "@/components/ui/phone-input";
 
 import { AssistantNameStep } from "./steps/AssistantNameStep";
-import { AssistantProfessionStep } from "./steps/AssistantProfessionStep";
-import { AssistantPermissionsStep, type PermissionsState } from "./steps/AssistantPermissionsStep";
 import { AssistantContactStep } from "./steps/AssistantContactStep";
 import { AssistantAddressStep } from "./steps/AssistantAddressStep";
-import { AssistantPersonalDataStep } from "./steps/AssistantPersonalDataStep";
-
-type AssistantFormData = z.infer<typeof assistantSchema>;
+import { AssistantProfessionStep } from "./steps/AssistantProfessionStep";
+import { AssistantPermissionsStep, type PermissionsState } from "./steps/AssistantPermissionsStep";
 
 // ── Step configuration ──────────────────────────────────────────────────────
 const STEPS = [
-  { id: "name",         cta: "Continuar →" },
-  { id: "profession",   cta: "Continuar →" },
-  { id: "permissions",  cta: "Continuar →" },
-  { id: "contact",      cta: "Continuar →" },
-  { id: "address",      cta: "Continuar →" },
-  { id: "personalData", cta: "Adicionar assistente ✓" },
+  { id: "name",        label: "Nome",             cta: "Continuar →" },
+  { id: "personal",    label: "Dados Pessoais",   cta: "Continuar →" },
+  { id: "address",     label: "Endereço",         cta: "Continuar →" },
+  { id: "profession",  label: "Dados Profissionais", cta: "Continuar →" },
+  { id: "permissions", label: "Permissões",       cta: "Adicionar assistente ✓" },
 ] as const;
 
 const TOTAL_STEPS = STEPS.length;
@@ -48,9 +44,6 @@ export function AssistantOnboardingFlow() {
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Local UI state — profession and permissions are passed via separate state
-  const [selectedProfession, setSelectedProfession] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<PermissionsState>(DEFAULT_PERMISSIONS);
 
   const methods = useForm<AssistantFormData>({
@@ -59,7 +52,13 @@ export function AssistantOnboardingFlow() {
       name: "",
       email: "",
       phone: "",
+      emergencyPhone: "",
       cpf: "",
+      birthDate: "",
+      birthCity: "",
+      maritalStatus: "",
+      profession: "",
+      role: "",
       status: "ACTIVE",
     },
     mode: "onChange",
@@ -99,7 +98,16 @@ export function AssistantOnboardingFlow() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ...data,
-              profession: selectedProfession ?? undefined,
+              // Strip masks before sending
+              phone: unMaskPhone(data.phone) || undefined,
+              emergencyPhone: unMaskPhone(data.emergencyPhone) || undefined,
+              // Empty strings → undefined
+              cpf: data.cpf || undefined,
+              birthDate: data.birthDate || undefined,
+              birthCity: data.birthCity || undefined,
+              maritalStatus: data.maritalStatus || undefined,
+              profession: data.profession || undefined,
+              role: data.role || undefined,
               permissions: permissionsPayload,
             }),
           }),
@@ -108,7 +116,7 @@ export function AssistantOnboardingFlow() {
 
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
-          throw new Error(errData?.message || "Erro ao criar assistente");
+          throw new Error(errData?.message || errData?.error || "Erro ao criar assistente");
         }
 
         const assistant = await response.json();
@@ -118,23 +126,25 @@ export function AssistantOnboardingFlow() {
         toast.error(error instanceof Error ? error.message : "Erro inesperado. Tente novamente.");
       }
     },
-    [router, selectedProfession, permissions]
+    [router, permissions]
   );
 
   // ── Navigation ──────────────────────────────────────────────────────────
   const handleNext = useCallback(async () => {
     const stepId = STEPS[currentStep]?.id;
+
     if (stepId === "name") {
       const valid = await trigger("name");
       if (!valid) return;
-    } else if (stepId === "contact") {
+    } else if (stepId === "personal") {
       const valid = await trigger("email");
       if (!valid) return;
-    } else if (stepId === "personalData") {
+    } else if (stepId === "permissions") {
       // Last step: submit
       onSubmit(getValues());
       return;
     }
+
     setDirection("forward");
     setCurrentStep((s) => s + 1);
   }, [currentStep, trigger, getValues, onSubmit]);
@@ -180,24 +190,18 @@ export function AssistantOnboardingFlow() {
   // ── Step content map ────────────────────────────────────────────────────
   const stepContent: Record<number, React.ReactNode> = {
     0: <AssistantNameStep />,
-    1: (
-      <AssistantProfessionStep
-        selectedProfession={selectedProfession}
-        onSelect={setSelectedProfession}
-      />
-    ),
-    2: (
+    1: <AssistantContactStep />,
+    2: <AssistantAddressStep />,
+    3: <AssistantProfessionStep />,
+    4: (
       <AssistantPermissionsStep
         permissions={permissions}
         onToggle={handlePermissionToggle}
       />
     ),
-    3: <AssistantContactStep />,
-    4: <AssistantAddressStep />,
-    5: <AssistantPersonalDataStep />,
   };
 
-  // ── Main layout — identical Molde ───────────────────────────────────────
+  // ── Main layout ─────────────────────────────────────────────────────────
   return (
     <FormProvider {...methods}>
       <div className="flex flex-col h-[100dvh] bg-background overflow-hidden">

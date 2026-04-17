@@ -68,10 +68,13 @@ export const assistantSchema = z.object({
   name: z.string().min(2, "Nome deve ter no mínimo 2 caracteres"),
   email: z.string().email("Email inválido"),
   phone: z.string().optional(),
+  emergencyPhone: z.string().optional(),
   cpf: z.string().optional(),
-  profession: z.string().optional(),
+  birthDate: z.string().optional(),
   birthCity: z.string().optional(),
   maritalStatus: z.string().optional(),
+  profession: z.string().optional(),
+  role: z.string().optional(),
   address: z.object({
     cep: z.string().optional(),
     street: z.string().optional(),
@@ -91,17 +94,24 @@ export const assistantSchema = z.object({
   }).optional(),
 });
 
-// Schema separado por step do stepper (para validação parcial)
+export type AssistantFormData = z.infer<typeof assistantSchema>;
+
+// Schemas por step do stepper (5 steps: Nome → Pessoal → Endereço → Profissional → Permissões)
 export const assistantStep1Schema = z.object({
   name: z.string().min(2, "Nome deve ter no mínimo 2 caracteres"),
-  email: z.string().email("Email inválido"),
-  phone: z.string().optional(),
-  cpf: z.string().optional(),
 });
 
 export const assistantStep2Schema = z.object({
-  profession: z.string().optional(),
+  email: z.string().email("Email inválido"),
+  phone: z.string().optional(),
+  emergencyPhone: z.string().optional(),
+  cpf: z.string().optional(),
+  birthDate: z.string().optional(),
   birthCity: z.string().optional(),
+  maritalStatus: z.string().optional(),
+});
+
+export const assistantStep3Schema = z.object({
   address: z.object({
     cep: z.string().optional(),
     street: z.string().optional(),
@@ -111,6 +121,11 @@ export const assistantStep2Schema = z.object({
     city: z.string().optional(),
     state: z.string().optional(),
   }).optional(),
+});
+
+export const assistantStep4Schema = z.object({
+  profession: z.string().optional(),
+  role: z.string().optional(),
 });
 
 export const assessmentSchema = z.object({

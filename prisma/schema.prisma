@@ -179,10 +179,13 @@ model Assistant {
   name           String
   email          String
   phone          String?
+  emergencyPhone String?
   cpf            String?
+  birthDate      DateTime?
   birthCity      String?
   maritalStatus  String?
   profession     String?
+  role           String?
   photo          String?
   address        Json?
   status         AssistantStatus @default(ACTIVE)

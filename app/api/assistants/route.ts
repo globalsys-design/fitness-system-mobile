@@ -35,12 +35,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const assistant = await db.assistant.create({
-    data: {
-      ...parsed.data,
-      professionalId: professional.id,
-    },
-  });
+  const { address, permissions, birthDate, ...rest } = parsed.data;
+
+  let assistant;
+  try {
+    assistant = await db.assistant.create({
+      data: {
+        ...rest,
+        professionalId: professional.id,
+        ...(birthDate ? { birthDate: new Date(birthDate) } : {}),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(address ? { address: address as any } : {}),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(permissions ? { permissions: permissions as any } : {}),
+      },
+    });
+  } catch (err) {
+    console.error("[POST /api/assistants] DB error:", err);
+    return NextResponse.json({ error: "Erro ao criar assistente" }, { status: 500 });
+  }
 
   return NextResponse.json(assistant, { status: 201 });
 }
