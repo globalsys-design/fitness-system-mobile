@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { BottomSheet } from "@/components/mobile/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CpfInput } from "@/components/ui/cpf-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -149,12 +150,10 @@ export function EditPersonalSheet({
         {/* CPF */}
         <div>
           <Label>CPF</Label>
-          <Input
-            inputMode="numeric"
-            placeholder="000.000.000-00"
+          <CpfInput
             className="mt-1.5 h-12"
             value={form.cpf}
-            onChange={(e) => setForm({ ...form, cpf: e.target.value.replace(/\D/g, "") })}
+            onChange={(e) => setForm({ ...form, cpf: e.target.value })}
           />
         </div>
 

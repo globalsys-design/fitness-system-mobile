@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PhoneInput, unMaskPhone, maskPhone } from "@/components/ui/phone-input";
+import { CpfInput } from "@/components/ui/cpf-input";
 import { PROFESSIONS } from "@/lib/constants/professions";
 import { USER_STATUS_OPTIONS } from "@/lib/constants/user";
 
@@ -192,9 +193,7 @@ export function AssistantEditSheet({
 
             <div>
               <Label>CPF</Label>
-              <Input
-                inputMode="numeric"
-                placeholder="000.000.000-00"
+              <CpfInput
                 className="mt-1.5 h-12"
                 value={form.cpf}
                 onChange={(e) => set("cpf", e.target.value)}

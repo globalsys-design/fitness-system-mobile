@@ -6,6 +6,7 @@ import { Camera, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { maskPhone } from "@/components/ui/phone-input";
+import { CpfInput } from "@/components/ui/cpf-input";
 import {
   Select,
   SelectContent,
@@ -31,15 +32,6 @@ function getOptionLabel(
   return options.find((opt) => opt.value === value)?.label;
 }
 
-/** Format CPF: 000.000.000-00 */
-function formatCPF(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
-  if (digits.length <= 9)
-    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
-}
 
 export function StepPersonal() {
   const {
@@ -60,11 +52,6 @@ export function StepPersonal() {
       setValue("photo", reader.result as string);
     };
     reader.readAsDataURL(file);
-  }
-
-  function handleCPFInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const formatted = formatCPF(e.target.value);
-    setValue("cpf", formatted, { shouldValidate: true });
   }
 
   return (
@@ -128,16 +115,14 @@ export function StepPersonal() {
         />
       </div>
 
-      {/* CPF — com máscara em tempo real (C3) */}
+      {/* CPF — máscara progressiva via CpfInput */}
       <div>
         <Label htmlFor="cpf">CPF (opcional)</Label>
-        <Input
+        <CpfInput
           id="cpf"
           className="mt-1.5"
-          placeholder="000.000.000-00"
-          inputMode="numeric"
           value={watched.cpf || ""}
-          onChange={handleCPFInput}
+          onChange={(e) => setValue("cpf", e.target.value, { shouldValidate: true })}
         />
         {errors.cpf && (
           <p className="text-xs text-destructive mt-1">

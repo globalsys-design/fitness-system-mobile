@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { maskPhone } from "@/components/ui/phone-input";
+import { CpfInput } from "@/components/ui/cpf-input";
 
 export function ResponsibleStep() {
   const {
@@ -66,17 +67,14 @@ export function ResponsibleStep() {
         {/* CPF */}
         <div>
           <Label className="text-sm font-medium">CPF</Label>
-          <Input
-            placeholder="000.000.000-00"
-            inputMode="numeric"
+          <CpfInput
             value={responsible.cpf ?? ""}
-            onChange={(e) => {
-              const cleaned = e.target.value.replace(/\D/g, "");
+            onChange={(e) =>
               setValue("responsible", {
                 ...responsible,
-                cpf: cleaned,
-              });
-            }}
+                cpf: e.target.value,
+              })
+            }
             className={cn(
               "mt-2 h-12",
               errors.responsible?.cpf && "border-destructive"

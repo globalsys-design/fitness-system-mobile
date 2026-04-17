@@ -3,6 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { maskPhone } from "@/components/ui/phone-input";
+import { maskCpf } from "@/components/ui/cpf-input";
 import type { AssistantFormData } from "@/lib/validations";
 
 const FIELD_CLASS = cn(
@@ -36,9 +37,10 @@ export function AssistantContactStep() {
     formState: { errors },
   } = useFormContext<AssistantFormData>();
 
-  const email    = watch("email") ?? "";
-  const phone    = watch("phone") ?? "";
+  const email          = watch("email") ?? "";
+  const phone          = watch("phone") ?? "";
   const emergencyPhone = watch("emergencyPhone") ?? "";
+  const cpf            = watch("cpf") ?? "";
   const maritalStatus  = watch("maritalStatus");
 
   return (
@@ -117,8 +119,9 @@ export function AssistantContactStep() {
             type="text"
             inputMode="numeric"
             placeholder="000.000.000-00"
-            className={FIELD_CLASS}
-            {...register("cpf")}
+            className={cn(FIELD_CLASS, cpf.length > 0 && "border-primary")}
+            value={maskCpf(cpf)}
+            onChange={(e) => setValue("cpf", maskCpf(e.target.value))}
           />
         </div>
 

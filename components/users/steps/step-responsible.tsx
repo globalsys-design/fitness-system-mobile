@@ -5,6 +5,7 @@ import { AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { maskPhone } from "@/components/ui/phone-input";
+import { CpfInput } from "@/components/ui/cpf-input";
 import type { ClientFormData } from "@/lib/validations/client";
 
 interface StepResponsibleProps {
@@ -97,10 +98,8 @@ export function StepResponsible({ isMinor }: StepResponsibleProps) {
           {/* CPF * */}
           <div>
             <Label required>CPF do responsável</Label>
-            <Input
+            <CpfInput
               className="mt-1.5"
-              placeholder="000.000.000-00"
-              inputMode="numeric"
               value={resp.cpf || ""}
               onChange={(e) => setResponsibleField("cpf", e.target.value)}
             />
