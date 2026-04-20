@@ -60,8 +60,8 @@ export function AssistantCard({ assistant }: AssistantCardProps) {
           )}
           {assistant.phone && (
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <Phone className="size-3" />
-              {assistant.phone}
+              <Phone className="size-3 shrink-0" />
+              <span className="whitespace-nowrap">{assistant.phone}</span>
             </span>
           )}
         </div>

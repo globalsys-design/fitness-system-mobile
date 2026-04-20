@@ -88,7 +88,7 @@ export function ClientCard({ client }: ClientCardProps) {
               className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors min-h-[24px]"
             >
               <Phone className="size-3 shrink-0" />
-              {client.phone}
+              <span className="whitespace-nowrap">{client.phone}</span>
             </button>
           )}
         </div>
