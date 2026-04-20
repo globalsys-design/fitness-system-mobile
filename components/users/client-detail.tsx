@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { maskPhone } from "@/components/ui/phone-input";
 import { format, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -310,7 +311,7 @@ export function ClientDetail({ client }: ClientDetailProps) {
                 className="mt-5"
               />
               <InfoRow icon={Mail} label="Email" value={client.email} />
-              <InfoRow icon={Phone} label="Telefone" value={client.phone} />
+              <InfoRow icon={Phone} label="Telefone" value={client.phone ? maskPhone(client.phone) : null} />
 
               {/* SECÇÃO: Metas */}
               <SectionHeader title="Metas & Rotina" className="mt-5" />

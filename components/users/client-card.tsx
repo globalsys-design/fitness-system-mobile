@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight, Mail, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { maskPhone, unMaskPhone } from "@/components/ui/phone-input";
 
 interface ClientCardProps {
   client: {
@@ -83,12 +84,13 @@ export function ClientCard({ client }: ClientCardProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                window.location.href = `tel:${client.phone}`;
+                // tel: aceita apenas dígitos para discagem confiável em iOS/Android
+                window.location.href = `tel:${unMaskPhone(client.phone)}`;
               }}
               className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors min-h-[24px]"
             >
               <Phone className="size-3 shrink-0" />
-              <span className="whitespace-nowrap">{client.phone}</span>
+              <span className="whitespace-nowrap">{maskPhone(client.phone)}</span>
             </button>
           )}
         </div>

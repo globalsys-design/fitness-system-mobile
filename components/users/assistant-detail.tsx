@@ -27,6 +27,7 @@ import { PermissionsToggle, EMPTY_CRUD, type PermissionsMap } from "./permission
 import { AssistantEditSheet } from "./sheets/AssistantEditSheet";
 import { PasswordGeneratorBlock } from "./PasswordGeneratorBlock";
 import { cn } from "@/lib/utils";
+import { maskPhone } from "@/components/ui/phone-input";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -238,8 +239,8 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
                   Dados Pessoais
                 </p>
                 <InfoRow icon={Mail}     label="Email"             value={assistant.email} />
-                <InfoRow icon={Phone}    label="Telefone"          value={assistant.phone} />
-                <InfoRow icon={PhoneCall} label="Tel. emergência"  value={assistant.emergencyPhone} />
+                <InfoRow icon={Phone}    label="Telefone"          value={assistant.phone ? maskPhone(assistant.phone) : null} />
+                <InfoRow icon={PhoneCall} label="Tel. emergência"  value={assistant.emergencyPhone ? maskPhone(assistant.emergencyPhone) : null} />
                 <InfoRow icon={User}     label="CPF"               value={assistant.cpf} />
                 <InfoRow
                   icon={Calendar}

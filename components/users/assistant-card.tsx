@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight, Mail, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { maskPhone } from "@/components/ui/phone-input";
 
 interface AssistantCardProps {
   assistant: {
@@ -61,7 +62,7 @@ export function AssistantCard({ assistant }: AssistantCardProps) {
           {assistant.phone && (
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <Phone className="size-3 shrink-0" />
-              <span className="whitespace-nowrap">{assistant.phone}</span>
+              <span className="whitespace-nowrap">{maskPhone(assistant.phone)}</span>
             </span>
           )}
         </div>
