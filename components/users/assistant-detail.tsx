@@ -11,6 +11,8 @@ import {
   MapPin,
   Briefcase,
   ClipboardList,
+  Dumbbell,
+  ChevronRight,
   Edit2,
   User,
   Calendar,
@@ -202,15 +204,16 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
           <div className="px-4 pt-3 border-b border-border bg-background sticky top-0 z-10">
             <TabsList className="w-full h-10 bg-transparent p-0 gap-0">
               {[
-                { value: "info",        label: "Informações" },
-                { value: "access",      label: "Acesso" },
-                { value: "assessments", label: "Avaliações" },
-                { value: "permissions", label: "Permissões" },
+                { value: "info",          label: "Informações" },
+                { value: "access",        label: "Acesso" },
+                { value: "assessments",   label: "Avaliações" },
+                { value: "prescriptions", label: "Prescrições" },
+                { value: "permissions",   label: "Permissões" },
               ].map((t) => (
                 <TabsTrigger
                   key={t.value}
                   value={t.value}
-                  className="flex-1 text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none data-[state=active]:shadow-none h-10"
+                  className="flex-1 text-[11px] px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none data-[state=active]:shadow-none h-10"
                 >
                   {t.label}
                 </TabsTrigger>
@@ -389,6 +392,55 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
                       >
                         {assessment.status === "COMPLETE" ? "Completa" : "Rascunho"}
                       </Badge>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* ── Tab: Prescrições ─────────────────────────────────── */}
+          <TabsContent value="prescriptions" className="mt-0 flex-1">
+            <div className="p-4">
+              {assistant.prescriptions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <div className="flex items-center justify-center size-16 rounded-full bg-muted">
+                    <Dumbbell className="size-8 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground text-center">
+                    Nenhuma prescrição vinculada
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
+                  {assistant.prescriptions.map((p) => (
+                    <Link
+                      key={p.id}
+                      href={`/app/prescricoes/${p.id}`}
+                      className="flex items-center gap-3 px-4 py-3.5 bg-card active:bg-muted/50 transition-colors"
+                    >
+                      <div
+                        className={cn(
+                          "flex items-center justify-center size-10 rounded-lg shrink-0",
+                          p.type === "TRAINING"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-accent text-accent-foreground",
+                        )}
+                      >
+                        <Dumbbell className="size-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {p.title ?? (p.type === "TRAINING" ? "Ficha de Treino" : "Prescrição Aeróbica")}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(p.createdAt), "dd/MM/yyyy", { locale: ptBR })}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="text-xs shrink-0 bg-primary/10 text-primary">
+                        Ativa
+                      </Badge>
+                      <ChevronRight className="size-4 text-muted-foreground shrink-0" />
                     </Link>
                   ))}
                 </div>
