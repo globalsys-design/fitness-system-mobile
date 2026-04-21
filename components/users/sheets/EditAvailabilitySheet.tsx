@@ -209,7 +209,7 @@ export function EditAvailabilitySheet({
           );
         })}
 
-        <Button className="w-full h-13 mt-4" onClick={handleSave} disabled={saving}>
+        <Button className="w-full h-13 mt-4 transition-transform duration-150 active:scale-[0.98]" onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
           Salvar disponibilidade
         </Button>

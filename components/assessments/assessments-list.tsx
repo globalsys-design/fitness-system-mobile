@@ -80,47 +80,56 @@ export function AssessmentsList({ assessments }: AssessmentsListProps) {
             isFiltered={!!search}
           />
         ) : (
-          <div className="flex flex-col gap-3">
+          /* Lista agrupada — padrão do sistema: um único card com divisões internas.
+             Referência: components/users/clients-list.tsx */
+          <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
             {filtered.map((assessment) => (
-              <div
+              <Link
                 key={assessment.id}
-                className="flex items-start gap-3 p-4 rounded-xl border border-border bg-card"
+                href={`/app/avaliacoes/${assessment.id}`}
+                className="relative flex items-start gap-3 px-4 py-3.5 bg-card active:bg-muted/50 transition-colors"
               >
-                <Link href={`/app/avaliacoes/${assessment.id}`} className="flex-1 flex items-start gap-3">
-                  <Avatar className="w-11 h-11 flex-shrink-0">
-                    <AvatarImage src={assessment.client.photo ?? undefined} />
-                    <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
-                      {assessment.client.name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground text-sm truncate">
-                      {assessment.client.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {POPULATION_LABELS[assessment.population] ?? assessment.population}
-                      {assessment.modality && ` · ${assessment.modality}`}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {format(new Date(assessment.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                    </p>
-                  </div>
-                </Link>
-                <div className="flex flex-col items-end gap-2">
+                <Avatar className="w-11 h-11 flex-shrink-0">
+                  <AvatarImage src={assessment.client.photo ?? undefined} />
+                  <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+                    {assessment.client.name.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground text-sm truncate">
+                    {assessment.client.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {POPULATION_LABELS[assessment.population] ?? assessment.population}
+                    {assessment.modality && ` · ${assessment.modality}`}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {format(new Date(assessment.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2 shrink-0">
                   <Badge
                     variant="outline"
                     className={assessment.status === "COMPLETE" ? "border-success/30 text-success" : ""}
                   >
                     {assessment.status === "COMPLETE" ? "Completa" : "Rascunho"}
                   </Badge>
+                  {/* Botão de ações — impede navegação do Link pai */}
                   <button
-                    onClick={() => { setSelectedAssessment(assessment); setActionsOpen(true); }}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedAssessment(assessment);
+                      setActionsOpen(true);
+                    }}
                     className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted transition-colors"
+                    aria-label="Ações da avaliação"
                   >
                     <MoreVertical className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

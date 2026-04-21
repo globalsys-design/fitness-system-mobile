@@ -3,10 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Calendar } from "lucide-react";
+import { Loader2, Calendar, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MultiSelectSheet } from "@/components/ui/multi-select-sheet";
 import { MobileHeader } from "@/components/mobile/mobile-header";
 import { POPULATION_OPTIONS, MODALITY_OPTIONS } from "@/lib/constants/assessment";
 
@@ -27,7 +30,13 @@ export default function NovaAvaliacaoPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [clientId, setClientId] = useState("");
   const [population, setPopulation] = useState("NORMAL");
-  const [modality, setModality] = useState("");
+  const [modalities, setModalities] = useState<string[]>([]);
+
+  // Agendar próxima avaliação
+  const [scheduleNext, setScheduleNext] = useState(false);
+  const [nextDate, setNextDate] = useState("");
+  const [nextStartTime, setNextStartTime] = useState("");
+  const [nextEndTime, setNextEndTime] = useState("");
 
   useEffect(() => {
     fetch("/api/clients")
@@ -49,6 +58,16 @@ export default function NovaAvaliacaoPage() {
       toast.error("Selecione um cliente");
       return;
     }
+    if (scheduleNext) {
+      if (!nextDate || !nextStartTime || !nextEndTime) {
+        toast.error("Preencha data, hora de início e hora de fim do agendamento");
+        return;
+      }
+      if (nextStartTime >= nextEndTime) {
+        toast.error("Hora de fim deve ser posterior à hora de início");
+        return;
+      }
+    }
     setIsLoading(true);
     try {
       const response = await fetch("/api/assessments", {
@@ -57,7 +76,9 @@ export default function NovaAvaliacaoPage() {
         body: JSON.stringify({
           clientId,
           population,
-          modality,
+          modalities,
+          scheduleNext,
+          ...(scheduleNext && { nextDate, nextStartTime, nextEndTime }),
           // Opcional: se vindo de um agendamento, enviar appointmentId
           ...(appointmentId && { appointmentId }),
         }),
@@ -114,17 +135,79 @@ export default function NovaAvaliacaoPage() {
         </div>
 
         <div>
-          <Label>Modalidade</Label>
-          <Select value={modality} onValueChange={(v) => { if (v !== null) setModality(v); }}>
-            <SelectTrigger className="mt-1.5">
-              <SelectValue placeholder="Selecione (opcional)" />
-            </SelectTrigger>
-            <SelectContent>
-              {MODALITY_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label htmlFor="modalities">Modalidades</Label>
+          <div className="mt-1.5">
+            <MultiSelectSheet
+              id="modalities"
+              options={MODALITY_OPTIONS}
+              value={modalities}
+              onChange={setModalities}
+              placeholder="Selecione uma ou mais (opcional)"
+              sheetTitle="Modalidades"
+              searchPlaceholder="Buscar modalidade..."
+              emptyMessage="Nenhuma modalidade encontrada"
+            />
+          </div>
+        </div>
+
+        {/* Bloco: agendar próxima avaliação */}
+        <div className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
+          <label className="flex items-start justify-between gap-3 cursor-pointer">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="flex items-center justify-center size-9 rounded-lg bg-primary/10 text-primary shrink-0">
+                <CalendarPlus className="size-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground">Agendar próxima avaliação</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Cria um evento no calendário após salvar
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={scheduleNext}
+              onCheckedChange={(v) => setScheduleNext(Boolean(v))}
+              className="mt-0.5 shrink-0"
+            />
+          </label>
+
+          {scheduleNext && (
+            <div className="flex flex-col gap-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div>
+                <Label htmlFor="nextDate">Data *</Label>
+                <Input
+                  id="nextDate"
+                  type="date"
+                  className="mt-1.5"
+                  value={nextDate}
+                  onChange={(e) => setNextDate(e.target.value)}
+                  min={new Date().toISOString().slice(0, 10)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="nextStartTime">Hora início *</Label>
+                  <Input
+                    id="nextStartTime"
+                    type="time"
+                    className="mt-1.5"
+                    value={nextStartTime}
+                    onChange={(e) => setNextStartTime(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="nextEndTime">Hora fim *</Label>
+                  <Input
+                    id="nextEndTime"
+                    type="time"
+                    className="mt-1.5"
+                    value={nextEndTime}
+                    onChange={(e) => setNextEndTime(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
