@@ -42,7 +42,7 @@
  *     - `prefers-reduced-motion` desliga keyframes decorativos.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -598,8 +598,13 @@ function ParameterCard({
         />
       </div>
 
-      {/* Gauge zonas + marker */}
-      <ZoneGauge param={param} markerPos={markerPos} tone={tone} />
+      {/* Gauge zonas + marker (drag-to-set) */}
+      <ZoneGauge
+        param={param}
+        markerPos={markerPos}
+        tone={tone}
+        onChange={onChange}
+      />
     </div>
   );
 }
@@ -634,18 +639,22 @@ function StepperButton({
   );
 }
 
-// ─── ZoneGauge ───────────────────────────────────────────────────────────
+// ─── ZoneGauge — slider draggable ────────────────────────────────────────
 
 function ZoneGauge({
   param,
   markerPos,
   tone,
+  onChange,
 }: {
   param: BasalParam;
   markerPos: number | null;
   tone: Tone | undefined;
+  onChange: (raw: string) => void;
 }) {
   const range = param.scaleMax - param.scaleMin;
+  const stepSize = param.step ?? 1;
+  const decimals = param.decimals ?? 0;
 
   // Cada zona ocupa uma faixa proporcional ao range do scale.
   const segments = param.zones.map((z, i) => {
@@ -654,49 +663,160 @@ function ZoneGauge({
     return { ...z, width };
   });
 
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  /* Quando ainda não há valor, posicionamos a bolinha no meio (estado neutro) */
+  const visualPos = markerPos ?? 0.5;
+  const hasValue = markerPos !== null;
+  const numericValue =
+    markerPos !== null
+      ? param.scaleMin + markerPos * range
+      : null;
+
+  /* ── helpers ─────────────────────────────────────────────────── */
+  function snap(value: number): number {
+    const stepped = Math.round(value / stepSize) * stepSize;
+    const clamped = Math.max(param.scaleMin, Math.min(param.scaleMax, stepped));
+    return Number(clamped.toFixed(decimals));
+  }
+
+  function format(value: number): string {
+    if (decimals > 0) return value.toFixed(decimals).replace(".", ",");
+    return String(value);
+  }
+
+  function commitFromPointerX(clientX: number) {
+    const el = trackRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const raw = param.scaleMin + pct * range;
+    onChange(format(snap(raw)));
+  }
+
+  /* ── pointer events ──────────────────────────────────────────── */
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    // Captura o pointer para que o move continue mesmo se sair do trilho
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    setIsDragging(true);
+    commitFromPointerX(e.clientX);
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging) return;
+    commitFromPointerX(e.clientX);
+  }
+
+  function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if ((e.currentTarget as HTMLDivElement).hasPointerCapture(e.pointerId)) {
+      (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+    }
+    setIsDragging(false);
+  }
+
+  /* ── keyboard a11y ───────────────────────────────────────────── */
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    const current = numericValue ?? (param.scaleMin + param.scaleMax) / 2;
+    let next: number | null = null;
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      next = current + stepSize;
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      next = current - stepSize;
+    } else if (e.key === "Home") {
+      next = param.scaleMin;
+    } else if (e.key === "End") {
+      next = param.scaleMax;
+    } else if (e.key === "PageUp") {
+      next = current + stepSize * 10;
+    } else if (e.key === "PageDown") {
+      next = current - stepSize * 10;
+    }
+    if (next !== null) {
+      e.preventDefault();
+      onChange(format(snap(next)));
+    }
+  }
+
   return (
     <div className="relative mt-1">
-      {/* Trilho de zonas */}
+      {/* Slider — área tocável (trilho + zonas) */}
       <div
-        className="flex h-1.5 rounded-full overflow-hidden border border-border/50"
-        role="presentation"
+        ref={trackRef}
+        role="slider"
+        tabIndex={0}
+        aria-label={`Ajustar ${param.label}`}
+        aria-valuemin={param.scaleMin}
+        aria-valuemax={param.scaleMax}
+        aria-valuenow={numericValue ?? undefined}
+        aria-valuetext={
+          numericValue !== null
+            ? `${format(numericValue)} ${param.unit}`
+            : "Não definido"
+        }
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onKeyDown={handleKeyDown}
+        className={cn(
+          // Hit area maior (12px de altura tocável) sem alterar o visual:
+          // padding vertical invisível + cursor-pointer para discoverability.
+          "relative -my-2 py-2 cursor-pointer select-none touch-none",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:rounded-full"
+        )}
       >
-        {segments.map((s, i) => (
-          <div
-            key={i}
-            className={cn(TONE_CLASSES[s.tone].bar, "opacity-40 transition-opacity duration-300")}
-            style={{
-              width: `${s.width}%`,
-              opacity: tone === s.tone ? 0.95 : 0.25,
-            }}
-            aria-hidden
-          />
-        ))}
-      </div>
-
-      {/* Marker deslizante */}
-      {markerPos !== null && tone && (
+        {/* Trilho de zonas */}
         <div
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
-          style={{
-            left: `${markerPos * 100}%`,
-            transition: "left 400ms cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
+          className="flex h-1.5 rounded-full overflow-hidden border border-border/50"
+          aria-hidden
+        >
+          {segments.map((s, i) => (
+            <div
+              key={i}
+              className={cn(
+                TONE_CLASSES[s.tone].bar,
+                "opacity-40 transition-opacity duration-300"
+              )}
+              style={{
+                width: `${s.width}%`,
+                opacity: tone === s.tone ? 0.95 : 0.25,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Marker / handle deslizante */}
+        <div
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none",
+            !isDragging && "transition-[left] duration-300 ease-out"
+          )}
+          style={{ left: `${visualPos * 100}%` }}
           aria-hidden
         >
           <span
             className={cn(
-              "block size-3 rounded-full border-2 border-background shadow",
-              TONE_CLASSES[tone].bar
+              "block size-4 rounded-full border-2 border-background",
+              "transition-[transform,box-shadow,background-color] duration-150",
+              isDragging
+                ? "scale-125 shadow-lg ring-2 ring-foreground/10"
+                : "shadow",
+              hasValue && tone
+                ? TONE_CLASSES[tone].bar
+                : "bg-muted-foreground/40"
             )}
           />
         </div>
-      )}
+      </div>
 
       {/* Escala min/max */}
       <div className="flex justify-between mt-1 text-[9px] font-semibold tabular-nums text-muted-foreground/70">
         <span>{param.scaleMin}</span>
-        <span>{param.scaleMax} {param.unit}</span>
+        <span>
+          {param.scaleMax} {param.unit}
+        </span>
       </div>
     </div>
   );
