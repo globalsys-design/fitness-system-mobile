@@ -1,12 +1,29 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+/**
+ * AnamnesisToggle — bloco de pergunta numerada com Sim/Não.
+ *
+ * Wrapper sobre o componente único do design system (`YesNoButtons`).
+ * Mantém a API antiga (boolean | null) para não quebrar telas legadas
+ * e centraliza a UX de Sim/Não no componente padrão.
+ *
+ * Use este wrapper quando precisar de:
+ *  - número da pergunta visível (badge cyan)
+ *  - bloco em card com pergunta acima e botões abaixo (full-width)
+ *
+ * Para listas inline, use diretamente `<YesNoButtons variant="inline">`.
+ */
+
+import { YesNoButtons } from "@/components/ui/yes-no-buttons";
 
 interface AnamnesisToggleProps {
   question: string;
   questionNumber: number;
   value: boolean | null;
   onChange: (val: boolean) => void;
+  /** Quando true, "Sim" assume tom destructive (resposta indica risco). */
+  dangerYes?: boolean;
+  disabled?: boolean;
 }
 
 export function AnamnesisToggle({
@@ -14,42 +31,32 @@ export function AnamnesisToggle({
   questionNumber,
   value,
   onChange,
+  dangerYes = true,
+  disabled,
 }: AnamnesisToggleProps) {
+  // Adapta API boolean → "yes" | "no" do componente padrão
+  const yesNoValue: "yes" | "no" | null =
+    value === true ? "yes" : value === false ? "no" : null;
+
   return (
     <div className="flex flex-col gap-3 p-4 rounded-xl border border-border bg-card">
       <div className="flex items-start gap-3">
-        <span className="flex items-center justify-center size-7 rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0 mt-0.5">
+        <span
+          className="flex items-center justify-center size-7 rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0 mt-0.5"
+          aria-hidden
+        >
           {questionNumber}
         </span>
         <p className="text-sm text-foreground leading-relaxed">{question}</p>
       </div>
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => onChange(true)}
-          className={cn(
-            "flex-1 h-12 rounded-xl text-sm font-semibold transition-colors active:scale-[0.98]",
-            value === true
-              ? "bg-destructive text-destructive-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
-          )}
-        >
-          Sim
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange(false)}
-          className={cn(
-            "flex-1 h-12 rounded-xl text-sm font-semibold transition-colors active:scale-[0.98]",
-            value === false
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
-          )}
-        >
-          Não
-        </button>
-      </div>
+      <YesNoButtons
+        value={yesNoValue}
+        onChange={(v) => onChange(v === "yes")}
+        dangerYes={dangerYes}
+        disabled={disabled}
+        ariaLabel={question}
+      />
     </div>
   );
 }

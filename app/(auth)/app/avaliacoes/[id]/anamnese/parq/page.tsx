@@ -26,6 +26,7 @@ import { MobileLayout } from "@/components/mobile/mobile-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RiskDashboardCard } from "@/components/assessments/risk-dashboard-card";
 import { ParqView } from "@/components/assessments/parq/parq-view";
+import { scrollMobileTop } from "@/lib/utils/scroll";
 
 import {
   PARQ_PLUS_SCREENING,
@@ -167,14 +168,14 @@ export default function ParqPlusPage() {
   /* ── navegação ──────────────────────────────────────────────── */
   const goToReview = useCallback(() => {
     setPhase("review");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollMobileTop();
   }, []);
 
   const handleNext = useCallback(() => {
     if (phase === "screening") {
       if (screeningIdx < PARQ_PLUS_SCREENING.length - 1) {
         setScreeningIdx((v) => v + 1);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollMobileTop();
         return;
       }
       // último screening — decide transição
@@ -188,7 +189,7 @@ export default function ParqPlusPage() {
     if (phase === "sections") {
       if (sectionIdx < PARQ_PLUS_SECTIONS.length - 1) {
         setSectionIdx((v) => v + 1);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollMobileTop();
         return;
       }
       goToReview();
@@ -205,7 +206,7 @@ export default function ParqPlusPage() {
         setPhase("screening");
         setScreeningIdx(PARQ_PLUS_SCREENING.length - 1);
       }
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollMobileTop();
       return;
     }
     if (phase === "sections") {
@@ -215,12 +216,12 @@ export default function ParqPlusPage() {
         setPhase("screening");
         setScreeningIdx(PARQ_PLUS_SCREENING.length - 1);
       }
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollMobileTop();
       return;
     }
     if (phase === "screening" && screeningIdx > 0) {
       setScreeningIdx((v) => v - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollMobileTop();
     }
   }, [phase, screeningIdx, sectionIdx, anyScreeningYes]);
 
@@ -228,7 +229,7 @@ export default function ParqPlusPage() {
     setTransitionOpen(false);
     setPhase("sections");
     setSectionIdx(0);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollMobileTop();
   }, []);
 
   const handleStepClick = useCallback(
@@ -237,14 +238,14 @@ export default function ParqPlusPage() {
       if (screenIdx >= 0) {
         setPhase("screening");
         setScreeningIdx(screenIdx);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollMobileTop();
         return;
       }
       const secIdx = PARQ_PLUS_SECTIONS.findIndex((s) => s.id === id);
       if (secIdx >= 0) {
         setPhase("sections");
         setSectionIdx(secIdx);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollMobileTop();
       }
     },
     []

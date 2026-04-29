@@ -1,36 +1,33 @@
 "use client";
 
 /**
- * CoronaryRiskView — modo leitura do Risco Coronariano.
+ * AdvancedQuestionnaireView — modo leitura do Questionário Avançado.
  *
- * v2 design spells — premium "fitness watch" vibe:
- *   • Hero "vital ring" — gauge 144px com PERCENTUAL gigante no centro,
- *     2 anéis concêntricos rotacionando, aura pulsante no ritmo cardíaco
- *   • Constelação de partículas decorativas no background
- *   • ECG line traçada no fundo (signature)
- *   • Stacked contribution bar — barra horizontal empilhada mostrando
- *     a contribuição visual de cada fator (verde/âmbar/vermelho)
- *   • Risk meter 4 segmentos com botão "?" → drawer explicativo dos níveis
- *   • Stats strip + accordion de respostas + observações
- *
- * Tudo CSS-only, GPU-accelerated, respeita prefers-reduced-motion.
+ * Mantém a família visual do Coronário/Framingham:
+ *   • Hero "Vital Ring 144px" com % de fatores relatados sobre o total
+ *   • Anéis decorativos rotacionando + aura heartbeat
+ *   • ECG signature line + constelação de partículas
+ *   • Risk meter 3 segmentos (Limpo / Cautela / Atenção)
+ *   • Stats strip por seção (Cardíaco / Médico / Risco)
+ *   • Accordion por seção com cada pergunta + observações
+ *   • Drawer explicativo das faixas
+ *   • FAB para nova avaliação
  */
 
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   AlertTriangle,
-  HeartPulse,
+  ClipboardList,
+  Eye,
   HelpCircle,
+  HeartPulse,
   Pencil,
   Plus,
-  Eye,
   Shield,
   ShieldCheck,
-  TrendingUp,
-  ListChecks,
   StickyNote,
-  Heart,
+  TrendingUp,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -43,51 +40,49 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  findOption,
-  type CoronaryQuestion,
-  type CoronaryRiskLevel,
-} from "@/lib/data/coronary-questions";
+  ADVANCED_SECTIONS,
+  countYesAnswers,
+  getAllQuestions,
+  type AdvancedSection,
+} from "@/lib/data/advanced-questionnaire";
 
-interface CoronaryRiskViewProps {
-  questions: readonly CoronaryQuestion[];
-  answers: Record<string, string>;
-  notes?: string;
-  score: number;
-  maxScore: number;
-  riskLevel: CoronaryRiskLevel;
-  description: string;
+export type AdvancedRiskLevel = "clean" | "caution" | "attention";
+
+interface AdvancedQuestionnaireViewProps {
+  answers: Record<string, "yes" | "no">;
+  observations: Record<string, string>;
   completedAt?: string | null;
   onEdit: () => void;
   onStartNew: () => void;
 }
 
-export function CoronaryRiskView({
-  questions,
+/* ──────────────────────────────────────────────────────────────────────
+ * Helpers de classificação (mobile-first, didático para profissional)
+ * ────────────────────────────────────────────────────────────────────── */
+
+export function classifyAdvanced(yesCount: number): AdvancedRiskLevel {
+  if (yesCount === 0) return "clean";
+  if (yesCount <= 3) return "caution";
+  return "attention";
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Componente principal
+ * ────────────────────────────────────────────────────────────────────── */
+
+export function AdvancedQuestionnaireView({
   answers,
-  notes,
-  score,
-  maxScore,
-  riskLevel,
-  description,
+  observations,
   completedAt,
   onEdit,
   onStartNew,
-}: CoronaryRiskViewProps) {
+}: AdvancedQuestionnaireViewProps) {
   const completedDate = completedAt ? new Date(completedAt) : null;
   const [explainerOpen, setExplainerOpen] = useState(false);
 
-  /* Quantas questões aumentaram o risco (points > 0) */
-  const counts = useMemo(() => {
-    let positive = 0;
-    let zero = 0;
-    for (const q of questions) {
-      const opt = findOption(q.key, answers[q.key]);
-      if (!opt) continue;
-      if (opt.points > 0) positive++;
-      else zero++;
-    }
-    return { positive, zero, total: questions.length };
-  }, [questions, answers]);
+  const totalQuestions = useMemo(() => getAllQuestions().length, []);
+  const yesCount = useMemo(() => countYesAnswers(answers), [answers]);
+  const riskLevel = classifyAdvanced(yesCount);
 
   return (
     <div className="relative pb-[calc(7rem+env(safe-area-inset-bottom))]">
@@ -95,19 +90,11 @@ export function CoronaryRiskView({
 
       <div className="px-4 py-4 space-y-4">
         {/* ✨ HERO — Vital Ring */}
-        <HeroVitalRing
+        <HeroAdvancedCard
           riskLevel={riskLevel}
-          description={description}
-          score={score}
-          maxScore={maxScore}
+          yesCount={yesCount}
+          totalQuestions={totalQuestions}
           onOpenExplainer={() => setExplainerOpen(true)}
-        />
-
-        {/* Stats strip */}
-        <StatsStrip
-          score={score}
-          maxScore={maxScore}
-          positive={counts.positive}
         />
 
         {/* Timestamp */}
@@ -119,7 +106,7 @@ export function CoronaryRiskView({
             <div className="flex items-center gap-2 min-w-0">
               <Activity className="h-3.5 w-3.5 text-primary shrink-0" />
               <p className="text-xs text-muted-foreground truncate">
-                Estratificação Cardiovascular
+                Questionário Avançado
               </p>
             </div>
             <p className="text-xs font-semibold text-foreground tabular-nums">
@@ -134,65 +121,21 @@ export function CoronaryRiskView({
           </section>
         )}
 
-        {/* Accordion — respostas */}
-        <section
-          className="spell-slide-up"
-          style={{ animationDelay: "160ms" }}
-        >
-          <Accordion defaultValue={["answers"]}>
-            <AccordionItem
-              value="answers"
-              className="rounded-2xl border border-border bg-card overflow-hidden"
-            >
-              <AccordionTrigger className="px-4 py-3.5 hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <ListChecks className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">
-                    Detalhamento por fator
-                  </span>
-                  <span className="inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary tabular-nums">
-                    {score}/{maxScore} pts
-                  </span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-0 pb-0">
-                <div className="divide-y divide-border/60 border-t border-border/60">
-                  {questions.map((q, i) => (
-                    <AnswerRow
-                      key={q.key}
-                      index={i}
-                      question={q}
-                      answerValue={answers[q.key]}
-                    />
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </section>
-
-        {/* Observações */}
-        {notes && notes.trim().length > 0 && (
-          <section
-            className="spell-slide-up rounded-2xl border border-border bg-card p-4 space-y-2"
-            style={{ animationDelay: "200ms" }}
-          >
-            <div className="flex items-center gap-2">
-              <StickyNote className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">
-                Observações
-              </h3>
-            </div>
-            <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap border-l-2 border-primary/30 pl-3 italic">
-              {notes}
-            </p>
-          </section>
-        )}
+        {/* Accordion por seção */}
+        {ADVANCED_SECTIONS.map((section, i) => (
+          <SectionAccordion
+            key={section.id}
+            section={section}
+            answers={answers}
+            observations={observations}
+            index={i}
+          />
+        ))}
 
         {/* CTA secundário */}
         <div
           className="spell-slide-up grid grid-cols-1 gap-2"
-          style={{ animationDelay: "240ms" }}
+          style={{ animationDelay: "260ms" }}
         >
           <SecondaryAction
             icon={Pencil}
@@ -206,10 +149,10 @@ export function CoronaryRiskView({
       <FAB
         icon={Plus}
         onClick={onStartNew}
-        label="Nova estratificação de risco coronariano"
+        label="Novo questionário avançado"
       />
 
-      {/* Drawer explicativo */}
+      {/* Drawer */}
       <RiskExplainerSheet
         open={explainerOpen}
         onOpenChange={setExplainerOpen}
@@ -220,26 +163,25 @@ export function CoronaryRiskView({
 }
 
 /* ──────────────────────────────────────────────────────────────────────
- * HERO — Vital Ring (signature)
+ * HERO — Vital Ring com % de fatores relatados
  * ────────────────────────────────────────────────────────────────────── */
 
-function HeroVitalRing({
+function HeroAdvancedCard({
   riskLevel,
-  description,
-  score,
-  maxScore,
+  yesCount,
+  totalQuestions,
   onOpenExplainer,
 }: {
-  riskLevel: CoronaryRiskLevel;
-  description: string;
-  score: number;
-  maxScore: number;
+  riskLevel: AdvancedRiskLevel;
+  yesCount: number;
+  totalQuestions: number;
   onOpenExplainer: () => void;
 }) {
   const config = {
-    low: {
+    clean: {
       Icon: ShieldCheck,
-      label: "Risco Baixo",
+      label: "Histórico Limpo",
+      desc: "Nenhum fator de risco relatado. Cliente apto para programas de exercício sem restrições adicionais.",
       tone: "text-primary",
       bg: "from-primary/10 via-primary/5 to-transparent",
       ring: "ring-primary/25",
@@ -248,9 +190,10 @@ function HeroVitalRing({
       arc: "var(--color-primary)",
       gaugeIdx: 0,
     },
-    moderate: {
+    caution: {
       Icon: Shield,
-      label: "Risco Moderado",
+      label: "Cautela Recomendada",
+      desc: "Foram relatados fatores que merecem atenção. Considere encaminhamento médico antes de programas de alta intensidade.",
       tone: "text-amber-500 dark:text-amber-300",
       bg: "from-amber-500/15 via-amber-500/5 to-transparent",
       ring: "ring-amber-500/25",
@@ -259,9 +202,10 @@ function HeroVitalRing({
       arc: "oklch(0.75 0.15 70)",
       gaugeIdx: 1,
     },
-    high: {
+    attention: {
       Icon: AlertTriangle,
-      label: "Risco Alto",
+      label: "Atenção Médica Necessária",
+      desc: "Múltiplos fatores relevantes relatados. Encaminhamento médico antes de iniciar ou alterar significativamente o programa de exercícios.",
       tone: "text-destructive",
       bg: "from-destructive/15 via-destructive/5 to-transparent",
       ring: "ring-destructive/25",
@@ -270,20 +214,7 @@ function HeroVitalRing({
       arc: "var(--color-destructive)",
       gaugeIdx: 2,
     },
-    "very-high": {
-      Icon: AlertTriangle,
-      label: "Risco Muito Alto",
-      tone: "text-destructive",
-      bg: "from-destructive/20 via-destructive/10 to-transparent",
-      ring: "ring-destructive/35",
-      aura: "bg-destructive/40",
-      ecg: "text-destructive",
-      arc: "var(--color-destructive)",
-      gaugeIdx: 3,
-    },
   }[riskLevel];
-
-  const pct = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
 
   return (
     <section
@@ -313,24 +244,24 @@ function HeroVitalRing({
         }}
       />
 
-      {/* Vital Ring central — 144px */}
-      <div className="relative flex flex-col items-center pt-1">
+      <div className="relative flex flex-col items-center gap-3 pt-1">
+        {/* Vital Ring com Sim/total no centro */}
         <VitalRing
-          score={score}
-          maxScore={maxScore}
+          yesCount={yesCount}
+          totalQuestions={totalQuestions}
           color={config.arc}
           toneClass={config.tone}
           auraClass={config.aura}
           ringClass={config.ring}
         >
-          <Heart
+          <ClipboardList
             aria-hidden
             className={cn("h-3.5 w-3.5 spell-icon-in", config.tone)}
           />
         </VitalRing>
 
-        {/* Label de risco abaixo do ring */}
-        <div className="relative mt-3 flex items-center gap-2">
+        {/* Label + ajuda */}
+        <div className="flex items-center gap-2 mt-1">
           <p
             className={cn(
               "text-[11px] font-bold uppercase tracking-widest",
@@ -347,21 +278,21 @@ function HeroVitalRing({
               "bg-background/60 ring-1 ring-border/60 hover:bg-background",
               "active:scale-90 transition-transform"
             )}
-            aria-label="Entender as faixas de risco"
+            aria-label="Entender as faixas"
           >
             <HelpCircle className="h-3 w-3 text-muted-foreground" />
           </button>
         </div>
 
-        <p className="relative mt-1 text-xs text-center text-muted-foreground leading-relaxed max-w-md">
-          {description}
+        <p className="text-xs text-center text-muted-foreground leading-relaxed max-w-md">
+          {config.desc}
         </p>
       </div>
 
-      {/* Risk meter — 4 segmentos */}
+      {/* Risk meter — 3 segmentos */}
       <div className="relative mt-5">
         <div className="flex items-center gap-1.5">
-          {[0, 1, 2, 3].map((idx) => (
+          {[0, 1, 2].map((idx) => (
             <GaugeSegment
               key={idx}
               active={config.gaugeIdx >= idx}
@@ -378,20 +309,17 @@ function HeroVitalRing({
         </div>
         <div className="mt-1.5 flex items-center justify-between text-[10px] font-medium text-muted-foreground">
           <span className={cn(config.gaugeIdx === 0 && "text-primary")}>
-            Baixo
+            Limpo
           </span>
           <span
             className={cn(
               config.gaugeIdx === 1 && "text-amber-500 dark:text-amber-300"
             )}
           >
-            Moderado
+            Cautela
           </span>
           <span className={cn(config.gaugeIdx === 2 && "text-destructive")}>
-            Alto
-          </span>
-          <span className={cn(config.gaugeIdx === 3 && "text-destructive")}>
-            Muito Alto
+            Atenção
           </span>
         </div>
       </div>
@@ -400,12 +328,11 @@ function HeroVitalRing({
       <div className="relative mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
         <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <HeartPulse className="h-3 w-3 text-destructive/70" />
-          Pontuação
+          Fatores relatados
         </span>
         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground/90 tabular-nums">
           <TrendingUp className="h-3 w-3" />
-          <CountUp value={score} /> / {maxScore} ·{" "}
-          <CountUp value={pct} />%
+          <CountUp value={yesCount} /> de {totalQuestions}
         </span>
       </div>
     </section>
@@ -413,20 +340,20 @@ function HeroVitalRing({
 }
 
 /* ──────────────────────────────────────────────────────────────────────
- * VitalRing — gauge 144px com percentual gigante no centro
+ * VitalRing — gauge 144px com Sim/total e %
  * ────────────────────────────────────────────────────────────────────── */
 
 function VitalRing({
-  score,
-  maxScore,
+  yesCount,
+  totalQuestions,
   color,
   toneClass,
   auraClass,
   ringClass,
   children,
 }: {
-  score: number;
-  maxScore: number;
+  yesCount: number;
+  totalQuestions: number;
   color: string;
   toneClass: string;
   auraClass: string;
@@ -437,8 +364,7 @@ function VitalRing({
   const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const pct = Math.min(1, score / Math.max(1, maxScore));
-  const pctNumber = Math.round(pct * 100);
+  const pct = totalQuestions > 0 ? yesCount / totalQuestions : 0;
 
   const [progress, setProgress] = useState(0);
   useEffect(() => {
@@ -464,7 +390,6 @@ function VitalRing({
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
-      {/* Aura externa pulsante */}
       <span
         aria-hidden
         className={cn(
@@ -472,8 +397,6 @@ function VitalRing({
           auraClass
         )}
       />
-
-      {/* Anel decorativo rotacionando — outermost */}
       <span
         aria-hidden
         className={cn(
@@ -483,8 +406,6 @@ function VitalRing({
         )}
         style={{ borderColor: "currentColor", color: color }}
       />
-
-      {/* Anel decorativo rotacionando — middle (sentido oposto) */}
       <span
         aria-hidden
         className="absolute inset-2 rounded-full spell-rotate-fast-rev opacity-30"
@@ -495,51 +416,50 @@ function VitalRing({
           borderLeft: `1px solid ${color}`,
         }}
       />
-
-      {/* Gauge SVG principal */}
-      <svg
-        width={size}
-        height={size}
-        className="absolute inset-0 -rotate-90"
-        aria-hidden
-      >
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          fill="none"
-          className="text-muted opacity-30"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          style={{
-            filter: `drop-shadow(0 0 8px ${color})`,
-            transition: "stroke-dashoffset 0.1s ease-out",
-          }}
-        />
-      </svg>
-
-      {/* Centro do ring — percentual gigante */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <div className={cn("flex items-baseline", toneClass)}>
-          <span className="text-5xl font-bold tabular-nums leading-none tracking-tight spell-icon-in">
-            <CountUp value={pctNumber} />
-          </span>
-          <span className="text-xl font-bold ml-0.5">%</span>
-        </div>
-        <div className="mt-1 inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
-          {children}
-          <span>do máximo</span>
+      <div className="absolute inset-0 flex items-center justify-center rounded-full bg-background/60 backdrop-blur ring-1 ring-border/60">
+        <svg
+          width={size}
+          height={size}
+          className="absolute inset-0 -rotate-90"
+          aria-hidden
+        >
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            fill="none"
+            className="text-muted opacity-30"
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            style={{
+              filter: `drop-shadow(0 0 8px ${color})`,
+            }}
+          />
+        </svg>
+        <div className="relative z-10 flex flex-col items-center justify-center text-center">
+          <div className={cn("flex items-baseline", toneClass)}>
+            <span className="text-5xl font-bold tabular-nums leading-none tracking-tight spell-icon-in">
+              <CountUp value={yesCount} />
+            </span>
+            <span className="text-xl font-bold ml-1 opacity-60">
+              /{totalQuestions}
+            </span>
+          </div>
+          <div className="mt-1 inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {children}
+            <span>fatores Sim</span>
+          </div>
         </div>
       </div>
     </div>
@@ -547,11 +467,282 @@ function VitalRing({
 }
 
 /* ──────────────────────────────────────────────────────────────────────
- * ParticleField — constelação de pontos sutis movendo lentamente
+ * SectionAccordion — uma seção com perguntas + observações
  * ────────────────────────────────────────────────────────────────────── */
 
+function SectionAccordion({
+  section,
+  answers,
+  observations,
+  index,
+}: {
+  section: AdvancedSection;
+  answers: Record<string, "yes" | "no">;
+  observations: Record<string, string>;
+  index: number;
+}) {
+  const yes = section.questions.filter((q) => answers[q.id] === "yes").length;
+
+  return (
+    <section
+      className="spell-slide-up"
+      style={{ animationDelay: `${160 + index * 40}ms` }}
+    >
+      <Accordion defaultValue={[section.id]}>
+        <AccordionItem
+          value={section.id}
+          className="rounded-2xl border border-border bg-card overflow-hidden"
+        >
+          <AccordionTrigger className="px-4 py-3.5 hover:no-underline">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">
+                {section.title}
+              </span>
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                  yes > 0
+                    ? "bg-destructive/10 text-destructive"
+                    : "bg-primary/10 text-primary"
+                )}
+              >
+                {yes}/{section.questions.length}
+              </span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-0 pb-0">
+            <div className="divide-y divide-border/60 border-t border-border/60">
+              {section.questions.map((q, i) => (
+                <QuestionRow
+                  key={q.id}
+                  index={i}
+                  text={q.text}
+                  answer={answers[q.id] ?? null}
+                  observation={observations[q.id]}
+                />
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </section>
+  );
+}
+
+function QuestionRow({
+  index,
+  text,
+  answer,
+  observation,
+}: {
+  index: number;
+  text: string;
+  answer: "yes" | "no" | null;
+  observation?: string;
+}) {
+  const sideCls =
+    answer === "yes"
+      ? "before:bg-destructive"
+      : answer === "no"
+        ? "before:bg-primary"
+        : "before:bg-border";
+
+  const hasObservation = answer === "yes" && !!observation?.trim();
+
+  return (
+    <div
+      className={cn(
+        "relative flex flex-col gap-2 px-4 py-3.5",
+        "before:content-[''] before:absolute before:left-0 before:top-3 before:bottom-3 before:w-0.5 before:rounded-r-full",
+        sideCls,
+        "transition-colors active:bg-muted/40",
+        "spell-slide-up"
+      )}
+      style={{ animationDelay: `${200 + index * 30}ms` }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm text-foreground/90 leading-relaxed flex-1 min-w-0">
+          {text}
+        </p>
+        <AnswerBadge answer={answer} />
+      </div>
+      {hasObservation && (
+        <div className="mt-1 flex gap-2 items-start">
+          <StickyNote
+            aria-hidden
+            className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0 mt-0.5"
+          />
+          <p className="text-xs text-muted-foreground italic leading-relaxed border-l-2 border-destructive/30 pl-2 flex-1 min-w-0">
+            {observation}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AnswerBadge({ answer }: { answer: "yes" | "no" | null }) {
+  if (answer === "yes") {
+    return (
+      <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
+        Sim
+      </span>
+    );
+  }
+  if (answer === "no") {
+    return (
+      <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+        Não
+      </span>
+    );
+  }
+  return <span className="shrink-0 text-xs text-muted-foreground/60">—</span>;
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Risk explainer drawer
+ * ────────────────────────────────────────────────────────────────────── */
+
+function RiskExplainerSheet({
+  open,
+  onOpenChange,
+  currentLevel,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  currentLevel: AdvancedRiskLevel;
+}) {
+  const items: {
+    level: AdvancedRiskLevel;
+    label: string;
+    range: string;
+    desc: string;
+    tone: string;
+    bg: string;
+  }[] = [
+    {
+      level: "clean",
+      label: "Limpo",
+      range: "0 fatores Sim",
+      desc: "Nenhum fator de risco relatado. Cliente apto sem necessidade de avaliação médica adicional.",
+      tone: "text-primary",
+      bg: "bg-primary/10 border-primary/30",
+    },
+    {
+      level: "caution",
+      label: "Cautela",
+      range: "1 a 3 fatores Sim",
+      desc: "Considerar avaliação médica antes de programas de alta intensidade. Revisar observações do cliente.",
+      tone: "text-amber-600 dark:text-amber-300",
+      bg: "bg-amber-500/10 border-amber-500/30",
+    },
+    {
+      level: "attention",
+      label: "Atenção",
+      range: "4 ou mais fatores Sim",
+      desc: "Encaminhamento médico necessário antes de iniciar ou alterar significativamente o programa de exercícios.",
+      tone: "text-destructive",
+      bg: "bg-destructive/10 border-destructive/30",
+    },
+  ];
+
+  return (
+    <BottomSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      srOnlyTitle="Faixas de classificação do questionário avançado"
+      srOnlyDescription="Explicação detalhada de cada nível de classificação."
+    >
+      <div className="px-1 pt-2 pb-1">
+        <div className="flex items-center gap-2 mb-3">
+          <HelpCircle className="h-4 w-4 text-primary" />
+          <h2 className="text-base font-semibold text-foreground">
+            Faixas de classificação
+          </h2>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+          A classificação considera a quantidade total de fatores marcados como
+          Sim no questionário (cardíacos, médicos e de risco).
+        </p>
+        <div className="space-y-2">
+          {items.map((it) => {
+            const isCurrent = it.level === currentLevel;
+            return (
+              <div
+                key={it.level}
+                className={cn(
+                  "rounded-xl border-2 px-3 py-3",
+                  it.bg,
+                  isCurrent
+                    ? "ring-2 ring-offset-2 ring-offset-background ring-foreground/10"
+                    : ""
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className={cn("text-sm font-bold", it.tone)}>
+                    {it.label}
+                  </p>
+                  {isCurrent && (
+                    <span className="inline-flex items-center rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground/80">
+                      Atual
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] font-semibold text-muted-foreground mt-0.5">
+                  {it.range}
+                </p>
+                <p className="text-xs text-foreground/80 mt-1.5 leading-relaxed">
+                  {it.desc}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </BottomSheet>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * EcgLine + ParticleField + GaugeSegment + CountUp + Helpers
+ * ────────────────────────────────────────────────────────────────────── */
+
+function EcgLine({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden
+      className={cn(
+        "pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-16 w-full opacity-[0.08]",
+        className
+      )}
+      viewBox="0 0 400 64"
+      preserveAspectRatio="none"
+    >
+      <line
+        x1="0"
+        y1="32"
+        x2="400"
+        y2="32"
+        stroke="currentColor"
+        strokeWidth="0.75"
+        strokeDasharray="2 4"
+        opacity="0.4"
+      />
+      <path
+        d="M0 32 L70 32 L85 28 L100 32 L120 32 L130 14 L138 52 L146 8 L154 32 L175 32 L190 26 L210 32 L400 32"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        className="spell-ecg-draw"
+        pathLength={1}
+      />
+    </svg>
+  );
+}
+
 function ParticleField({ className }: { className?: string }) {
-  // Pontos pré-calculados (estáticos) — animação via CSS para evitar re-render
   const dots = useMemo(
     () => [
       { x: 12, y: 18, size: 3, delay: 0 },
@@ -591,45 +782,6 @@ function ParticleField({ className }: { className?: string }) {
   );
 }
 
-/* ──────────────────────────────────────────────────────────────────────
- * EcgLine, GaugeSegment
- * ────────────────────────────────────────────────────────────────────── */
-
-function EcgLine({ className }: { className?: string }) {
-  return (
-    <svg
-      aria-hidden
-      className={cn(
-        "pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-16 w-full opacity-[0.10]",
-        className
-      )}
-      viewBox="0 0 400 64"
-      preserveAspectRatio="none"
-    >
-      <line
-        x1="0"
-        y1="32"
-        x2="400"
-        y2="32"
-        stroke="currentColor"
-        strokeWidth="0.75"
-        strokeDasharray="2 4"
-        opacity="0.4"
-      />
-      <path
-        d="M0 32 L70 32 L85 28 L100 32 L120 32 L130 14 L138 52 L146 8 L154 32 L175 32 L190 26 L210 32 L400 32"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-        className="spell-ecg-draw"
-        pathLength={1}
-      />
-    </svg>
-  );
-}
-
 function GaugeSegment({
   active,
   current,
@@ -661,243 +813,6 @@ function GaugeSegment({
   );
 }
 
-/* ──────────────────────────────────────────────────────────────────────
- * Risk explainer drawer
- * ────────────────────────────────────────────────────────────────────── */
-
-function RiskExplainerSheet({
-  open,
-  onOpenChange,
-  currentLevel,
-}: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-  currentLevel: CoronaryRiskLevel;
-}) {
-  const items: {
-    level: CoronaryRiskLevel;
-    label: string;
-    range: string;
-    desc: string;
-    tone: string;
-    bg: string;
-  }[] = [
-    {
-      level: "low",
-      label: "Baixo",
-      range: "0–25% do score máximo",
-      desc: "Pode iniciar programa de exercícios sem necessidade de avaliação médica adicional.",
-      tone: "text-primary",
-      bg: "bg-primary/10 border-primary/30",
-    },
-    {
-      level: "moderate",
-      label: "Moderado",
-      range: "26–50% do score máximo",
-      desc: "Recomenda-se avaliação médica antes de exercícios vigorosos.",
-      tone: "text-amber-600 dark:text-amber-300",
-      bg: "bg-amber-500/10 border-amber-500/30",
-    },
-    {
-      level: "high",
-      label: "Alto",
-      range: "51–75% do score máximo",
-      desc: "Avaliação médica completa antes de qualquer programa de exercícios.",
-      tone: "text-destructive",
-      bg: "bg-destructive/10 border-destructive/30",
-    },
-    {
-      level: "very-high",
-      label: "Muito Alto",
-      range: "76–100% do score máximo",
-      desc: "Necessita avaliação cardiológica imediata antes de iniciar atividade física.",
-      tone: "text-destructive",
-      bg: "bg-destructive/15 border-destructive/40",
-    },
-  ];
-
-  return (
-    <BottomSheet
-      open={open}
-      onOpenChange={onOpenChange}
-      srOnlyTitle="Faixas de risco coronariano"
-      srOnlyDescription="Explicação detalhada de cada nível de classificação de risco."
-    >
-      <div className="px-1 pt-2 pb-1">
-        <div className="flex items-center gap-2 mb-3">
-          <HelpCircle className="h-4 w-4 text-primary" />
-          <h2 className="text-base font-semibold text-foreground">
-            Faixas de risco
-          </h2>
-        </div>
-        <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-          A classificação é proporcional ao percentual atingido em relação ao
-          score máximo possível.
-        </p>
-        <div className="space-y-2">
-          {items.map((it) => {
-            const isCurrent = it.level === currentLevel;
-            return (
-              <div
-                key={it.level}
-                className={cn(
-                  "rounded-xl border-2 px-3 py-3",
-                  it.bg,
-                  isCurrent ? "ring-2 ring-offset-2 ring-offset-background ring-foreground/10" : ""
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className={cn("text-sm font-bold", it.tone)}>
-                    {it.label}
-                  </p>
-                  {isCurrent && (
-                    <span className="inline-flex items-center rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground/80">
-                      Atual
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] font-semibold text-muted-foreground mt-0.5">
-                  {it.range}
-                </p>
-                <p className="text-xs text-foreground/80 mt-1.5 leading-relaxed">
-                  {it.desc}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </BottomSheet>
-  );
-}
-
-/* ──────────────────────────────────────────────────────────────────────
- * Stats strip
- * ────────────────────────────────────────────────────────────────────── */
-
-function StatsStrip({
-  score,
-  maxScore,
-  positive,
-}: {
-  score: number;
-  maxScore: number;
-  positive: number;
-}) {
-  return (
-    <div
-      className="spell-slide-up grid grid-cols-3 gap-2"
-      style={{ animationDelay: "100ms" }}
-    >
-      <StatChip label="Pontos" value={score} tone="primary" />
-      <StatChip label="Máximo" value={maxScore} tone="muted" />
-      <StatChip
-        label="Fatores +"
-        value={positive}
-        tone={positive > 0 ? "destructive" : "muted"}
-      />
-    </div>
-  );
-}
-
-function StatChip({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: "primary" | "destructive" | "muted";
-}) {
-  const cls = {
-    primary: "text-primary border-primary/20 bg-primary/5",
-    destructive: "text-destructive border-destructive/20 bg-destructive/5",
-    muted: "text-foreground border-border bg-card",
-  }[tone];
-  return (
-    <div
-      className={cn(
-        "rounded-xl border px-3 py-2.5 flex flex-col items-start gap-0.5",
-        cls
-      )}
-    >
-      <span className="text-[10px] font-semibold uppercase tracking-wider opacity-70">
-        {label}
-      </span>
-      <span className="text-xl font-bold tabular-nums leading-none">
-        <CountUp value={value} />
-      </span>
-    </div>
-  );
-}
-
-/* ──────────────────────────────────────────────────────────────────────
- * Answer row
- * ────────────────────────────────────────────────────────────────────── */
-
-function AnswerRow({
-  index,
-  question,
-  answerValue,
-}: {
-  index: number;
-  question: CoronaryQuestion;
-  answerValue: string | undefined;
-}) {
-  const opt = findOption(question.key, answerValue);
-  const points = opt?.points ?? 0;
-  const maxPoints = Math.max(...question.options.map((o) => o.points));
-  const intensity = maxPoints > 0 ? points / maxPoints : 0;
-
-  const sideCls =
-    intensity === 0
-      ? "before:bg-primary"
-      : intensity > 0.6
-        ? "before:bg-destructive"
-        : "before:bg-amber-500";
-
-  const badgeCls =
-    intensity === 0
-      ? "bg-primary/10 text-primary"
-      : intensity > 0.6
-        ? "bg-destructive/10 text-destructive"
-        : "bg-amber-500/10 text-amber-600 dark:text-amber-300";
-
-  return (
-    <div
-      className={cn(
-        "relative flex items-start justify-between gap-3 px-4 py-3.5",
-        "before:content-[''] before:absolute before:left-0 before:top-3 before:bottom-3 before:w-0.5 before:rounded-r-full",
-        sideCls,
-        "transition-colors active:bg-muted/40",
-        "spell-slide-up"
-      )}
-      style={{ animationDelay: `${220 + index * 35}ms` }}
-    >
-      <div className="flex-1 min-w-0 space-y-0.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {question.label}
-        </p>
-        <p className="text-sm text-foreground leading-relaxed">
-          {opt?.label ?? "—"}
-        </p>
-      </div>
-      <span
-        className={cn(
-          "shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold tabular-nums",
-          badgeCls
-        )}
-      >
-        {points} pts
-      </span>
-    </div>
-  );
-}
-
-/* ──────────────────────────────────────────────────────────────────────
- * CountUp + SecondaryAction
- * ────────────────────────────────────────────────────────────────────── */
-
 function CountUp({ value }: { value: number }) {
   const [n, setN] = useState(0);
   useEffect(() => {
@@ -907,7 +822,7 @@ function CountUp({ value }: { value: number }) {
     ).matches;
     if (reduced || value === 0) return setN(value);
     const start = performance.now();
-    const dur = 800;
+    const dur = 700;
     let raf = 0;
     const tick = (t: number) => {
       const p = Math.min(1, (t - start) / dur);
@@ -953,7 +868,7 @@ function SecondaryAction({
 }
 
 /* ──────────────────────────────────────────────────────────────────────
- * CSS — design spells
+ * CSS — design spells (compartilhados com Coronário/Framingham)
  * ────────────────────────────────────────────────────────────────────── */
 
 const SPELLS_CSS = `
@@ -971,7 +886,7 @@ const SPELLS_CSS = `
   15%, 40%           { opacity: 0.65; transform: scale(1.1); }
 }
 .spell-heartbeat {
-  animation: spell-heartbeat 1.2s ease-in-out infinite;
+  animation: spell-heartbeat 1.6s ease-in-out infinite;
   will-change: transform, opacity;
 }
 
@@ -993,18 +908,6 @@ const SPELLS_CSS = `
   animation-delay: 120ms;
 }
 
-@keyframes spell-ecg-draw {
-  0%   { stroke-dashoffset: 1; opacity: 0; }
-  20%  { opacity: 0.10; }
-  60%  { stroke-dashoffset: 0; opacity: 0.10; }
-  100% { stroke-dashoffset: 0; opacity: 0.10; }
-}
-.spell-ecg-draw {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: spell-ecg-draw 1800ms cubic-bezier(0.65, 0, 0.35, 1) 200ms forwards;
-}
-
 @keyframes spell-rotate-slow {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
@@ -1023,16 +926,6 @@ const SPELLS_CSS = `
   will-change: transform;
 }
 
-@keyframes spell-bar-grow {
-  from { width: 0 !important; opacity: 0; }
-  to   { width: var(--bar-w); opacity: 1; }
-}
-.spell-bar-grow {
-  animation: spell-bar-grow 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  transform-origin: left;
-  will-change: width, opacity;
-}
-
 @keyframes spell-twinkle {
   0%, 100% { opacity: 0.1; transform: scale(0.6); }
   50%      { opacity: 0.6; transform: scale(1); }
@@ -1042,19 +935,40 @@ const SPELLS_CSS = `
   will-change: opacity, transform;
 }
 
+@keyframes spell-ecg-draw {
+  0%   { stroke-dashoffset: 1; opacity: 0; }
+  20%  { opacity: 0.08; }
+  60%  { stroke-dashoffset: 0; opacity: 0.08; }
+  100% { stroke-dashoffset: 0; opacity: 0.08; }
+}
+.spell-ecg-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: spell-ecg-draw 1800ms cubic-bezier(0.65, 0, 0.35, 1) 200ms forwards;
+}
+
+@keyframes spell-bar-grow {
+  from { width: 0 !important; opacity: 0; }
+  to   { width: var(--bar-w); opacity: 1; }
+}
+.spell-bar-grow {
+  animation: spell-bar-grow 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: width, opacity;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .spell-slide-up,
   .spell-heartbeat,
   .spell-shimmer,
   .spell-icon-in,
-  .spell-ecg-draw,
   .spell-rotate-slow,
   .spell-rotate-fast-rev,
-  .spell-bar-grow,
-  .spell-twinkle {
+  .spell-twinkle,
+  .spell-ecg-draw,
+  .spell-bar-grow {
     animation: none !important;
   }
-  .spell-ecg-draw { stroke-dashoffset: 0 !important; opacity: 0.10 !important; }
+  .spell-ecg-draw { stroke-dashoffset: 0 !important; opacity: 0.08 !important; }
   .spell-bar-grow { width: var(--bar-w) !important; opacity: 1 !important; }
 }
 `;

@@ -3,15 +3,13 @@
 /**
  * Follow-ups do PAR-Q+: Checkboxes e Textarea.
  *
- * Ambos seguem o padrão Figma:
- *  - Título "Como você respondeu SIM à pergunta acima"
- *  - Hint em text-muted-foreground (ex: "Selecione TODAS as opções que se aplicam.")
- *  - Conteúdo específico abaixo
+ * FollowUpCheckboxes agora delega para <MultiChoiceChips /> (componente
+ * único do design system para multi-choice). API antiga preservada.
  */
 
 import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { MultiChoiceChips } from "@/components/ui/multi-choice-chips";
 
 interface FollowUpCheckboxesProps {
   label: string;
@@ -28,16 +26,7 @@ export function FollowUpCheckboxes({
   options,
   selected,
   onChange,
-  idBase,
 }: FollowUpCheckboxesProps) {
-  const toggle = (opt: string) => {
-    if (selected.includes(opt)) {
-      onChange(selected.filter((o) => o !== opt));
-    } else {
-      onChange([...selected, opt]);
-    }
-  };
-
   return (
     <div className="space-y-3">
       <div className="space-y-1">
@@ -48,38 +37,13 @@ export function FollowUpCheckboxes({
           </p>
         )}
       </div>
-      <div className="space-y-2" role="group" aria-label={label}>
-        {options.map((opt, i) => {
-          const checked = selected.includes(opt);
-          const id = `${idBase}-opt-${i}`;
-          return (
-            <div
-              key={opt}
-              className={cn(
-                "flex items-center gap-3 min-h-11 rounded-lg px-3 py-2",
-                "border transition-colors cursor-pointer",
-                checked
-                  ? "bg-primary/5 border-primary/30"
-                  : "bg-background border-border hover:border-primary/30"
-              )}
-              onClick={() => toggle(opt)}
-            >
-              <Checkbox
-                id={id}
-                checked={checked}
-                onCheckedChange={() => toggle(opt)}
-                aria-label={opt}
-              />
-              <Label
-                htmlFor={id}
-                className="text-sm text-foreground cursor-pointer flex-1"
-              >
-                {opt}
-              </Label>
-            </div>
-          );
-        })}
-      </div>
+      <MultiChoiceChips
+        options={options.map((o) => ({ value: o, label: o }))}
+        values={selected}
+        onChange={onChange}
+        ariaLabel={label}
+        helperText={null}
+      />
     </div>
   );
 }

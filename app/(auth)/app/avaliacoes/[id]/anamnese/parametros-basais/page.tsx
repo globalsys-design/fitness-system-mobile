@@ -42,210 +42,52 @@
  *     - `prefers-reduced-motion` desliga keyframes decorativos.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   Loader2,
   Activity,
-  Thermometer,
-  Heart,
-  Droplets,
-  Wind,
-  Minus,
-  Plus,
   Sparkles,
-  AlertCircle,
-  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MobileLayout } from "@/components/mobile/mobile-layout";
 import { cn } from "@/lib/utils";
+import { ParametrosBasaisView } from "@/components/assessments/parametros-basais/parametros-basais-view";
+import { ParameterCard } from "@/components/assessments/parameter-card";
+import {
+  BASAL_PARAMS,
+  BASAL_TONE_CLASSES,
+  classifyBloodPressure,
+  parseBasalNumber,
+  zoneFor,
+  type BasalParam,
+  type BasalTone,
+} from "@/lib/data/parametros-basais";
 
-// ─── Tipos ──────────────────────────────────────────────────────────────
+// Tipos e dados clínicos vêm de @/lib/data/parametros-basais
+// Componentes (ParameterCard, StepperButton, ParameterGauge) vêm de
+// @/components/assessments/parameter-card
 
-type Tone = "ok" | "low" | "warn" | "bad";
-
-interface Zone {
-  max: number; // limite superior INCLUSIVO da zona
-  tone: Tone;
-  label: string;
-}
-
-interface BasalParam {
-  key: string;
-  label: string;
-  short: string;
-  unit: string;
-  icon: React.ElementType;
-  iconColor: string;
-  iconBg: string;
-  /** Limites do gauge (scale mínima e máxima plausível). */
-  scaleMin: number;
-  scaleMax: number;
-  /** Zonas ordenadas por `max` crescente — cobrem todo o range. */
-  zones: Zone[];
-  /** Passo do stepper +/-. Default 1. */
-  step?: number;
-  /** Casas decimais para parse/format. Default 0. */
-  decimals?: number;
-  /** Descrição acessível mostrada como hint. */
-  hint: string;
-}
-
-// ─── Faixas clínicas de referência (adulto saudável) ────────────────────
-//
-// Fontes: Ministério da Saúde, SBC 2020, SBD 2023, OMS.
-// São referências didáticas — conduta clínica é responsabilidade do profissional.
-
-const PARAMS: BasalParam[] = [
-  {
-    key: "systolic",
-    label: "Pressão Sistólica",
-    short: "PAS",
-    unit: "mmHg",
-    icon: Activity,
-    iconColor: "text-red-500",
-    iconBg: "bg-red-500/10",
-    scaleMin: 70,
-    scaleMax: 200,
-    zones: [
-      { max: 89,  tone: "low",  label: "Baixa" },
-      { max: 129, tone: "ok",   label: "Normal" },
-      { max: 139, tone: "warn", label: "Elevada" },
-      { max: 200, tone: "bad",  label: "Alta" },
-    ],
-    hint: "Normal 90–129 mmHg",
-  },
-  {
-    key: "diastolic",
-    label: "Pressão Diastólica",
-    short: "PAD",
-    unit: "mmHg",
-    icon: Activity,
-    iconColor: "text-red-400",
-    iconBg: "bg-red-400/10",
-    scaleMin: 40,
-    scaleMax: 120,
-    zones: [
-      { max: 59,  tone: "low",  label: "Baixa" },
-      { max: 84,  tone: "ok",   label: "Normal" },
-      { max: 89,  tone: "warn", label: "Elevada" },
-      { max: 120, tone: "bad",  label: "Alta" },
-    ],
-    hint: "Normal 60–84 mmHg",
-  },
-  {
-    key: "glucose",
-    label: "Glicemia em Jejum",
-    short: "Glicemia",
-    unit: "mg/dL",
-    icon: Droplets,
-    iconColor: "text-info",
-    iconBg: "bg-info/10",
-    scaleMin: 40,
-    scaleMax: 300,
-    zones: [
-      { max: 69,  tone: "low",  label: "Hipoglicemia" },
-      { max: 99,  tone: "ok",   label: "Normal" },
-      { max: 125, tone: "warn", label: "Pré-diabetes" },
-      { max: 300, tone: "bad",  label: "Alta" },
-    ],
-    hint: "Normal 70–99 mg/dL em jejum",
-  },
-  {
-    key: "temperature",
-    label: "Temperatura",
-    short: "Temp.",
-    unit: "°C",
-    icon: Thermometer,
-    iconColor: "text-orange-500",
-    iconBg: "bg-orange-500/10",
-    scaleMin: 34,
-    scaleMax: 42,
-    decimals: 1,
-    step: 0.1,
-    zones: [
-      { max: 35.4, tone: "low",  label: "Hipotermia" },
-      { max: 37.4, tone: "ok",   label: "Normal" },
-      { max: 37.9, tone: "warn", label: "Febrícula" },
-      { max: 42,   tone: "bad",  label: "Febre" },
-    ],
-    hint: "Normal 35,5–37,4 °C",
-  },
-  {
-    key: "heartRate",
-    label: "Frequência Cardíaca",
-    short: "FC",
-    unit: "bpm",
-    icon: Heart,
-    iconColor: "text-pink-500",
-    iconBg: "bg-pink-500/10",
-    scaleMin: 30,
-    scaleMax: 200,
-    zones: [
-      { max: 59,  tone: "low",  label: "Bradicardia" },
-      { max: 100, tone: "ok",   label: "Normal" },
-      { max: 120, tone: "warn", label: "Elevada" },
-      { max: 200, tone: "bad",  label: "Taquicardia" },
-    ],
-    hint: "Normal 60–100 bpm em repouso",
-  },
-  {
-    key: "saturation",
-    label: "Saturação de O₂",
-    short: "SpO₂",
-    unit: "%",
-    icon: Wind,
-    iconColor: "text-teal-500",
-    iconBg: "bg-teal-500/10",
-    scaleMin: 80,
-    scaleMax: 100,
-    zones: [
-      { max: 89, tone: "bad",  label: "Crítica" },
-      { max: 94, tone: "warn", label: "Reduzida" },
-      { max: 100, tone: "ok",  label: "Normal" },
-    ],
-    hint: "Normal ≥ 95 %",
-  },
-];
-
-// ─── Tone helpers ───────────────────────────────────────────────────────
-
-const TONE_CLASSES: Record<
-  Tone,
-  { text: string; bg: string; border: string; bar: string; ring: string }
-> = {
-  ok:   { text: "text-success",       bg: "bg-success/10",       border: "border-success/30",       bar: "bg-success",          ring: "ring-success/30" },
-  low:  { text: "text-info",          bg: "bg-info/10",          border: "border-info/30",          bar: "bg-info",             ring: "ring-info/30" },
-  warn: { text: "text-orange-500",    bg: "bg-orange-500/10",    border: "border-orange-500/30",    bar: "bg-orange-500",       ring: "ring-orange-500/30" },
-  bad:  { text: "text-destructive",   bg: "bg-destructive/10",   border: "border-destructive/30",   bar: "bg-destructive",      ring: "ring-destructive/30" },
-};
-
-function zoneFor(value: number, zones: Zone[]): Zone | null {
-  if (Number.isNaN(value)) return null;
-  for (const z of zones) {
-    if (value <= z.max) return z;
-  }
-  return zones[zones.length - 1];
-}
-
-function parseNumber(raw: string): number | null {
-  if (raw === "" || raw === "-" || raw === ".") return null;
-  const n = Number(raw.replace(",", "."));
-  return Number.isFinite(n) ? n : null;
-}
 
 // ─── Página ─────────────────────────────────────────────────────────────
 
 export default function ParametrosBasaisPage() {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const assessmentId = params.id as string;
+
   const [values, setValues] = useState<Record<string, string>>({});
+  const [savedValues, setSavedValues] = useState<Record<string, string> | null>(
+    null
+  );
+  const [savedAt, setSavedAt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [forceEdit, setForceEdit] = useState(false);
+  const isEditQuery = searchParams.get("mode") === "edit";
 
   // Carrega valores existentes.
   useEffect(() => {
@@ -257,13 +99,19 @@ export default function ParametrosBasaisPage() {
           const basal = data?.basalParameters ?? data?.anamnesis?.basalParameters;
           if (basal && typeof basal === "object") {
             const next: Record<string, string> = {};
-            for (const p of PARAMS) {
+            for (const p of BASAL_PARAMS) {
               const v = basal[p.key];
               if (v !== null && v !== undefined && v !== "") {
                 next[p.key] = String(v);
               }
             }
             setValues(next);
+            if (Object.keys(next).length > 0) {
+              setSavedValues(next);
+              setSavedAt(
+                data?.basalParametersAt ?? data?.updatedAt ?? null
+              );
+            }
           }
         }
       } catch {
@@ -277,13 +125,13 @@ export default function ParametrosBasaisPage() {
 
   const numericValues = useMemo(() => {
     const out: Record<string, number | null> = {};
-    for (const p of PARAMS) out[p.key] = parseNumber(values[p.key] ?? "");
+    for (const p of BASAL_PARAMS) out[p.key] = parseBasalNumber(values[p.key] ?? "");
     return out;
   }, [values]);
 
   const filledCount = Object.values(numericValues).filter((v) => v !== null).length;
-  const totalCount = PARAMS.length;
-  const anyAbnormal = PARAMS.some((p) => {
+  const totalCount = BASAL_PARAMS.length;
+  const anyAbnormal = BASAL_PARAMS.some((p) => {
     const v = numericValues[p.key];
     if (v === null) return false;
     const z = zoneFor(v, p.zones);
@@ -291,7 +139,7 @@ export default function ParametrosBasaisPage() {
   });
   const allFilledAndNormal =
     filledCount === totalCount &&
-    PARAMS.every((p) => {
+    BASAL_PARAMS.every((p) => {
       const v = numericValues[p.key];
       if (v === null) return false;
       return zoneFor(v, p.zones)?.tone === "ok";
@@ -319,7 +167,7 @@ export default function ParametrosBasaisPage() {
     try {
       // Só envia numéricos válidos — backend não se preocupa com strings vazias.
       const payload: Record<string, number> = {};
-      for (const p of PARAMS) {
+      for (const p of BASAL_PARAMS) {
         const n = numericValues[p.key];
         if (n !== null) payload[p.key] = n;
       }
@@ -330,11 +178,28 @@ export default function ParametrosBasaisPage() {
       });
       if (!res.ok) throw new Error();
       toast.success("Parâmetros salvos!");
+      setSavedValues(values);
+      setSavedAt(new Date().toISOString());
+      setForceEdit(false);
+      if (isEditQuery) {
+        router.replace(
+          `/app/avaliacoes/${assessmentId}/anamnese/parametros-basais`
+        );
+      }
     } catch {
       toast.error("Erro ao salvar.");
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function handleEdit() {
+    setForceEdit(true);
+  }
+
+  function handleStartNew() {
+    setValues({});
+    setForceEdit(true);
   }
 
   if (isFetching) {
@@ -345,6 +210,23 @@ export default function ParametrosBasaisPage() {
             <Skeleton key={i} className="h-36 w-full rounded-xl" />
           ))}
         </div>
+      </MobileLayout>
+    );
+  }
+
+  /* Modo leitura: há dados salvos e usuário não pediu edição. */
+  const hasSavedData = savedValues != null && Object.keys(savedValues).length > 0;
+  const isViewMode = hasSavedData && !isEditQuery && !forceEdit;
+
+  if (isViewMode && savedValues) {
+    return (
+      <MobileLayout title="Parâmetros Basais" showBack>
+        <ParametrosBasaisView
+          values={savedValues}
+          completedAt={savedAt}
+          onEdit={handleEdit}
+          onStartNew={handleStartNew}
+        />
       </MobileLayout>
     );
   }
@@ -387,7 +269,7 @@ export default function ParametrosBasaisPage() {
         </div>
 
         {/* Cards dos parâmetros */}
-        {PARAMS.map((param, idx) => (
+        {BASAL_PARAMS.map((param, idx) => (
           <ParameterCard
             key={param.key}
             param={param}
@@ -457,371 +339,6 @@ export default function ParametrosBasaisPage() {
   );
 }
 
-// ─── ParameterCard ──────────────────────────────────────────────────────
-
-function ParameterCard({
-  param,
-  raw,
-  onChange,
-  onStep,
-  index,
-}: {
-  param: BasalParam;
-  raw: string;
-  onChange: (raw: string) => void;
-  onStep: (dir: 1 | -1) => void;
-  index: number;
-}) {
-  const Icon = param.icon;
-  const numeric = parseNumber(raw);
-  const zone = numeric !== null ? zoneFor(numeric, param.zones) : null;
-  const tone = zone?.tone;
-  const toneCls = tone ? TONE_CLASSES[tone] : null;
-
-  // Posição do marker no gauge (0..1).
-  const markerPos =
-    numeric !== null
-      ? Math.max(
-          0,
-          Math.min(
-            1,
-            (numeric - param.scaleMin) / (param.scaleMax - param.scaleMin)
-          )
-        )
-      : null;
-
-  const hintId = `hint-${param.key}`;
-  const statusId = `status-${param.key}`;
-
-  return (
-    <div
-      className={cn(
-        "relative rounded-xl border p-4 flex flex-col gap-3 overflow-hidden",
-        "transition-[background-color,border-color,box-shadow] duration-300 ease-out",
-        "animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both",
-        tone && toneCls
-          ? cn("bg-card", toneCls.border)
-          : "bg-card border-border"
-      )}
-      style={{ animationDelay: `${index * 50}ms` }}
-      data-tone={tone ?? "empty"}
-    >
-      {/* Header — ícone + label + status badge */}
-      <div className="flex items-start gap-3">
-        <div
-          className={cn(
-            "flex items-center justify-center size-10 rounded-xl shrink-0 transition-transform duration-300",
-            param.iconBg,
-            tone && "scale-105"
-          )}
-          aria-hidden
-        >
-          <Icon className={cn("w-4 h-4", param.iconColor)} />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <Label
-            htmlFor={param.key}
-            className="text-sm font-semibold text-foreground block"
-          >
-            {param.label}
-          </Label>
-          <p
-            id={hintId}
-            className="text-[11px] text-muted-foreground mt-0.5"
-          >
-            {param.hint}
-          </p>
-        </div>
-
-        {/* Status badge — aparece/morfa conforme a zona */}
-        {zone && toneCls && (
-          <span
-            key={zone.label}
-            id={statusId}
-            aria-live="polite"
-            className={cn(
-              "shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full",
-              "text-[10px] font-bold uppercase tracking-wide border",
-              "animate-in zoom-in-95 fade-in duration-200",
-              toneCls.text,
-              toneCls.bg,
-              toneCls.border
-            )}
-          >
-            {tone === "bad" || tone === "warn" ? (
-              <AlertCircle className="size-2.5" />
-            ) : tone === "ok" ? (
-              <CheckCircle2 className="size-2.5" />
-            ) : null}
-            {zone.label}
-          </span>
-        )}
-      </div>
-
-      {/* Input row — stepper amplo + número grande + unit */}
-      <div className="flex items-stretch gap-2">
-        <StepperButton
-          direction="down"
-          onClick={() => onStep(-1)}
-          ariaLabel={`Diminuir ${param.short}`}
-        />
-        <div className="flex-1 relative">
-          <Input
-            id={param.key}
-            type="text"
-            inputMode="decimal"
-            pattern="[0-9,.]*"
-            placeholder="—"
-            value={raw}
-            onChange={(e) => onChange(e.target.value)}
-            aria-describedby={`${hintId}${zone ? ` ${statusId}` : ""}`}
-            className={cn(
-              "h-12 text-center text-xl font-bold tabular-nums pr-14",
-              "transition-[border-color,box-shadow] duration-200",
-              toneCls && [toneCls.border, "focus-visible:" + toneCls.ring]
-            )}
-          />
-          <span
-            className={cn(
-              "absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold tabular-nums",
-              toneCls ? toneCls.text : "text-muted-foreground"
-            )}
-          >
-            {param.unit}
-          </span>
-        </div>
-        <StepperButton
-          direction="up"
-          onClick={() => onStep(1)}
-          ariaLabel={`Aumentar ${param.short}`}
-        />
-      </div>
-
-      {/* Gauge zonas + marker (drag-to-set) */}
-      <ZoneGauge
-        param={param}
-        markerPos={markerPos}
-        tone={tone}
-        onChange={onChange}
-      />
-    </div>
-  );
-}
-
-// ─── StepperButton (44x44) ───────────────────────────────────────────────
-
-function StepperButton({
-  direction,
-  onClick,
-  ariaLabel,
-}: {
-  direction: "up" | "down";
-  onClick: () => void;
-  ariaLabel: string;
-}) {
-  const Icon = direction === "up" ? Plus : Minus;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={ariaLabel}
-      className={cn(
-        "shrink-0 w-11 h-12 rounded-lg border border-border bg-card",
-        "flex items-center justify-center",
-        "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-        "active:scale-[0.92] transition-[transform,background-color,color] duration-150",
-        "focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
-      )}
-    >
-      <Icon className="size-4" />
-    </button>
-  );
-}
-
-// ─── ZoneGauge — slider draggable ────────────────────────────────────────
-
-function ZoneGauge({
-  param,
-  markerPos,
-  tone,
-  onChange,
-}: {
-  param: BasalParam;
-  markerPos: number | null;
-  tone: Tone | undefined;
-  onChange: (raw: string) => void;
-}) {
-  const range = param.scaleMax - param.scaleMin;
-  const stepSize = param.step ?? 1;
-  const decimals = param.decimals ?? 0;
-
-  // Cada zona ocupa uma faixa proporcional ao range do scale.
-  const segments = param.zones.map((z, i) => {
-    const prevMax = i === 0 ? param.scaleMin : param.zones[i - 1].max;
-    const width = Math.max(0, (z.max - prevMax) / range) * 100;
-    return { ...z, width };
-  });
-
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  /* Quando ainda não há valor, posicionamos a bolinha no meio (estado neutro) */
-  const visualPos = markerPos ?? 0.5;
-  const hasValue = markerPos !== null;
-  const numericValue =
-    markerPos !== null
-      ? param.scaleMin + markerPos * range
-      : null;
-
-  /* ── helpers ─────────────────────────────────────────────────── */
-  function snap(value: number): number {
-    const stepped = Math.round(value / stepSize) * stepSize;
-    const clamped = Math.max(param.scaleMin, Math.min(param.scaleMax, stepped));
-    return Number(clamped.toFixed(decimals));
-  }
-
-  function format(value: number): string {
-    if (decimals > 0) return value.toFixed(decimals).replace(".", ",");
-    return String(value);
-  }
-
-  function commitFromPointerX(clientX: number) {
-    const el = trackRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    if (rect.width <= 0) return;
-    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const raw = param.scaleMin + pct * range;
-    onChange(format(snap(raw)));
-  }
-
-  /* ── pointer events ──────────────────────────────────────────── */
-  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    // Captura o pointer para que o move continue mesmo se sair do trilho
-    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
-    setIsDragging(true);
-    commitFromPointerX(e.clientX);
-  }
-
-  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!isDragging) return;
-    commitFromPointerX(e.clientX);
-  }
-
-  function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
-    if ((e.currentTarget as HTMLDivElement).hasPointerCapture(e.pointerId)) {
-      (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
-    }
-    setIsDragging(false);
-  }
-
-  /* ── keyboard a11y ───────────────────────────────────────────── */
-  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    const current = numericValue ?? (param.scaleMin + param.scaleMax) / 2;
-    let next: number | null = null;
-    if (e.key === "ArrowRight" || e.key === "ArrowUp") {
-      next = current + stepSize;
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
-      next = current - stepSize;
-    } else if (e.key === "Home") {
-      next = param.scaleMin;
-    } else if (e.key === "End") {
-      next = param.scaleMax;
-    } else if (e.key === "PageUp") {
-      next = current + stepSize * 10;
-    } else if (e.key === "PageDown") {
-      next = current - stepSize * 10;
-    }
-    if (next !== null) {
-      e.preventDefault();
-      onChange(format(snap(next)));
-    }
-  }
-
-  return (
-    <div className="relative mt-1">
-      {/* Slider — área tocável (trilho + zonas) */}
-      <div
-        ref={trackRef}
-        role="slider"
-        tabIndex={0}
-        aria-label={`Ajustar ${param.label}`}
-        aria-valuemin={param.scaleMin}
-        aria-valuemax={param.scaleMax}
-        aria-valuenow={numericValue ?? undefined}
-        aria-valuetext={
-          numericValue !== null
-            ? `${format(numericValue)} ${param.unit}`
-            : "Não definido"
-        }
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onKeyDown={handleKeyDown}
-        className={cn(
-          // Hit area maior (12px de altura tocável) sem alterar o visual:
-          // padding vertical invisível + cursor-pointer para discoverability.
-          "relative -my-2 py-2 cursor-pointer select-none touch-none",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:rounded-full"
-        )}
-      >
-        {/* Trilho de zonas */}
-        <div
-          className="flex h-1.5 rounded-full overflow-hidden border border-border/50"
-          aria-hidden
-        >
-          {segments.map((s, i) => (
-            <div
-              key={i}
-              className={cn(
-                TONE_CLASSES[s.tone].bar,
-                "opacity-40 transition-opacity duration-300"
-              )}
-              style={{
-                width: `${s.width}%`,
-                opacity: tone === s.tone ? 0.95 : 0.25,
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Marker / handle deslizante */}
-        <div
-          className={cn(
-            "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none",
-            !isDragging && "transition-[left] duration-300 ease-out"
-          )}
-          style={{ left: `${visualPos * 100}%` }}
-          aria-hidden
-        >
-          <span
-            className={cn(
-              "block size-4 rounded-full border-2 border-background",
-              "transition-[transform,box-shadow,background-color] duration-150",
-              isDragging
-                ? "scale-125 shadow-lg ring-2 ring-foreground/10"
-                : "shadow",
-              hasValue && tone
-                ? TONE_CLASSES[tone].bar
-                : "bg-muted-foreground/40"
-            )}
-          />
-        </div>
-      </div>
-
-      {/* Escala min/max */}
-      <div className="flex justify-between mt-1 text-[9px] font-semibold tabular-nums text-muted-foreground/70">
-        <span>{param.scaleMin}</span>
-        <span>
-          {param.scaleMax} {param.unit}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 // ─── BloodPressureCombo ──────────────────────────────────────────────────
 
 function BloodPressureCombo({
@@ -833,16 +350,10 @@ function BloodPressureCombo({
 }) {
   if (systolic === null || diastolic === null) return null;
 
-  // Classificação combinada conforme SBC — usa o pior dos dois.
-  function classify(s: number, d: number): { label: string; tone: Tone } {
-    if (s >= 180 || d >= 110) return { label: "Hipertensão grave", tone: "bad" };
-    if (s >= 140 || d >= 90)  return { label: "Hipertensão", tone: "bad" };
-    if (s >= 130 || d >= 85)  return { label: "Pressão elevada", tone: "warn" };
-    if (s < 90 || d < 60)     return { label: "Hipotensão", tone: "low" };
-    return { label: "Pressão normal", tone: "ok" };
-  }
-  const cls = classify(systolic, diastolic);
-  const toneCls = TONE_CLASSES[cls.tone];
+  // Classificação combinada conforme SBC — função unificada na lib.
+  const cls = classifyBloodPressure(systolic, diastolic);
+  if (!cls) return null;
+  const toneCls = BASAL_TONE_CLASSES[cls.tone];
 
   return (
     <div

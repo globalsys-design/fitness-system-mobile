@@ -1,39 +1,31 @@
 "use client";
 
 /**
- * ParqView — modo leitura do PAR-Q+ (padrão unificado do design system).
+ * ParametrosBasaisView — modo leitura dos parâmetros basais (padrão único).
  *
- * Mantém a família visual de Coronário/Framingham/Avançado/Completo:
- *   • Hero "Vital Ring 144px" classificando o risco (low/moderate/high)
+ * Mantém a família visual de Coronário/Framingham/Avançado/Completo/PARQ+:
+ *   • Hero "Vital Ring 144px" com % de parâmetros normais
  *   • Anéis decorativos rotacionando + aura heartbeat
  *   • ECG signature + constelação de partículas
- *   • Risk meter 3 segmentos (Liberado / Cautela / Avaliação Médica)
- *   • Stats strip — Sim / Não / Total da Etapa 1
- *   • Versão + acesso ao histórico (preserva ParqHistorySheet)
- *   • Accordion "Respostas Primárias" — Etapa 1 (7 perguntas) com badges
- *   • Accordion por seção da Etapa 2 — só as visíveis (gate respondido).
- *     Sub-perguntas Sim aparecem com observação inline (texto livre) +
- *     chips de checkboxes selecionados.
- *   • Drawer explicativo das 3 faixas
- *   • CTA único "Editar respostas" + FAB "Nova avaliação"
- *
- * Migração: removido "Ver respostas" (drawer) que existia antes —
- * agora toda a informação salva está visível inline.
+ *   • Risk meter 3 segmentos (Normal / Atenção / Crítico)
+ *   • Stats strip — contagem por zona (Normais / Alterados / Críticos)
+ *   • Card combinado de pressão arterial (PAS + PAD)
+ *   • Lista de cada parâmetro com valor, zona e referência
+ *   • Drawer explicativo das faixas
+ *   • CTA único "Editar parâmetros" + FAB "Nova medição"
  */
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  Activity,
   AlertTriangle,
-  ClipboardList,
   Eye,
   HelpCircle,
   HeartPulse,
-  History,
   Pencil,
   Plus,
   Shield,
   ShieldCheck,
-  StickyNote,
   TrendingUp,
 } from "lucide-react";
 
@@ -41,198 +33,160 @@ import { cn } from "@/lib/utils";
 import { FAB } from "@/components/mobile/fab";
 import { BottomSheet } from "@/components/mobile/bottom-sheet";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  PARQ_PLUS_SCREENING,
-  PARQ_PLUS_SECTIONS,
-  type ParqAnswer,
-  type ParqPlusData,
-  type ParqQuestion,
-} from "@/lib/data/parq-plus";
-import { renderRichText } from "./rich-text";
-import { ParqHistorySheet } from "./parq-history-sheet";
+  BASAL_PARAMS,
+  BASAL_TONE_CLASSES,
+  classifyBloodPressure,
+  parseBasalNumber,
+  summarizeBasal,
+  zoneFor,
+  type BasalParam,
+  type BasalRiskLevel,
+  type BasalTone,
+  type BasalValues,
+} from "@/lib/data/parametros-basais";
 
-interface ParqViewProps {
-  data: ParqPlusData;
+interface ParametrosBasaisViewProps {
+  values: BasalValues;
+  completedAt?: string | null;
   onEdit: () => void;
   onStartNew: () => void;
 }
 
-type RiskLevel = "low" | "moderate" | "high";
-
-export function ParqView({ data, onEdit, onStartNew }: ParqViewProps) {
+export function ParametrosBasaisView({
+  values,
+  completedAt,
+  onEdit,
+  onStartNew,
+}: ParametrosBasaisViewProps) {
   const [explainerOpen, setExplainerOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const completedDate = completedAt ? new Date(completedAt) : null;
 
-  const risk: RiskLevel = data.riskLevel ?? "low";
-  const completedAt = data.completedAt ? new Date(data.completedAt) : null;
+  const summary = useMemo(() => summarizeBasal(values), [values]);
 
-  const history = data.history ?? [];
-  const historyCount = history.length;
-  const versionNumber = historyCount + 1;
+  /* Linhas para a lista de parâmetros */
+  const rows = useMemo(() => {
+    return BASAL_PARAMS.map((p) => {
+      const numeric = parseBasalNumber(values[p.key] ?? "");
+      const zone = numeric != null ? zoneFor(numeric, p.zones) : null;
+      return { param: p, numeric, zone };
+    });
+  }, [values]);
 
-  const screeningQs = useMemo(
-    () => PARQ_PLUS_SCREENING.flatMap((s) => s.questions),
-    []
-  );
-
-  /* Stats da Etapa 1 */
-  const stats = useMemo(() => {
-    let yes = 0;
-    let no = 0;
-    for (const q of screeningQs) {
-      const a = data.answers?.[q.id];
-      if (a === "yes") yes++;
-      else if (a === "no") no++;
-    }
-    return { yes, no, total: screeningQs.length };
-  }, [data.answers, screeningQs]);
-
-  /* Seções da Etapa 2 com gate respondido */
-  const visibleSections = useMemo(
-    () =>
-      PARQ_PLUS_SECTIONS.filter(
-        (s) => data.answers?.[s.gate.id] !== undefined
-      ),
-    [data.answers]
-  );
-
-  const totalSubYes = useMemo(() => {
-    let count = 0;
-    for (const sec of PARQ_PLUS_SECTIONS) {
-      if (data.answers?.[sec.gate.id] !== "yes") continue;
-      for (const q of sec.subQuestions) {
-        if (data.answers?.[q.id] === "yes") count++;
-      }
-    }
-    return count;
-  }, [data.answers]);
+  /* BP combinada */
+  const systolic = parseBasalNumber(values.systolic ?? "");
+  const diastolic = parseBasalNumber(values.diastolic ?? "");
+  const bp = classifyBloodPressure(systolic, diastolic);
 
   return (
     <div className="relative pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <style>{SPELLS_CSS}</style>
 
       <div className="px-4 py-4 space-y-4">
-        {/* Hero VitalRing */}
-        <HeroParqCard
-          risk={risk}
-          stats={stats}
-          totalSubYes={totalSubYes}
+        {/* Hero */}
+        <HeroBasalCard
+          riskLevel={summary.riskLevel}
+          filled={summary.filled}
+          total={summary.total}
+          byTone={summary.byTone}
           onOpenExplainer={() => setExplainerOpen(true)}
         />
 
         {/* Stats strip */}
-        <StatsStrip yes={stats.yes} no={stats.no} total={stats.total} />
+        <StatsStrip
+          normal={summary.byTone.ok + summary.byTone.low}
+          warn={summary.byTone.warn}
+          bad={summary.byTone.bad}
+        />
 
-        {/* Timestamp + versão */}
-        <section
-          className="spell-slide-up flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-3 py-2.5 gap-2"
-          style={{ animationDelay: "120ms" }}
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
-              v{versionNumber}
-            </span>
-            <p className="text-xs text-muted-foreground truncate">
-              {historyCount === 0
-                ? "Primeira avaliação registrada"
-                : `${historyCount} ${historyCount === 1 ? "avaliação anterior" : "avaliações anteriores"}`}
-            </p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            {historyCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setHistoryOpen(true)}
-                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-              >
-                <History className="h-3.5 w-3.5" />
-                Histórico
-              </button>
-            )}
-            {completedAt && (
-              <p className="text-xs font-semibold text-foreground tabular-nums">
-                {completedAt.toLocaleString("pt-BR", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+        {/* Timestamp */}
+        {completedDate && (
+          <section
+            className="spell-slide-up flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-3 py-2.5"
+            style={{ animationDelay: "120ms" }}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Activity className="h-3.5 w-3.5 text-primary shrink-0" />
+              <p className="text-xs text-muted-foreground truncate">
+                {summary.filled}/{summary.total} parâmetros medidos
               </p>
-            )}
+            </div>
+            <p className="text-xs font-semibold text-foreground tabular-nums">
+              {completedDate.toLocaleString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </section>
+        )}
+
+        {/* Card combinado PA — quando ambos preenchidos */}
+        {bp && systolic != null && diastolic != null && (
+          <section
+            className="spell-slide-up rounded-2xl border border-border bg-card p-4 space-y-2"
+            style={{ animationDelay: "140ms" }}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <HeartPulse className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">
+                  Pressão Arterial
+                </h3>
+              </div>
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold",
+                  BASAL_TONE_CLASSES[bp.tone].bg,
+                  BASAL_TONE_CLASSES[bp.tone].text
+                )}
+              >
+                {bp.label}
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold tabular-nums text-foreground">
+                <CountUp value={systolic} />
+                <span className="text-muted-foreground/50 mx-1">/</span>
+                <CountUp value={diastolic} />
+              </span>
+              <span className="text-xs text-muted-foreground">mmHg</span>
+            </div>
+          </section>
+        )}
+
+        {/* Lista de parâmetros */}
+        <section
+          className="spell-slide-up rounded-2xl border border-border bg-card overflow-hidden"
+          style={{ animationDelay: "180ms" }}
+        >
+          <div className="px-4 py-3 border-b border-border/60">
+            <h3 className="text-sm font-semibold text-foreground">
+              Parâmetros medidos
+            </h3>
+          </div>
+          <div className="divide-y divide-border/60">
+            {rows.map((row, i) => (
+              <ParamRow
+                key={row.param.key}
+                index={i}
+                param={row.param}
+                numeric={row.numeric}
+                zone={row.zone}
+              />
+            ))}
           </div>
         </section>
 
-        {/* Accordion Etapa 1 — Respostas Primárias */}
-        <section
-          className="spell-slide-up"
-          style={{ animationDelay: "160ms" }}
-        >
-          <Accordion defaultValue={["primary"]}>
-            <AccordionItem
-              value="primary"
-              className="rounded-2xl border border-border bg-card overflow-hidden"
-            >
-              <AccordionTrigger className="px-4 py-3.5 hover:no-underline">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <ClipboardList className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-sm font-semibold text-foreground truncate">
-                    Respostas Primárias
-                  </span>
-                  <span
-                    className={cn(
-                      "ml-auto inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
-                      stats.yes > 0
-                        ? "bg-destructive/10 text-destructive"
-                        : "bg-primary/10 text-primary"
-                    )}
-                  >
-                    {stats.yes}/{stats.total}
-                  </span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-0 pb-0">
-                <div className="divide-y divide-border/60 border-t border-border/60">
-                  {screeningQs.map((q, i) => (
-                    <ScreeningRow
-                      key={q.id}
-                      index={i}
-                      question={q}
-                      answer={data.answers?.[q.id] ?? null}
-                      checkboxes={data.followUpOptions?.[q.id] ?? []}
-                      observation={data.followUpText?.[q.id] ?? ""}
-                    />
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </section>
-
-        {/* Accordions Etapa 2 — uma por seção respondida */}
-        {visibleSections.map((section, i) => (
-          <SectionAccordion
-            key={section.id}
-            section={section}
-            answers={data.answers ?? {}}
-            followUpText={data.followUpText ?? {}}
-            index={i}
-          />
-        ))}
-
-        {/* CTA secundário único */}
+        {/* CTA secundário */}
         <div
           className="spell-slide-up grid grid-cols-1 gap-2"
           style={{ animationDelay: "260ms" }}
         >
           <SecondaryAction
             icon={Pencil}
-            label="Editar respostas"
+            label="Editar parâmetros"
             onClick={onEdit}
           />
         </div>
@@ -242,48 +196,53 @@ export function ParqView({ data, onEdit, onStartNew }: ParqViewProps) {
       <FAB
         icon={Plus}
         onClick={onStartNew}
-        label="Nova avaliação PAR-Q+"
+        label="Nova medição de parâmetros basais"
       />
 
-      {/* Drawer explicativo */}
+      {/* Drawer */}
       <RiskExplainerSheet
         open={explainerOpen}
         onOpenChange={setExplainerOpen}
-        currentLevel={risk}
+        currentLevel={summary.riskLevel}
       />
-
-      {/* Drawer histórico (preservado) */}
-      {historyCount > 0 && (
-        <ParqHistorySheet
-          open={historyOpen}
-          onOpenChange={setHistoryOpen}
-          entries={history}
-        />
-      )}
     </div>
   );
 }
 
 /* ──────────────────────────────────────────────────────────────────────
- * Hero VitalRing
+ * Hero
  * ────────────────────────────────────────────────────────────────────── */
 
-function HeroParqCard({
-  risk,
-  stats,
-  totalSubYes,
+function HeroBasalCard({
+  riskLevel,
+  filled,
+  total,
+  byTone,
   onOpenExplainer,
 }: {
-  risk: RiskLevel;
-  stats: { yes: number; no: number; total: number };
-  totalSubYes: number;
+  riskLevel: BasalRiskLevel;
+  filled: number;
+  total: number;
+  byTone: Record<BasalTone, number>;
   onOpenExplainer: () => void;
 }) {
   const config = {
-    low: {
+    "all-pending": {
+      Icon: HelpCircle,
+      label: "Sem Medições",
+      desc: "Nenhum parâmetro foi medido ainda. Edite para iniciar a coleta.",
+      tone: "text-muted-foreground",
+      bg: "from-muted/30 via-muted/10 to-transparent",
+      ring: "ring-border/40",
+      aura: "bg-muted-foreground/20",
+      ecg: "text-muted-foreground",
+      arc: "var(--color-muted-foreground)",
+      gaugeIdx: -1,
+    },
+    "all-normal": {
       Icon: ShieldCheck,
-      label: "Liberado para Atividade Física",
-      desc: "Com base nas respostas, o aluno está apto a iniciar ou manter um programa de exercícios sem necessidade de avaliação médica prévia.",
+      label: "Parâmetros Dentro do Normal",
+      desc: "Todos os sinais vitais medidos estão dentro das faixas de referência.",
       tone: "text-primary",
       bg: "from-primary/10 via-primary/5 to-transparent",
       ring: "ring-primary/25",
@@ -292,10 +251,10 @@ function HeroParqCard({
       arc: "var(--color-primary)",
       gaugeIdx: 0,
     },
-    moderate: {
+    warn: {
       Icon: Shield,
-      label: "Cautela Recomendada",
-      desc: "Algumas condições foram relatadas. Recomenda-se avaliação adicional antes de atividades de alta intensidade.",
+      label: "Atenção em Parâmetros",
+      desc: "Um ou mais parâmetros estão fora da faixa ideal. Revise antes de prescrever atividade.",
       tone: "text-amber-500 dark:text-amber-300",
       bg: "from-amber-500/15 via-amber-500/5 to-transparent",
       ring: "ring-amber-500/25",
@@ -304,10 +263,10 @@ function HeroParqCard({
       arc: "oklch(0.75 0.15 70)",
       gaugeIdx: 1,
     },
-    high: {
+    bad: {
       Icon: AlertTriangle,
-      label: "Avaliação Médica Necessária",
-      desc: "É fortemente recomendável que o aluno consulte um médico antes de iniciar ou aumentar significativamente sua atividade física.",
+      label: "Parâmetros Críticos",
+      desc: "Há parâmetros em zona crítica. Encaminhamento médico antes de qualquer atividade física.",
       tone: "text-destructive",
       bg: "from-destructive/15 via-destructive/5 to-transparent",
       ring: "ring-destructive/25",
@@ -316,9 +275,9 @@ function HeroParqCard({
       arc: "var(--color-destructive)",
       gaugeIdx: 2,
     },
-  }[risk];
+  }[riskLevel];
 
-  const totalYesAll = stats.yes + totalSubYes;
+  const totalAlterados = byTone.warn + byTone.bad;
 
   return (
     <section
@@ -346,14 +305,14 @@ function HeroParqCard({
 
       <div className="relative flex flex-col items-center gap-3 pt-1">
         <VitalRing
-          yes={stats.yes}
-          total={stats.total}
+          filled={filled}
+          total={total}
           color={config.arc}
           toneClass={config.tone}
           auraClass={config.aura}
           ringClass={config.ring}
         >
-          <ClipboardList
+          <Activity
             aria-hidden
             className={cn("h-3.5 w-3.5 spell-icon-in", config.tone)}
           />
@@ -388,45 +347,46 @@ function HeroParqCard({
       </div>
 
       {/* Risk meter — 3 segmentos */}
-      <div className="relative mt-5">
-        <div className="flex items-center gap-1.5">
-          {[0, 1, 2].map((idx) => (
-            <GaugeSegment
-              key={idx}
-              active={config.gaugeIdx >= idx}
-              current={config.gaugeIdx === idx}
-              tone={
-                idx === 0 ? "primary" : idx === 1 ? "amber" : "destructive"
-              }
-            />
-          ))}
+      {riskLevel !== "all-pending" && (
+        <div className="relative mt-5">
+          <div className="flex items-center gap-1.5">
+            {[0, 1, 2].map((idx) => (
+              <GaugeSegment
+                key={idx}
+                active={config.gaugeIdx >= idx}
+                current={config.gaugeIdx === idx}
+                tone={
+                  idx === 0 ? "primary" : idx === 1 ? "amber" : "destructive"
+                }
+              />
+            ))}
+          </div>
+          <div className="mt-1.5 flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+            <span className={cn(config.gaugeIdx === 0 && "text-primary")}>
+              Normal
+            </span>
+            <span
+              className={cn(
+                config.gaugeIdx === 1 && "text-amber-500 dark:text-amber-300"
+              )}
+            >
+              Atenção
+            </span>
+            <span className={cn(config.gaugeIdx === 2 && "text-destructive")}>
+              Crítico
+            </span>
+          </div>
         </div>
-        <div className="mt-1.5 flex items-center justify-between text-[10px] font-medium text-muted-foreground">
-          <span className={cn(config.gaugeIdx === 0 && "text-primary")}>
-            Liberado
-          </span>
-          <span
-            className={cn(
-              config.gaugeIdx === 1 && "text-amber-500 dark:text-amber-300"
-            )}
-          >
-            Cautela
-          </span>
-          <span className={cn(config.gaugeIdx === 2 && "text-destructive")}>
-            Médico
-          </span>
-        </div>
-      </div>
+      )}
 
-      {/* Score resumo */}
       <div className="relative mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
         <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <HeartPulse className="h-3 w-3 text-destructive/70" />
-          Total de respostas Sim
+          Parâmetros alterados
         </span>
         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground/90 tabular-nums">
           <TrendingUp className="h-3 w-3" />
-          <CountUp value={totalYesAll} />
+          <CountUp value={totalAlterados} /> de {filled}
         </span>
       </div>
     </section>
@@ -434,11 +394,11 @@ function HeroParqCard({
 }
 
 /* ──────────────────────────────────────────────────────────────────────
- * VitalRing 144px
+ * VitalRing
  * ────────────────────────────────────────────────────────────────────── */
 
 function VitalRing({
-  yes,
+  filled,
   total,
   color,
   toneClass,
@@ -446,7 +406,7 @@ function VitalRing({
   ringClass,
   children,
 }: {
-  yes: number;
+  filled: number;
   total: number;
   color: string;
   toneClass: string;
@@ -458,7 +418,7 @@ function VitalRing({
   const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const pct = total > 0 ? yes / total : 0;
+  const pct = total > 0 ? filled / total : 0;
 
   const [progress, setProgress] = useState(0);
   useEffect(() => {
@@ -542,15 +502,13 @@ function VitalRing({
         <div className="relative z-10 flex flex-col items-center justify-center text-center">
           <div className={cn("flex items-baseline", toneClass)}>
             <span className="text-5xl font-bold tabular-nums leading-none tracking-tight spell-icon-in">
-              <CountUp value={yes} />
+              <CountUp value={filled} />
             </span>
-            <span className="text-xl font-bold ml-1 opacity-60">
-              /{total}
-            </span>
+            <span className="text-xl font-bold ml-1 opacity-60">/{total}</span>
           </div>
           <div className="mt-1 inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
             {children}
-            <span>respostas Sim</span>
+            <span>parâmetros</span>
           </div>
         </div>
       </div>
@@ -563,22 +521,22 @@ function VitalRing({
  * ────────────────────────────────────────────────────────────────────── */
 
 function StatsStrip({
-  yes,
-  no,
-  total,
+  normal,
+  warn,
+  bad,
 }: {
-  yes: number;
-  no: number;
-  total: number;
+  normal: number;
+  warn: number;
+  bad: number;
 }) {
   return (
     <div
       className="spell-slide-up grid grid-cols-3 gap-2"
       style={{ animationDelay: "60ms" }}
     >
-      <StatChip label="Sim" value={yes} tone="destructive" />
-      <StatChip label="Não" value={no} tone="primary" />
-      <StatChip label="Total" value={total} tone="muted" />
+      <StatChip label="Normais" value={normal} tone="primary" />
+      <StatChip label="Alterados" value={warn} tone="amber" />
+      <StatChip label="Críticos" value={bad} tone="destructive" />
     </div>
   );
 }
@@ -590,12 +548,13 @@ function StatChip({
 }: {
   label: string;
   value: number;
-  tone: "primary" | "destructive" | "muted";
+  tone: "primary" | "amber" | "destructive";
 }) {
   const cls = {
     primary: "text-primary border-primary/20 bg-primary/5",
+    amber:
+      "text-amber-600 dark:text-amber-300 border-amber-500/20 bg-amber-500/5",
     destructive: "text-destructive border-destructive/20 bg-destructive/5",
-    muted: "text-foreground border-border bg-card",
   }[tone];
   return (
     <div
@@ -615,240 +574,96 @@ function StatChip({
 }
 
 /* ──────────────────────────────────────────────────────────────────────
- * ScreeningRow — pergunta da Etapa 1 com badge + follow-ups inline
+ * ParamRow — uma linha por parâmetro com valor + zona + referência
  * ────────────────────────────────────────────────────────────────────── */
 
-function ScreeningRow({
+function ParamRow({
   index,
-  question,
-  answer,
-  checkboxes,
-  observation,
+  param,
+  numeric,
+  zone,
 }: {
   index: number;
-  question: ParqQuestion;
-  answer: ParqAnswer;
-  checkboxes: string[];
-  observation: string;
+  param: BasalParam;
+  numeric: number | null;
+  zone: ReturnType<typeof zoneFor>;
 }) {
+  const Icon = param.icon;
+  const toneCls = zone ? BASAL_TONE_CLASSES[zone.tone] : null;
   const sideCls =
-    answer === "yes"
+    zone?.tone === "bad"
       ? "before:bg-destructive"
-      : answer === "no"
-        ? "before:bg-primary"
-        : "before:bg-border";
+      : zone?.tone === "warn"
+        ? "before:bg-orange-500"
+        : zone?.tone === "ok"
+          ? "before:bg-success"
+          : zone?.tone === "low"
+            ? "before:bg-info"
+            : "before:bg-border";
 
-  const hasChips = checkboxes && checkboxes.length > 0;
-  const hasObs = observation && observation.trim().length > 0;
-  const hasFollowUps = answer === "yes" && (hasChips || hasObs);
+  const decimals = param.decimals ?? 0;
+  const formatted =
+    numeric != null
+      ? decimals > 0
+        ? numeric.toFixed(decimals).replace(".", ",")
+        : String(numeric)
+      : "—";
 
   return (
     <div
       className={cn(
-        "relative flex flex-col gap-2 px-4 py-3.5",
+        "relative flex items-center gap-3 px-4 py-3.5",
         "before:content-[''] before:absolute before:left-0 before:top-3 before:bottom-3 before:w-0.5 before:rounded-r-full",
         sideCls,
-        "transition-colors active:bg-muted/40",
         "spell-slide-up"
       )}
       style={{ animationDelay: `${200 + index * 30}ms` }}
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm text-foreground/90 leading-relaxed flex-1 min-w-0">
-          {renderRichText(question.text)}
-        </p>
-        <AnswerBadge answer={answer} />
+      <div
+        className={cn(
+          "flex items-center justify-center size-9 rounded-xl shrink-0",
+          param.iconBg
+        )}
+        aria-hidden
+      >
+        <Icon className={cn("h-4 w-4", param.iconColor)} />
       </div>
-      {hasFollowUps && (
-        <div className="flex flex-col gap-1.5 pt-1">
-          {hasChips && (
-            <div className="flex flex-wrap gap-1.5">
-              {checkboxes.map((c) => (
-                <span
-                  key={c}
-                  className="inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive"
-                >
-                  {c}
-                </span>
-              ))}
-            </div>
+
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-foreground truncate">
+          {param.label}
+        </p>
+        <p className="text-[11px] text-muted-foreground truncate">
+          {param.hint}
+        </p>
+      </div>
+
+      <div className="text-right shrink-0">
+        <p
+          className={cn(
+            "text-base font-bold tabular-nums leading-none",
+            toneCls ? toneCls.text : "text-foreground"
           )}
-          {hasObs && (
-            <div className="flex gap-2 items-start">
-              <StickyNote
-                aria-hidden
-                className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0 mt-0.5"
-              />
-              <p className="text-xs text-muted-foreground italic leading-relaxed border-l-2 border-destructive/30 pl-2 flex-1 min-w-0">
-                {observation}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ──────────────────────────────────────────────────────────────────────
- * SectionAccordion — uma seção da Etapa 2
- * ────────────────────────────────────────────────────────────────────── */
-
-function SectionAccordion({
-  section,
-  answers,
-  followUpText,
-  index,
-}: {
-  section: (typeof PARQ_PLUS_SECTIONS)[number];
-  answers: Record<string, ParqAnswer>;
-  followUpText: Record<string, string>;
-  index: number;
-}) {
-  const gateAnswer = answers[section.gate.id];
-  const isOpen = gateAnswer === "yes";
-  const yesCount = isOpen
-    ? section.subQuestions.filter((q) => answers[q.id] === "yes").length
-    : 0;
-  const totalSubs = section.subQuestions.length;
-
-  return (
-    <section
-      className="spell-slide-up"
-      style={{ animationDelay: `${220 + index * 40}ms` }}
-    >
-      <Accordion defaultValue={isOpen ? [section.id] : []}>
-        <AccordionItem
-          value={section.id}
-          className="rounded-2xl border border-border bg-card overflow-hidden"
         >
-          <AccordionTrigger className="px-4 py-3.5 hover:no-underline">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="text-sm font-semibold text-foreground truncate">
-                {section.title}
-              </span>
-              <span
-                className={cn(
-                  "ml-auto inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
-                  isOpen
-                    ? yesCount > 0
-                      ? "bg-destructive/10 text-destructive"
-                      : "bg-primary/10 text-primary"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                {isOpen ? `${yesCount}/${totalSubs}` : "Não"}
-              </span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-0 pb-0">
-            <div className="border-t border-border/60">
-              {/* Gate */}
-              <div className="px-4 py-3 border-b border-border/40">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm text-foreground/90 leading-relaxed flex-1 min-w-0">
-                    {renderRichText(section.gate.text)}
-                  </p>
-                  <AnswerBadge answer={gateAnswer ?? null} />
-                </div>
-              </div>
-
-              {/* Sub-perguntas (só quando gate = Sim) */}
-              {isOpen ? (
-                <div className="divide-y divide-border/60">
-                  {section.subQuestions.map((q, i) => (
-                    <SubQuestionRow
-                      key={q.id}
-                      index={i}
-                      question={q}
-                      answer={answers[q.id] ?? null}
-                      observation={followUpText[q.id] ?? ""}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="px-4 py-3 flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    Sem desdobramentos para esta seção.
-                  </p>
-                </div>
-              )}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-    </section>
-  );
-}
-
-function SubQuestionRow({
-  index,
-  question,
-  answer,
-  observation,
-}: {
-  index: number;
-  question: ParqQuestion;
-  answer: ParqAnswer;
-  observation: string;
-}) {
-  const sideCls =
-    answer === "yes"
-      ? "before:bg-destructive"
-      : answer === "no"
-        ? "before:bg-primary"
-        : "before:bg-border";
-  const hasObs =
-    answer === "yes" && observation && observation.trim().length > 0;
-
-  return (
-    <div
-      className={cn(
-        "relative flex flex-col gap-2 px-4 py-3",
-        "before:content-[''] before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-0.5 before:rounded-r-full",
-        sideCls,
-        "spell-slide-up"
-      )}
-      style={{ animationDelay: `${260 + index * 25}ms` }}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm text-foreground/90 leading-relaxed flex-1 min-w-0">
-          {renderRichText(question.text)}
+          {formatted}
+          <span className="text-xs font-medium text-muted-foreground ml-1">
+            {param.unit}
+          </span>
         </p>
-        <AnswerBadge answer={answer} />
+        {zone && toneCls && (
+          <span
+            className={cn(
+              "mt-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+              toneCls.bg,
+              toneCls.text
+            )}
+          >
+            {zone.label}
+          </span>
+        )}
       </div>
-      {hasObs && (
-        <div className="flex gap-2 items-start mt-0.5">
-          <StickyNote
-            aria-hidden
-            className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0 mt-0.5"
-          />
-          <p className="text-xs text-muted-foreground italic leading-relaxed border-l-2 border-destructive/30 pl-2 flex-1 min-w-0">
-            {observation}
-          </p>
-        </div>
-      )}
     </div>
   );
-}
-
-function AnswerBadge({ answer }: { answer: ParqAnswer }) {
-  if (answer === "yes") {
-    return (
-      <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">
-        Sim
-      </span>
-    );
-  }
-  if (answer === "no") {
-    return (
-      <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
-        Não
-      </span>
-    );
-  }
-  return <span className="shrink-0 text-xs text-muted-foreground/60">—</span>;
 }
 
 /* ──────────────────────────────────────────────────────────────────────
@@ -862,10 +677,10 @@ function RiskExplainerSheet({
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  currentLevel: RiskLevel;
+  currentLevel: BasalRiskLevel;
 }) {
   const items: {
-    level: RiskLevel;
+    level: BasalRiskLevel;
     label: string;
     range: string;
     desc: string;
@@ -873,26 +688,26 @@ function RiskExplainerSheet({
     bg: string;
   }[] = [
     {
-      level: "low",
-      label: "Liberado",
-      range: "0 respostas Sim na Etapa 1",
-      desc: "Cliente apto para programa de exercícios sem necessidade de avaliação médica adicional.",
+      level: "all-normal",
+      label: "Normal",
+      range: "Todos parâmetros nas faixas ideais",
+      desc: "Cliente apto para programa de exercícios sem ressalvas adicionais.",
       tone: "text-primary",
       bg: "bg-primary/10 border-primary/30",
     },
     {
-      level: "moderate",
-      label: "Cautela",
-      range: "Sim na Etapa 1 sem desdobramentos críticos",
-      desc: "Recomenda-se avaliação adicional antes de atividades de alta intensidade.",
+      level: "warn",
+      label: "Atenção",
+      range: "Pelo menos 1 parâmetro elevado/reduzido",
+      desc: "Avaliar contexto e considerar ajuste de intensidade ou encaminhamento.",
       tone: "text-amber-600 dark:text-amber-300",
       bg: "bg-amber-500/10 border-amber-500/30",
     },
     {
-      level: "high",
-      label: "Avaliação Médica",
-      range: "Sub-questões da Etapa 2 com Sim",
-      desc: "Encaminhamento médico antes de iniciar ou alterar significativamente o programa de exercícios.",
+      level: "bad",
+      label: "Crítico",
+      range: "Pelo menos 1 parâmetro em zona crítica",
+      desc: "Encaminhamento médico imediato antes de qualquer atividade física.",
       tone: "text-destructive",
       bg: "bg-destructive/10 border-destructive/30",
     },
@@ -902,8 +717,8 @@ function RiskExplainerSheet({
     <BottomSheet
       open={open}
       onOpenChange={onOpenChange}
-      srOnlyTitle="Faixas de risco PAR-Q+"
-      srOnlyDescription="Explicação detalhada de cada classificação."
+      srOnlyTitle="Faixas dos parâmetros basais"
+      srOnlyDescription="Explicação da classificação de cada parâmetro vital."
     >
       <div className="px-1 pt-2 pb-1">
         <div className="flex items-center gap-2 mb-3">
@@ -913,8 +728,8 @@ function RiskExplainerSheet({
           </h2>
         </div>
         <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-          Classificação oficial do PAR-Q+ baseada na presença de respostas
-          Sim na triagem (Etapa 1) e nos desdobramentos (Etapa 2).
+          A classificação considera a pior zona presente entre os parâmetros
+          medidos (PA, glicemia, temperatura, FC, SpO₂).
         </p>
         <div className="space-y-2">
           {items.map((it) => {
@@ -956,7 +771,7 @@ function RiskExplainerSheet({
 }
 
 /* ──────────────────────────────────────────────────────────────────────
- * Helpers visuais compartilhados (mesmo padrão das demais views)
+ * Helpers visuais (mesmo padrão das demais views)
  * ────────────────────────────────────────────────────────────────────── */
 
 function EcgLine({ className }: { className?: string }) {
@@ -1120,7 +935,7 @@ function SecondaryAction({
 }
 
 /* ──────────────────────────────────────────────────────────────────────
- * CSS — design spells
+ * CSS — design spells (compartilhado)
  * ────────────────────────────────────────────────────────────────────── */
 
 const SPELLS_CSS = `

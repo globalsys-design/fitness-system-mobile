@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { YesNoButtons } from "@/components/ui/yes-no-buttons";
 import { MobileLayout } from "@/components/mobile/mobile-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -466,21 +467,23 @@ export default function FraminghamPage() {
           </CardContent>
         </Card>
 
-        {/* Booleanos — Sim/Não toggles (mantidos do protótipo atual) */}
-        <ToggleField
+        {/* Booleanos — usa componente padrão do design system */}
+        <BoolField
           label="Tabagismo?"
           value={data.isSmoker}
-          onChange={(v) => update("isSmoker", v)}
+          onChange={(v) => update("isSmoker", v === "yes")}
+          dangerYes
         />
-        <ToggleField
+        <BoolField
           label="Pressão Arterial Sistólica Tratada?"
           value={data.isTreatedBP}
-          onChange={(v) => update("isTreatedBP", v)}
+          onChange={(v) => update("isTreatedBP", v === "yes")}
         />
-        <ToggleField
+        <BoolField
           label="Diabetes?"
           value={data.hasDiabetes}
-          onChange={(v) => update("hasDiabetes", v)}
+          onChange={(v) => update("hasDiabetes", v === "yes")}
+          dangerYes
         />
 
         <Button
@@ -546,44 +549,29 @@ function ProfileChip({
   );
 }
 
-function ToggleField({
+function BoolField({
   label,
   value,
   onChange,
+  dangerYes,
 }: {
   label: string;
   value: boolean | undefined;
-  onChange: (v: boolean) => void;
+  onChange: (v: "yes" | "no") => void;
+  dangerYes?: boolean;
 }) {
+  const yesNoValue: "yes" | "no" | null =
+    value === true ? "yes" : value === false ? "no" : null;
+
   return (
     <div className="flex flex-col gap-3 p-4 rounded-xl border border-border bg-card">
       <p className="text-sm text-foreground">{label}</p>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => onChange(true)}
-          className={cn(
-            "flex-1 h-12 rounded-xl text-sm font-semibold transition-colors",
-            value === true
-              ? "bg-destructive text-destructive-foreground"
-              : "bg-muted text-muted-foreground"
-          )}
-        >
-          Sim
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange(false)}
-          className={cn(
-            "flex-1 h-12 rounded-xl text-sm font-semibold transition-colors",
-            value === false
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground"
-          )}
-        >
-          Não
-        </button>
-      </div>
+      <YesNoButtons
+        value={yesNoValue}
+        onChange={onChange}
+        dangerYes={dangerYes}
+        ariaLabel={label}
+      />
     </div>
   );
 }
