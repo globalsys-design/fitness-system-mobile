@@ -104,17 +104,43 @@ export const guideImages: Record<string, GuideInfo> = {
     tip: "Prega vertical na face medial (interna) da perna, no nível da maior circunferência.",
   },
 
-  // ── Diâmetros ──
+  // ── Diâmetros (Tronco) ──
+  toracico_transverso: {
+    image: "/guides/diametro-placeholder.svg",
+    tip: "Posicione o paquímetro em contato com as faces laterais do tórax na linha mamilar, ao final de uma expiração tranquila.",
+  },
+  toracico_ap: {
+    image: "/guides/diametro-placeholder.svg",
+    tip: "Meça a distância ântero-posterior do tórax na linha mamilar (do esterno até a coluna), ao final de uma expiração tranquila.",
+  },
+  biacromial: {
+    image: "/guides/diametro-placeholder.svg",
+    tip: "Localize os pontos acromiais (extremidades laterais dos ombros) e meça a distância máxima entre eles. Sujeito de pé, ombros relaxados, braços ao longo do corpo.",
+  },
+  biiliaco: {
+    image: "/guides/diametro-placeholder.svg",
+    tip: "Meça a distância máxima entre as cristas ilíacas com o paquímetro. Sujeito de pé com o peso distribuído entre os pés.",
+  },
+  bitrocanterico: {
+    image: "/guides/diametro-placeholder.svg",
+    tip: "Localize os trocânteres maiores do fêmur (proeminências laterais do quadril) e meça a distância máxima entre eles.",
+  },
+
+  // ── Diâmetros (Articulações) ──
   biestiloide: {
-    image: "/guides/biestiloide.png",
-    tip: "Meça a distância entre os processos estilóides do rádio e da ulna com o paquímetro.",
+    image: "/guides/diametro-placeholder.svg",
+    tip: "Meça a distância entre os processos estilóides do rádio e da ulna com o paquímetro, mão pronada e antebraço apoiado.",
   },
   biepicondilo_umeral: {
-    image: "/guides/biepicondilo_umeral.png",
+    image: "/guides/diametro-placeholder.svg",
     tip: "Com o cotovelo flexionado a 90°, meça a distância entre os epicôndilos medial e lateral do úmero.",
   },
   biepicondilo_femoral: {
-    image: "/guides/biepicondilo_femoral.png",
-    tip: "Com o joelho flexionado a 90°, meça entre os epicôndilos medial e lateral do fêmur.",
+    image: "/guides/diametro-placeholder.svg",
+    tip: "Com o joelho flexionado a 90° (sentado em cadeira), meça a distância entre os epicôndilos medial e lateral do fêmur.",
+  },
+  bimaleolar: {
+    image: "/guides/diametro-placeholder.svg",
+    tip: "Meça a distância entre os maléolos medial (tíbia, lado interno) e lateral (fíbula, lado externo) do tornozelo, com o pé apoiado.",
   },
 };

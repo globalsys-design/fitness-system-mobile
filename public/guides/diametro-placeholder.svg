@@ -1,0 +1,31 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração de referência em produção">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0e1116"/>
+      <stop offset="100%" stop-color="#1a1f2a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f3ff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#00f3ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <g stroke="#2a3340" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="200" cy="55" r="22"/>
+    <path d="M 178 75 Q 200 80 222 75 L 235 110 L 245 175 L 240 220 L 220 295 L 210 295 L 215 230 L 200 230 L 185 230 L 190 295 L 180 295 L 160 220 L 155 175 L 165 110 Z"/>
+    <path d="M 235 110 L 270 130 L 290 195"/>
+    <path d="M 165 110 L 130 130 L 110 195"/>
+  </g>
+  <circle cx="170" cy="115" r="20" fill="url(#glow)"/>
+  <circle cx="230" cy="115" r="20" fill="url(#glow)"/>
+  <circle cx="170" cy="115" r="3" fill="#00f3ff"/>
+  <circle cx="230" cy="115" r="3" fill="#00f3ff"/>
+  <line x1="170" y1="115" x2="230" y2="115" stroke="#00f3ff" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.7"/>
+  <g transform="translate(305 215)" stroke="#00f3ff" stroke-width="1.5" fill="none" opacity="0.6">
+    <rect x="0" y="0" width="70" height="14" rx="2"/>
+    <line x1="0" y1="14" x2="0" y2="22"/>
+    <line x1="70" y1="14" x2="70" y2="22"/>
+    <line x1="35" y1="0" x2="35" y2="-6"/>
+  </g>
+  <text x="200" y="278" text-anchor="middle" fill="#6b7480" font-size="11" font-family="system-ui, -apple-system, sans-serif" font-weight="500">Ilustração de referência em produção</text>
+</svg>
