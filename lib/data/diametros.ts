@@ -1,14 +1,17 @@
 /**
- * Diâmetros Ósseos — banco de medidas antropométricas (cm).
+ * Diâmetros Ósseos — banco de medidas antropométricas.
+ *
+ * **UI/state em mm** (unidade natural do paquímetro). A conversão para cm
+ * é exibida em tempo real pelo `secondaryUnit` do `ParameterCard`.
+ * Persistência segue em **cm** (compat com perímetros e dados antigos),
+ * com conversão mm↔cm no boundary da página.
  *
  * Estrutura alinhada ao padrão de Perímetros (mesma família visual):
- *  - Diâmetros do Tronco (singletons: torácicos, biacromial, biiliaco, bitrocanterico)
- *  - Diâmetros das Articulações (singletons: punho, cotovelo, joelho, tornozelo)
- *
- * Reusa o tipo `BasalParam` e o `ParameterCard` (slider + stepper +/- + guia técnico).
+ *  - Diâmetros do Tronco (torácicos, biacromial, biiliaco, bitrocanterico)
+ *  - Diâmetros das Articulações (punho, cotovelo, joelho, tornozelo)
  *
  * Fonte: ISAK (International Society for the Advancement of Kinanthropometry).
- * Step de 0,1 cm (1 mm) — paquímetro tem precisão milimétrica.
+ * Step de 1 mm — paquímetro lê precisão milimétrica direta.
  */
 
 import { Maximize2 } from "lucide-react";
@@ -19,24 +22,27 @@ export interface DiametroParam extends BasalParam {
   guideTip?: string;
 }
 
+/**
+ * Helper de criação. `rangeMm` é a faixa em milímetros.
+ */
 const baseParam = (
   key: string,
   label: string,
   short: string,
-  range: [number, number],
+  rangeMm: [number, number],
   hint: string
 ): DiametroParam => ({
   key,
   label,
   short,
-  unit: "cm",
+  unit: "mm",
   icon: Maximize2,
   iconColor: "text-primary",
   iconBg: "bg-primary/10",
-  scaleMin: range[0],
-  scaleMax: range[1],
-  step: 0.1,
-  decimals: 1,
+  scaleMin: rangeMm[0],
+  scaleMax: rangeMm[1],
+  step: 1,
+  decimals: 0,
   hint,
 });
 
@@ -49,35 +55,35 @@ export const DIAMETRO_TRONCO: readonly DiametroParam[] = [
     "toracico_transverso",
     "Torácico transverso",
     "Tórax transv.",
-    [20, 40],
+    [200, 400],
     "Distância máxima entre as faces laterais do tórax na linha mamilar, expiração tranquila"
   ),
   baseParam(
     "toracico_ap",
     "Torácico ântero-posterior",
     "Tórax A-P",
-    [14, 30],
+    [140, 300],
     "Distância entre o esterno e a coluna vertebral na linha mamilar, expiração tranquila"
   ),
   baseParam(
     "biacromial",
     "Biacromial",
     "Biacromial",
-    [30, 50],
+    [300, 500],
     "Distância máxima entre os pontos acromiais (ombros relaxados, braços ao longo do corpo)"
   ),
   baseParam(
     "biiliaco",
     "Bi-iliocristal",
     "Bi-iliaco",
-    [20, 40],
+    [200, 400],
     "Distância máxima entre as cristas ilíacas"
   ),
   baseParam(
     "bitrocanterico",
     "Bitrocantérico",
     "Bitrocant.",
-    [25, 45],
+    [250, 450],
     "Distância máxima entre os trocânteres maiores do fêmur"
   ),
 ] as const;
@@ -91,28 +97,28 @@ export const DIAMETRO_ARTICULACOES: readonly DiametroParam[] = [
     "biestiloide",
     "Biestilóide (Punho)",
     "Punho",
-    [4, 8],
+    [40, 80],
     "Distância entre os processos estilóides do rádio e da ulna, mão pronada"
   ),
   baseParam(
     "biepicondilo_umeral",
     "Biepicôndilo Umeral (Cotovelo)",
     "Cotovelo",
-    [5, 10],
+    [50, 100],
     "Distância entre os epicôndilos medial e lateral do úmero, cotovelo flexionado a 90°"
   ),
   baseParam(
     "biepicondilo_femoral",
     "Biepicôndilo Femoral (Joelho)",
     "Joelho",
-    [7, 12],
+    [70, 120],
     "Distância entre os côndilos medial e lateral do fêmur, joelho flexionado a 90°"
   ),
   baseParam(
     "bimaleolar",
     "Bimaleolar (Tornozelo)",
     "Tornozelo",
-    [5, 10],
+    [50, 100],
     "Distância entre os maléolos medial (tíbia) e lateral (fíbula) do tornozelo"
   ),
 ] as const;

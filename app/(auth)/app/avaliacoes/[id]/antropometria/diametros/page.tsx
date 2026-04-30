@@ -3,15 +3,18 @@
 /**
  * Diâmetros Ósseos — captura de diâmetros antropométricos com paquímetro.
  *
- * Reusa o ParameterCard de Parâmetros Basais / Perímetros (mesmo
- * comportamento de input + stepper +/- + slider drag) com `zones`
- * omitidas (diâmetros não têm classificação clínica universal) e
- * `guideImage`/`guideTip` habilitados (modal de técnica de medição).
+ * Reusa o ParameterCard (slider + stepper +/- + guia técnico) com
+ * `zones` omitidas e `secondaryUnit` ativado para conversão mm → cm
+ * em tempo real abaixo do input.
+ *
+ * **Unidade primária: mm** (natural do paquímetro). Persistência em cm
+ * pra preservar dados antigos e manter consistência com perímetros —
+ * conversão acontece no boundary do `/api/assessments/[id]/anthropometry`.
  *
  * Layout (alinhado ao padrão Globalsys 2026-04-30):
  *  - Header com instruções + contador X/N preenchidos
- *  - Seção: Diâmetros do Tronco (torácicos, biacromial, biiliaco, bitrocant.)
- *  - Seção: Diâmetros das Articulações (punho, cotovelo, joelho, tornozelo)
+ *  - Seção: Diâmetros do Tronco (5 medidas)
+ *  - Seção: Diâmetros das Articulações (4 medidas)
  *  - Observações livres
  *  - Salvar
  */
@@ -45,7 +48,7 @@ export default function DiametrosPage() {
   const [isFetching, setIsFetching] = useState(true);
   const [saved, setSaved] = useState(false);
 
-  /* Carregamento */
+  /* Carregamento — converte cm (storage) → mm (state) */
   useEffect(() => {
     async function load() {
       try {
@@ -53,7 +56,16 @@ export default function DiametrosPage() {
         if (res.ok) {
           const data = await res.json();
           if (data?.diameters && typeof data.diameters === "object") {
-            setValues(data.diameters as DiametroValues);
+            const cmStored = data.diameters as Record<string, string>;
+            const mmState: DiametroValues = {};
+            for (const [key, cmRaw] of Object.entries(cmStored)) {
+              if (typeof cmRaw !== "string" || cmRaw.trim() === "") continue;
+              const cmNum = Number(cmRaw.replace(",", "."));
+              if (Number.isFinite(cmNum)) {
+                mmState[key] = String(Math.round(cmNum * 10));
+              }
+            }
+            setValues(mmState);
           }
           if (data?.notes && typeof data.notes === "string") {
             setNotes(data.notes);
@@ -68,7 +80,7 @@ export default function DiametrosPage() {
     load();
   }, [assessmentId]);
 
-  /* Handlers */
+  /* Handlers — state em mm */
   function handleChange(key: string, raw: string) {
     setValues((v) => ({ ...v, [key]: raw }));
     setSaved(false);
@@ -76,22 +88,30 @@ export default function DiametrosPage() {
 
   function handleStep(key: string, dir: 1 | -1) {
     const current = getNumeric(values, key);
-    const next = (current ?? 0) + dir * 0.1;
-    handleChange(key, next.toFixed(1).replace(".", ","));
+    const next = Math.round((current ?? 0) + dir * 1);
+    handleChange(key, String(next));
   }
 
   /* Cálculo de progresso */
   const { filled, total } = useMemo(() => countFilled(values), [values]);
 
-  /* Save */
+  /* Save — converte mm (state) → cm (storage) */
   async function handleSave() {
     setIsLoading(true);
     try {
+      const cmPayload: Record<string, string> = {};
+      for (const [key, mmRaw] of Object.entries(values)) {
+        if (typeof mmRaw !== "string" || mmRaw.trim() === "") continue;
+        const mmNum = Number(mmRaw.replace(",", "."));
+        if (Number.isFinite(mmNum)) {
+          cmPayload[key] = (mmNum / 10).toFixed(2);
+        }
+      }
       await fetch(`/api/assessments/${assessmentId}/anthropometry`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          diameters: values,
+          diameters: cmPayload,
           notes: notes.trim() || undefined,
         }),
       });
@@ -127,7 +147,7 @@ export default function DiametrosPage() {
               Diâmetros Ósseos
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Medidas com paquímetro em centímetros · {filled}/{total} preenchidos
+              Medidas com paquímetro em mm · conversão automática para cm · {filled}/{total} preenchidos
             </p>
           </div>
         </div>
@@ -149,6 +169,7 @@ export default function DiametrosPage() {
                 index={idx}
                 guideImage={guide?.image}
                 guideTip={guide?.tip}
+                secondaryUnit={{ unit: "cm", factor: 0.1, decimals: 2 }}
               />
             );
           })}
@@ -171,6 +192,7 @@ export default function DiametrosPage() {
                 index={idx}
                 guideImage={guide?.image}
                 guideTip={guide?.tip}
+                secondaryUnit={{ unit: "cm", factor: 0.1, decimals: 2 }}
               />
             );
           })}

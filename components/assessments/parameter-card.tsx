@@ -54,6 +54,15 @@ interface ParameterCardProps {
   guideImage?: string;
   /** Instrução de técnica exibida no modal. */
   guideTip?: string;
+  /**
+   * Conversão para unidade derivada exibida abaixo do input (somente leitura).
+   * Ex: input em mm com derivação cm → `{ unit: "cm", factor: 0.1, decimals: 2 }`.
+   */
+  secondaryUnit?: {
+    unit: string;
+    factor: number;
+    decimals: number;
+  };
   className?: string;
 }
 
@@ -65,6 +74,7 @@ export function ParameterCard({
   index = 0,
   guideImage,
   guideTip,
+  secondaryUnit,
   className,
 }: ParameterCardProps) {
   const Icon = param.icon;
@@ -213,6 +223,22 @@ export function ParameterCard({
           ariaLabel={`Aumentar ${param.short}`}
         />
       </div>
+
+      {/* Conversão para unidade derivada (ex: mm → cm) */}
+      {secondaryUnit && numeric !== null && (
+        <p
+          className="text-xs text-muted-foreground tabular-nums text-center -mt-1"
+          aria-live="polite"
+        >
+          ={" "}
+          <span className="font-semibold text-foreground/80">
+            {(numeric * secondaryUnit.factor)
+              .toFixed(secondaryUnit.decimals)
+              .replace(".", ",")}
+          </span>{" "}
+          {secondaryUnit.unit}
+        </p>
+      )}
 
       {/* Slider/gauge — com zonas (basais) ou neutro (perímetros) */}
       <ParameterGauge
