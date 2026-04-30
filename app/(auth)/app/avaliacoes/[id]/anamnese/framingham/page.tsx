@@ -1,185 +1,124 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Activity, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  Activity,
+  CheckCircle2,
+  Mars,
+  Venus,
+  User as UserIcon,
+  Info,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { YesNoButtons } from "@/components/ui/yes-no-buttons";
 import { MobileLayout } from "@/components/mobile/mobile-layout";
-import { RiskDashboardCard } from "@/components/assessments/risk-dashboard-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import {
+  CHOLESTEROL_OPTIONS,
+  HDL_OPTIONS,
+  SYSTOLIC_OPTIONS,
+  buildFraminghamBreakdown,
+  calcAge,
+  calcFraminghamV2,
+  isFraminghamComplete,
+  type FraminghamDataV2,
+  type FraminghamGender,
+} from "@/lib/data/framingham";
+import {
+  FraminghamView,
+  type FraminghamRiskLevel,
+} from "@/components/assessments/framingham/framingham-view";
 
-type Gender = "M" | "F" | null;
-
-interface FraminghamData {
-  gender: Gender;
-  age: string;
-  totalCholesterol: string;
-  hdl: string;
-  systolic: string;
-  isTreatedBP: boolean;
-  isSmoker: boolean;
-  hasDiabetes: boolean;
-}
-
-const INITIAL: FraminghamData = {
-  gender: null,
-  age: "",
-  totalCholesterol: "",
-  hdl: "",
-  systolic: "",
-  isTreatedBP: false,
-  isSmoker: false,
-  hasDiabetes: false,
+const INITIAL: FraminghamDataV2 = {
+  version: "v2",
+  cholesterol: undefined,
+  hdl: undefined,
+  systolic: undefined,
+  isSmoker: undefined,
+  isTreatedBP: undefined,
+  hasDiabetes: undefined,
 };
 
-function calcFraminghamScore(data: FraminghamData): {
-  score: number;
-  risk10Year: number;
-} | null {
-  const age = parseInt(data.age);
-  const tc = parseInt(data.totalCholesterol);
-  const hdl = parseInt(data.hdl);
-  const sbp = parseInt(data.systolic);
+/* Mapeia faixas de range para valores numéricos representativos —
+ * usado apenas pelo modo de visualização (FraminghamView), que mostra
+ * cards clínicos com números individuais. */
+const CHOLESTEROL_NUMERIC: Record<string, number> = {
+  "ch-lt160": 150,
+  "ch-160-199": 180,
+  "ch-200-239": 220,
+  "ch-240-279": 260,
+  "ch-gte280": 290,
+};
+const HDL_NUMERIC: Record<string, number> = {
+  "hdl-gte60": 65,
+  "hdl-50-59": 55,
+  "hdl-40-49": 45,
+  "hdl-lt40": 35,
+};
+const SYSTOLIC_NUMERIC: Record<string, number> = {
+  "sbp-lt120": 110,
+  "sbp-120-129": 125,
+  "sbp-130-139": 135,
+  "sbp-140-159": 150,
+  "sbp-gte160": 170,
+};
 
-  if (!data.gender || isNaN(age) || isNaN(tc) || isNaN(hdl) || isNaN(sbp))
-    return null;
-
-  let points = 0;
-
-  if (data.gender === "M") {
-    // Age points (male)
-    if (age >= 20 && age <= 34) points += -9;
-    else if (age <= 39) points += -4;
-    else if (age <= 44) points += 0;
-    else if (age <= 49) points += 3;
-    else if (age <= 54) points += 6;
-    else if (age <= 59) points += 8;
-    else if (age <= 64) points += 10;
-    else if (age <= 69) points += 11;
-    else if (age <= 74) points += 12;
-    else points += 13;
-
-    // Total cholesterol (male, age-adjusted simplified)
-    if (tc < 160) points += 0;
-    else if (tc <= 199) points += 4;
-    else if (tc <= 239) points += 7;
-    else if (tc <= 279) points += 9;
-    else points += 11;
-
-    // HDL
-    if (hdl >= 60) points += -1;
-    else if (hdl >= 50) points += 0;
-    else if (hdl >= 40) points += 1;
-    else points += 2;
-
-    // Systolic BP
-    if (!data.isTreatedBP) {
-      if (sbp < 120) points += 0;
-      else if (sbp <= 129) points += 0;
-      else if (sbp <= 139) points += 1;
-      else if (sbp <= 159) points += 1;
-      else points += 2;
-    } else {
-      if (sbp < 120) points += 0;
-      else if (sbp <= 129) points += 1;
-      else if (sbp <= 139) points += 2;
-      else if (sbp <= 159) points += 2;
-      else points += 3;
-    }
-
-    if (data.isSmoker) points += 8;
-    if (data.hasDiabetes) points += 5;
-  } else {
-    // Age points (female)
-    if (age >= 20 && age <= 34) points += -7;
-    else if (age <= 39) points += -3;
-    else if (age <= 44) points += 0;
-    else if (age <= 49) points += 3;
-    else if (age <= 54) points += 6;
-    else if (age <= 59) points += 8;
-    else if (age <= 64) points += 10;
-    else if (age <= 69) points += 12;
-    else if (age <= 74) points += 14;
-    else points += 16;
-
-    // Total cholesterol (female)
-    if (tc < 160) points += 0;
-    else if (tc <= 199) points += 4;
-    else if (tc <= 239) points += 8;
-    else if (tc <= 279) points += 11;
-    else points += 13;
-
-    // HDL
-    if (hdl >= 60) points += -1;
-    else if (hdl >= 50) points += 0;
-    else if (hdl >= 40) points += 1;
-    else points += 2;
-
-    // Systolic BP
-    if (!data.isTreatedBP) {
-      if (sbp < 120) points += 0;
-      else if (sbp <= 129) points += 1;
-      else if (sbp <= 139) points += 2;
-      else if (sbp <= 159) points += 3;
-      else points += 4;
-    } else {
-      if (sbp < 120) points += 0;
-      else if (sbp <= 129) points += 3;
-      else if (sbp <= 139) points += 4;
-      else if (sbp <= 159) points += 5;
-      else points += 6;
-    }
-
-    if (data.isSmoker) points += 9;
-    if (data.hasDiabetes) points += 7;
-  }
-
-  // Simplified 10-year risk estimation
-  let risk10Year: number;
-  if (data.gender === "M") {
-    if (points <= 0) risk10Year = 1;
-    else if (points <= 4) risk10Year = 1;
-    else if (points <= 6) risk10Year = 2;
-    else if (points <= 8) risk10Year = 5;
-    else if (points <= 10) risk10Year = 6;
-    else if (points <= 12) risk10Year = 10;
-    else if (points <= 14) risk10Year = 16;
-    else if (points <= 16) risk10Year = 25;
-    else risk10Year = 30;
-  } else {
-    if (points <= 8) risk10Year = 1;
-    else if (points <= 12) risk10Year = 1;
-    else if (points <= 14) risk10Year = 2;
-    else if (points <= 16) risk10Year = 4;
-    else if (points <= 18) risk10Year = 6;
-    else if (points <= 20) risk10Year = 11;
-    else if (points <= 22) risk10Year = 17;
-    else if (points <= 24) risk10Year = 25;
-    else risk10Year = 30;
-  }
-
-  return { score: points, risk10Year };
+function genderFromClient(g: string | null | undefined): FraminghamGender | null {
+  if (!g) return null;
+  const norm = g.toLowerCase().trim();
+  if (norm.startsWith("m") || norm === "masculino" || norm === "male") return "M";
+  if (norm.startsWith("f") || norm === "feminino" || norm === "female") return "F";
+  return null;
 }
 
 export default function FraminghamPage() {
   const params = useParams();
-  const [data, setData] = useState<FraminghamData>(INITIAL);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const assessmentId = params.id as string;
+
+  /* ── perfil do cliente (auto-preenchimento) ─────────────────── */
+  const [clientGender, setClientGender] = useState<FraminghamGender | null>(null);
+  const [clientAge, setClientAge] = useState<number | null>(null);
+  const [clientName, setClientName] = useState<string>("");
+
+  const [data, setData] = useState<FraminghamDataV2>(INITIAL);
+  const [savedData, setSavedData] = useState<FraminghamDataV2 | null>(null);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [forceEdit, setForceEdit] = useState(false);
+  const isEditQuery = searchParams.get("mode") === "edit";
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/assessments/${params.id}/anamnesis`);
+        const res = await fetch(`/api/assessments/${assessmentId}/anamnesis`);
         if (res.ok) {
           const d = await res.json();
-          if (d?.framingham) setData({ ...INITIAL, ...d.framingham });
+
+          // Auto-preenchimento do perfil
+          if (d?.client) {
+            setClientName(d.client.name ?? "");
+            setClientGender(genderFromClient(d.client.gender));
+            setClientAge(calcAge(d.client.birthDate));
+          }
+
+          // Carrega Framingham apenas se for v2
+          if (d?.framingham?.version === "v2") {
+            const v2 = d.framingham as FraminghamDataV2;
+            setData({ ...INITIAL, ...v2 });
+            setSavedData(v2);
+            setSavedAt(v2.completedAt ?? d?.updatedAt ?? null);
+          }
         }
       } catch {
         /* empty */
@@ -188,11 +127,16 @@ export default function FraminghamPage() {
       }
     }
     load();
-  }, [params.id]);
+  }, [assessmentId]);
 
-  const result = useMemo(() => calcFraminghamScore(data), [data]);
+  /* ── cálculo do score em tempo real ─────────────────────────── */
+  const result = useMemo(() => {
+    if (!clientGender || clientAge == null) return null;
+    if (!isFraminghamComplete(data)) return null;
+    return calcFraminghamV2(data, clientGender, clientAge);
+  }, [data, clientGender, clientAge]);
 
-  const riskLevel = result
+  const riskLevel: FraminghamRiskLevel | null = result
     ? result.risk10Year < 10
       ? "low"
       : result.risk10Year < 20
@@ -200,29 +144,58 @@ export default function FraminghamPage() {
         : "high"
     : null;
 
-  function update<K extends keyof FraminghamData>(
+  function update<K extends keyof FraminghamDataV2>(
     key: K,
-    value: FraminghamData[K]
+    value: FraminghamDataV2[K]
   ) {
     setData((d) => ({ ...d, [key]: value }));
     setSaved(false);
   }
 
   async function handleSave() {
+    if (!clientGender || clientAge == null) {
+      toast.error(
+        "Cadastre data de nascimento e gênero do cliente antes de calcular Framingham."
+      );
+      return;
+    }
     setIsLoading(true);
     try {
-      await fetch(`/api/assessments/${params.id}/anamnesis`, {
+      const payload: FraminghamDataV2 = {
+        ...data,
+        version: "v2",
+        completedAt: new Date().toISOString(),
+        score: result?.score,
+        risk10Year: result?.risk10Year,
+      };
+      await fetch(`/api/assessments/${assessmentId}/anamnesis`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ framingham: data }),
+        body: JSON.stringify({ framingham: payload }),
       });
       toast.success("Framingham salvo!");
       setSaved(true);
+      setSavedData(payload);
+      setSavedAt(payload.completedAt ?? null);
+      setForceEdit(false);
+      if (isEditQuery) {
+        router.replace(`/app/avaliacoes/${assessmentId}/anamnese/framingham`);
+      }
     } catch {
       toast.error("Erro ao salvar.");
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function handleEdit() {
+    setForceEdit(true);
+  }
+
+  function handleStartNew() {
+    setData(INITIAL);
+    setSaved(false);
+    setForceEdit(true);
   }
 
   if (isFetching) {
@@ -237,9 +210,70 @@ export default function FraminghamPage() {
     );
   }
 
+  /* ── modo leitura ──────────────────────────────────────────── */
+  const hasSavedData =
+    savedData != null &&
+    savedData.version === "v2" &&
+    isFraminghamComplete(savedData) &&
+    clientGender != null &&
+    clientAge != null;
+  const isViewMode = hasSavedData && !isEditQuery && !forceEdit;
+
+  if (
+    isViewMode &&
+    savedData &&
+    clientGender &&
+    clientAge != null
+  ) {
+    const savedResult = calcFraminghamV2(savedData, clientGender, clientAge);
+    const savedRisk: FraminghamRiskLevel =
+      savedResult.risk10Year < 10
+        ? "low"
+        : savedResult.risk10Year < 20
+          ? "moderate"
+          : "high";
+    const breakdown = buildFraminghamBreakdown(
+      savedData,
+      clientGender,
+      clientAge
+    ).map((b) => ({ ...b, icon: "chol" as const }));
+
+    return (
+      <MobileLayout title="Framingham" showBack>
+        <FraminghamView
+          data={{
+            gender: clientGender,
+            age: clientAge,
+            totalCholesterol: savedData.cholesterol
+              ? CHOLESTEROL_NUMERIC[savedData.cholesterol] ?? 0
+              : 0,
+            hdl: savedData.hdl ? HDL_NUMERIC[savedData.hdl] ?? 0 : 0,
+            systolic: savedData.systolic
+              ? SYSTOLIC_NUMERIC[savedData.systolic] ?? 0
+              : 0,
+            isTreatedBP: !!savedData.isTreatedBP,
+            isSmoker: !!savedData.isSmoker,
+            hasDiabetes: !!savedData.hasDiabetes,
+          }}
+          score={savedResult.score}
+          risk10Year={savedResult.risk10Year}
+          riskLevel={savedRisk}
+          breakdown={breakdown}
+          completedAt={savedAt}
+          onEdit={handleEdit}
+          onStartNew={handleStartNew}
+        />
+      </MobileLayout>
+    );
+  }
+
+  /* ── modo edição ───────────────────────────────────────────── */
+  const profileMissing = !clientGender || clientAge == null;
+
   return (
     <MobileLayout title="Framingham" showBack>
       <div className="p-4 flex flex-col gap-4">
+        {/* Header informativo */}
         <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
           <Activity className="size-6 text-primary shrink-0" />
           <div>
@@ -252,151 +286,212 @@ export default function FraminghamPage() {
           </div>
         </div>
 
-        {/* Gender */}
+        {/* Resultado preview */}
+        <div>
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
+            Resultado
+          </Label>
+          {!result || !riskLevel ? (
+            <div className="rounded-xl border border-dashed border-border bg-card/40 px-4 py-5 space-y-1">
+              <div className="flex items-center gap-2 text-foreground/80">
+                <Info className="size-4" />
+                <p className="text-sm font-semibold">
+                  Nenhuma classificação de risco
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Preencha e salve o formulário para obter uma estimativa do
+                nível de risco cardiovascular em 10 anos.
+              </p>
+            </div>
+          ) : (
+            <div
+              className={cn(
+                "rounded-xl border-2 px-4 py-4 space-y-1.5",
+                riskLevel === "low"
+                  ? "bg-primary/5 border-primary/30"
+                  : riskLevel === "moderate"
+                    ? "bg-amber-500/10 border-amber-500/30"
+                    : "bg-destructive/10 border-destructive/30"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <p
+                  className={cn(
+                    "text-sm font-semibold",
+                    riskLevel === "low"
+                      ? "text-primary"
+                      : riskLevel === "moderate"
+                        ? "text-amber-600 dark:text-amber-300"
+                        : "text-destructive"
+                  )}
+                >
+                  {riskLevel === "low"
+                    ? "Risco Baixo"
+                    : riskLevel === "moderate"
+                      ? "Risco Moderado"
+                      : "Risco Alto"}
+                </p>
+                <span
+                  className={cn(
+                    "text-xs font-bold tabular-nums px-2 py-0.5 rounded-full",
+                    riskLevel === "low"
+                      ? "bg-primary/15 text-primary"
+                      : riskLevel === "moderate"
+                        ? "bg-amber-500/15 text-amber-600 dark:text-amber-300"
+                        : "bg-destructive/15 text-destructive"
+                  )}
+                >
+                  {result.risk10Year}% · {result.score} pts
+                </span>
+              </div>
+              <p className="text-xs text-foreground/80 leading-relaxed">
+                Estimativa de evento cardiovascular em 10 anos.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Profile auto-fill alert */}
+        {profileMissing && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2">
+            <Info className="size-4 text-amber-600 dark:text-amber-300 shrink-0 mt-0.5" />
+            <div className="text-xs text-amber-700 dark:text-amber-200 leading-relaxed">
+              <p className="font-semibold">Dados do perfil incompletos</p>
+              <p className="mt-0.5">
+                Cadastre <strong>data de nascimento</strong> e{" "}
+                <strong>gênero</strong> do cliente para calcular o Framingham.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Idade + Gênero (read-only do perfil) */}
+        <div className="grid grid-cols-2 gap-3">
+          <ProfileChip
+            label="Idade"
+            value={clientAge != null ? `${clientAge} anos` : "Não informada"}
+            placeholder={clientAge == null}
+            icon={UserIcon}
+          />
+          <ProfileChip
+            label="Gênero"
+            value={
+              clientGender === "M"
+                ? "Masculino"
+                : clientGender === "F"
+                  ? "Feminino"
+                  : "Não informado"
+            }
+            placeholder={!clientGender}
+            icon={clientGender === "F" ? Venus : Mars}
+          />
+        </div>
+        <p className="text-[11px] text-muted-foreground -mt-2 pl-1">
+          Idade e gênero são puxados automaticamente do perfil
+          {clientName ? ` de ${clientName}` : ""}.
+        </p>
+
+        {/* Dropdowns de faixas */}
         <Card>
-          <CardContent className="p-4">
-            <Label className="text-sm font-medium mb-3 block">Sexo</Label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => update("gender", "M")}
-                className={cn(
-                  "flex-1 h-12 rounded-xl text-sm font-semibold transition-colors",
-                  data.gender === "M"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                )}
+          <CardContent className="p-4 space-y-3">
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="framingham-cholesterol"
+                className="text-sm font-medium"
               >
-                Masculino
-              </button>
-              <button
-                type="button"
-                onClick={() => update("gender", "F")}
-                className={cn(
-                  "flex-1 h-12 rounded-xl text-sm font-semibold transition-colors",
-                  data.gender === "F"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                )}
+                Colesterol
+              </Label>
+              <NativeSelect
+                id="framingham-cholesterol"
+                value={data.cholesterol ?? ""}
+                onChange={(e) =>
+                  update("cholesterol", e.target.value || undefined)
+                }
               >
-                Feminino
-              </button>
+                <option value="" disabled>
+                  Selecione uma opção
+                </option>
+                {CHOLESTEROL_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="framingham-hdl" className="text-sm font-medium">
+                HDL Colesterol
+              </Label>
+              <NativeSelect
+                id="framingham-hdl"
+                value={data.hdl ?? ""}
+                onChange={(e) => update("hdl", e.target.value || undefined)}
+              >
+                <option value="" disabled>
+                  Selecione uma opção
+                </option>
+                {HDL_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="framingham-systolic"
+                className="text-sm font-medium"
+              >
+                Pressão Arterial Sistólica
+              </Label>
+              <NativeSelect
+                id="framingham-systolic"
+                value={data.systolic ?? ""}
+                onChange={(e) =>
+                  update("systolic", e.target.value || undefined)
+                }
+              >
+                <option value="" disabled>
+                  Selecione uma opção
+                </option>
+                {SYSTOLIC_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </NativeSelect>
             </div>
           </CardContent>
         </Card>
 
-        {/* Numeric inputs */}
-        {[
-          { key: "age" as const, label: "Idade", unit: "anos", max: 120 },
-          {
-            key: "totalCholesterol" as const,
-            label: "Colesterol Total",
-            unit: "mg/dL",
-            max: 500,
-          },
-          { key: "hdl" as const, label: "HDL", unit: "mg/dL", max: 150 },
-          {
-            key: "systolic" as const,
-            label: "PA Sistólica",
-            unit: "mmHg",
-            max: 250,
-          },
-        ].map((field) => (
-          <Card key={field.key}>
-            <CardContent className="p-4">
-              <Label className="text-sm font-medium mb-3 block">
-                {field.label}
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={data[field.key]}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (
-                      val === "" ||
-                      (parseFloat(val) >= 0 &&
-                        parseFloat(val) <= field.max)
-                    ) {
-                      update(field.key, val);
-                    }
-                  }}
-                  className="flex-1 text-base"
-                />
-                <span className="text-sm text-muted-foreground w-14 text-center">
-                  {field.unit}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {/* Boolean toggles */}
-        {[
-          {
-            key: "isTreatedBP" as const,
-            label: "Em tratamento para pressão arterial?",
-          },
-          { key: "isSmoker" as const, label: "Fumante atual?" },
-          { key: "hasDiabetes" as const, label: "Diabetes?" },
-        ].map((field, i) => (
-          <div
-            key={field.key}
-            className="flex flex-col gap-3 p-4 rounded-xl border border-border bg-card"
-          >
-            <p className="text-sm text-foreground">{field.label}</p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => update(field.key, true)}
-                className={cn(
-                  "flex-1 h-12 rounded-xl text-sm font-semibold transition-colors",
-                  data[field.key] === true
-                    ? "bg-destructive text-destructive-foreground"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                Sim
-              </button>
-              <button
-                type="button"
-                onClick={() => update(field.key, false)}
-                className={cn(
-                  "flex-1 h-12 rounded-xl text-sm font-semibold transition-colors",
-                  data[field.key] === false
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                Não
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {/* Result */}
-        {result && riskLevel && (
-          <RiskDashboardCard
-            title="Risco Cardiovascular (10 anos)"
-            score={result.risk10Year}
-            maxScore={30}
-            riskLevel={riskLevel}
-            description={
-              result.risk10Year < 10
-                ? `Risco baixo (${result.risk10Year}%). Pontuação: ${result.score}. Manter hábitos saudáveis e acompanhamento regular.`
-                : result.risk10Year < 20
-                  ? `Risco moderado (${result.risk10Year}%). Pontuação: ${result.score}. Recomenda-se mudanças no estilo de vida e acompanhamento médico.`
-                  : `Risco alto (${result.risk10Year}%). Pontuação: ${result.score}. Necessita intervenção médica e mudanças imediatas no estilo de vida.`
-            }
-          />
-        )}
+        {/* Booleanos — usa componente padrão do design system */}
+        <BoolField
+          label="Tabagismo?"
+          value={data.isSmoker}
+          onChange={(v) => update("isSmoker", v === "yes")}
+          dangerYes
+        />
+        <BoolField
+          label="Pressão Arterial Sistólica Tratada?"
+          value={data.isTreatedBP}
+          onChange={(v) => update("isTreatedBP", v === "yes")}
+        />
+        <BoolField
+          label="Diabetes?"
+          value={data.hasDiabetes}
+          onChange={(v) => update("hasDiabetes", v === "yes")}
+          dangerYes
+        />
 
         <Button
           className="w-full"
           onClick={handleSave}
-          disabled={isLoading || !data.gender}
+          disabled={
+            isLoading || !isFraminghamComplete(data) || profileMissing
+          }
         >
           {isLoading ? (
             <Loader2 className="size-4 mr-2 animate-spin" />
@@ -407,5 +502,76 @@ export default function FraminghamPage() {
         </Button>
       </div>
     </MobileLayout>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Sub-componentes
+ * ────────────────────────────────────────────────────────────────────── */
+
+function ProfileChip({
+  label,
+  value,
+  icon: Icon,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  placeholder?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-3 flex items-center gap-2.5">
+      <div
+        className={cn(
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+          placeholder
+            ? "bg-amber-500/10 text-amber-600 dark:text-amber-300"
+            : "bg-primary/10 text-primary"
+        )}
+      >
+        <Icon className="size-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </p>
+        <p
+          className={cn(
+            "text-sm font-semibold tabular-nums truncate",
+            placeholder ? "text-muted-foreground" : "text-foreground"
+          )}
+        >
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function BoolField({
+  label,
+  value,
+  onChange,
+  dangerYes,
+}: {
+  label: string;
+  value: boolean | undefined;
+  onChange: (v: "yes" | "no") => void;
+  dangerYes?: boolean;
+}) {
+  const yesNoValue: "yes" | "no" | null =
+    value === true ? "yes" : value === false ? "no" : null;
+
+  return (
+    <div className="flex flex-col gap-3 p-4 rounded-xl border border-border bg-card">
+      <p className="text-sm text-foreground">{label}</p>
+      <YesNoButtons
+        value={yesNoValue}
+        onChange={onChange}
+        dangerYes={dangerYes}
+        ariaLabel={label}
+      />
+    </div>
   );
 }

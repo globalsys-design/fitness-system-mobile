@@ -148,8 +148,28 @@ export const assistantStep4Schema = z.object({
 export const assessmentSchema = z.object({
   clientId: z.string().min(1, "Selecione um cliente"),
   population: z.enum(["NORMAL", "ATHLETE", "ELDERLY", "CHILD", "PREGNANT"]).default("NORMAL"),
+  // Modalidades: multi-select. Mantém `modality` (string) para compat com chamadas antigas
+  // e `modalities` (array) como novo formato — a API aceita ambos.
   modality: z.string().optional(),
-});
+  modalities: z.array(z.string()).optional(),
+  // Agendamento opcional da próxima avaliação
+  scheduleNext: z.boolean().optional().default(false),
+  nextDate: z.string().optional(),
+  nextStartTime: z.string().optional(),
+  nextEndTime: z.string().optional(),
+}).refine(
+  (data) => {
+    if (!data.scheduleNext) return true;
+    return !!data.nextDate && !!data.nextStartTime && !!data.nextEndTime;
+  },
+  { message: "Preencha data, hora de início e fim", path: ["nextDate"] }
+).refine(
+  (data) => {
+    if (!data.scheduleNext || !data.nextStartTime || !data.nextEndTime) return true;
+    return data.nextStartTime < data.nextEndTime;
+  },
+  { message: "Hora de fim deve ser posterior à hora de início", path: ["nextEndTime"] }
+);
 
 export const calendarEventSchema = z.object({
   type: z.enum(["ASSESSMENT", "PRESCRIPTION"]),

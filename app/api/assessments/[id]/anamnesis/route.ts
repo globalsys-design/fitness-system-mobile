@@ -29,7 +29,22 @@ export async function GET(
     where: { assessmentId: id },
   });
 
-  return NextResponse.json(anamnesis);
+  // Inclui dados do cliente para auto-preenchimento de campos
+  // (idade/gênero do Framingham, etc).
+  const client = await db.client.findFirst({
+    where: { assessments: { some: { id } } },
+    select: {
+      id: true,
+      name: true,
+      gender: true,
+      birthDate: true,
+    },
+  });
+
+  return NextResponse.json({
+    ...(anamnesis ?? {}),
+    client,
+  });
 }
 
 export async function PATCH(

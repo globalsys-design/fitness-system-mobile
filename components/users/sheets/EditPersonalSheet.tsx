@@ -210,7 +210,7 @@ export function EditPersonalSheet({
 
         {/* CTA */}
         <Button
-          className="w-full h-13 mt-2"
+          className="w-full h-13 mt-2 transition-transform duration-150 active:scale-[0.98]"
           onClick={handleSave}
           disabled={saving || !form.name.trim()}
         >

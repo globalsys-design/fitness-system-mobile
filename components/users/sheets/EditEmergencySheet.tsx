@@ -99,7 +99,7 @@ export function EditEmergencySheet({
           />
         </div>
 
-        <Button className="w-full h-13 mt-2" onClick={handleSave} disabled={saving}>
+        <Button className="w-full h-13 mt-2 transition-transform duration-150 active:scale-[0.98]" onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
           Salvar contato de emergência
         </Button>

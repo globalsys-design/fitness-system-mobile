@@ -411,7 +411,7 @@ export function AssistantEditSheet({
       {/* ── Botão fixo de salvar ─────────────────────────────────────── */}
       <div className="pt-4 border-t border-border">
         <Button
-          className="w-full h-13"
+          className="w-full h-13 transition-transform duration-150 active:scale-[0.98]"
           onClick={handleSave}
           disabled={saving}
         >

@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PermissionsToggle, EMPTY_CRUD, type PermissionsMap } from "./permissions-toggle";
 import { AssistantEditSheet } from "./sheets/AssistantEditSheet";
 import { PasswordGeneratorBlock } from "./PasswordGeneratorBlock";
+import { DetailHeader } from "./client-detail";
 import { cn } from "@/lib/utils";
 import { maskPhone } from "@/components/ui/phone-input";
 import Link from "next/link";
@@ -162,47 +163,33 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
   return (
     <>
       <div className="flex flex-col">
-        {/* Header */}
-        <div className="flex items-center gap-4 px-4 py-5 border-b border-border bg-card">
-          <Avatar className="size-16 shrink-0">
-            <AvatarImage src={assistant.photo ?? undefined} />
-            <AvatarFallback className="text-lg font-bold bg-primary/10 text-primary">
-              {assistant.name.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-foreground truncate">
-                {assistant.name}
-              </h2>
-              <Badge
-                variant="secondary"
-                className={cn(
-                  "text-xs shrink-0",
-                  assistant.status === "ACTIVE"
-                    ? "bg-primary/10 text-primary border-primary/20"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                {assistant.status === "ACTIVE" ? "Ativo" : "Inativo"}
-              </Badge>
-            </div>
-            {(assistant.profession || assistant.role) && (
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {[assistant.profession, assistant.role].filter(Boolean).join(" · ")}
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Desde{" "}
-              {format(new Date(assistant.createdAt), "MMM yyyy", { locale: ptBR })}
-            </p>
-          </div>
-        </div>
+        {/* Header — spell reutilizado do ClientDetail, com edit button padrão */}
+        <DetailHeader
+          name={assistant.name}
+          photo={assistant.photo}
+          isActive={statusActive}
+          statusLabel={statusActive ? "Ativo" : "Inativo"}
+          statusKey={String(statusActive)}
+          meta={
+            [
+              [assistant.profession, assistant.role].filter(Boolean).join(" · "),
+              `Desde ${format(new Date(assistant.createdAt), "MMM yyyy", { locale: ptBR })}`,
+            ]
+              .filter(Boolean)
+              .join(" • ") || undefined
+          }
+          stats={[
+            { icon: ClipboardList, label: "aval.", value: assistant.assessments.length },
+            { icon: Dumbbell, label: "pres.", value: assistant.prescriptions.length },
+          ]}
+          onEdit={() => setEditOpen(true)}
+          editLabel="Editar assistente"
+        />
 
-        {/* Tabs */}
+        {/* Tabs — spell: growing pill underline */}
         <Tabs value={tab} onValueChange={setTab} className="flex flex-col flex-1">
           <div className="px-4 pt-3 border-b border-border bg-background sticky top-0 z-10">
-            <TabsList className="w-full h-10 bg-transparent p-0 gap-0">
+            <TabsList className="w-full h-11 bg-transparent p-0 gap-0 relative">
               {[
                 { value: "info",          label: "Informações" },
                 { value: "access",        label: "Acesso" },
@@ -213,7 +200,16 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
                 <TabsTrigger
                   key={t.value}
                   value={t.value}
-                  className="flex-1 text-[11px] px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none data-[state=active]:shadow-none h-10"
+                  className={cn(
+                    "flex-1 text-[11px] px-1 h-11 rounded-none relative bg-transparent",
+                    "data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+                    "data-[state=active]:text-primary text-muted-foreground",
+                    "transition-colors duration-200",
+                    "after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2",
+                    "after:h-[3px] after:w-0 after:rounded-t-full after:bg-primary",
+                    "after:transition-[width,box-shadow] after:duration-300 after:ease-out",
+                    "data-[state=active]:after:w-6 data-[state=active]:after:shadow-[0_0_10px_oklch(from_var(--color-primary)_l_c_h/0.5)]"
+                  )}
                 >
                   {t.label}
                 </TabsTrigger>
@@ -222,20 +218,8 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
           </div>
 
           {/* ── Tab: Informações ─────────────────────────────────── */}
-          <TabsContent value="info" className="mt-0 flex-1">
+          <TabsContent value="info" className="mt-0 flex-1 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-1 data-[state=active]:duration-300">
             <div className="p-4 flex flex-col gap-5">
-              {/* Botão editar */}
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditOpen(true)}
-                >
-                  <Edit2 className="size-4 mr-1.5" />
-                  Editar
-                </Button>
-              </div>
-
               {/* Bloco 1 — Dados Pessoais */}
               <div className="flex flex-col gap-0.5">
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">
@@ -294,12 +278,26 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
           </TabsContent>
 
           {/* ── Tab: Acesso ──────────────────────────────────────── */}
-          <TabsContent value="access" className="mt-0 flex-1">
+          <TabsContent value="access" className="mt-0 flex-1 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-1 data-[state=active]:duration-300">
             <div className="p-4 flex flex-col gap-4">
-              <div className="rounded-xl border border-border bg-card p-4">
+              <div
+                className={cn(
+                  "rounded-xl border p-4 transition-[background-color,border-color] duration-300",
+                  statusActive
+                    ? "bg-primary/5 border-primary/30"
+                    : "bg-card border-border"
+                )}
+              >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-foreground">Conta ativa</p>
+                    <p
+                      className={cn(
+                        "text-sm font-medium transition-colors",
+                        statusActive ? "text-primary" : "text-foreground"
+                      )}
+                    >
+                      Conta ativa
+                    </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Permitir que o assistente acesse o sistema
                     </p>
@@ -326,7 +324,7 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
                 {accessPassword.length >= 8 && (
                   <Button
                     size="sm"
-                    className="w-full h-11 mt-1"
+                    className="w-full h-11 mt-1 transition-transform duration-150 active:scale-[0.98] animate-in fade-in slide-in-from-bottom-1 duration-200"
                     onClick={handleSavePassword}
                     disabled={savingPwd}
                   >
@@ -350,11 +348,11 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
           </TabsContent>
 
           {/* ── Tab: Avaliações ──────────────────────────────────── */}
-          <TabsContent value="assessments" className="mt-0 flex-1">
+          <TabsContent value="assessments" className="mt-0 flex-1 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-1 data-[state=active]:duration-300">
             <div className="p-4">
               {assistant.assessments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <div className="flex items-center justify-center size-16 rounded-full bg-muted">
+                <div className="flex flex-col items-center justify-center py-12 gap-3 animate-in fade-in duration-500">
+                  <div className="flex items-center justify-center size-16 rounded-full bg-muted animate-in zoom-in-50 duration-500 fill-mode-both">
                     <ClipboardList className="size-8 text-muted-foreground" />
                   </div>
                   <p className="text-sm text-muted-foreground text-center">
@@ -363,11 +361,12 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
                 </div>
               ) : (
                 <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
-                  {assistant.assessments.map((assessment) => (
+                  {assistant.assessments.map((assessment, i) => (
                     <Link
                       key={assessment.id}
                       href={`/app/avaliacoes/${assessment.id}`}
-                      className="flex items-center gap-3 px-4 py-3.5 bg-card active:bg-muted/50 transition-colors"
+                      style={{ animationDelay: `${i * 50}ms` }}
+                      className="flex items-center gap-3 px-4 py-3.5 bg-card active:bg-muted/50 transition-colors animate-in fade-in slide-in-from-bottom-1 duration-300 fill-mode-both"
                     >
                       <div className="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary shrink-0">
                         <ClipboardList className="size-5" />
@@ -400,11 +399,11 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
           </TabsContent>
 
           {/* ── Tab: Prescrições ─────────────────────────────────── */}
-          <TabsContent value="prescriptions" className="mt-0 flex-1">
+          <TabsContent value="prescriptions" className="mt-0 flex-1 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-1 data-[state=active]:duration-300">
             <div className="p-4">
               {assistant.prescriptions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <div className="flex items-center justify-center size-16 rounded-full bg-muted">
+                <div className="flex flex-col items-center justify-center py-12 gap-3 animate-in fade-in duration-500">
+                  <div className="flex items-center justify-center size-16 rounded-full bg-muted animate-in zoom-in-50 duration-500 fill-mode-both">
                     <Dumbbell className="size-8 text-muted-foreground" />
                   </div>
                   <p className="text-sm text-muted-foreground text-center">
@@ -413,11 +412,12 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
                 </div>
               ) : (
                 <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
-                  {assistant.prescriptions.map((p) => (
+                  {assistant.prescriptions.map((p, i) => (
                     <Link
                       key={p.id}
                       href={`/app/prescricoes/${p.id}`}
-                      className="flex items-center gap-3 px-4 py-3.5 bg-card active:bg-muted/50 transition-colors"
+                      style={{ animationDelay: `${i * 50}ms` }}
+                      className="flex items-center gap-3 px-4 py-3.5 bg-card active:bg-muted/50 transition-colors animate-in fade-in slide-in-from-bottom-1 duration-300 fill-mode-both"
                     >
                       <div
                         className={cn(
@@ -449,7 +449,7 @@ export function AssistantDetail({ assistant }: AssistantDetailProps) {
           </TabsContent>
 
           {/* ── Tab: Permissões ──────────────────────────────────── */}
-          <TabsContent value="permissions" className="mt-0 flex-1">
+          <TabsContent value="permissions" className="mt-0 flex-1 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-1 data-[state=active]:duration-300">
             <div className="p-4 flex flex-col gap-4">
               {isSavingPermissions && (
                 <div className="flex items-center justify-end gap-2 text-xs text-primary">
@@ -492,14 +492,25 @@ function InfoRow({
   label: string;
   value: string | null | undefined;
 }) {
+  const filled = !!value;
   return (
     <div className="flex items-center gap-3 py-3 border-b border-border last:border-0">
-      <div className="flex items-center justify-center size-9 rounded-lg bg-muted text-muted-foreground shrink-0">
+      <div
+        className={cn(
+          "flex items-center justify-center size-9 rounded-lg shrink-0 transition-colors duration-300",
+          filled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+        )}
+      >
         <Icon className="size-4" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-medium text-foreground truncate">
+        <p
+          className={cn(
+            "text-sm font-medium truncate",
+            filled ? "text-foreground" : "text-muted-foreground/50 italic"
+          )}
+        >
           {value || "Não informado"}
         </p>
       </div>
